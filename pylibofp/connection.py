@@ -1,8 +1,7 @@
 import asyncio
 import logging
 
-_LIBOFP_PATH = '/Users/bfish/code/ofp/Build+Debug/tools/libofp/libofp'
-#_LIBOFP_PATH = '/Users/bfish/code/ofp/Build/tools/libofp/libofp'
+_LIBOFP_PATH = '/usr/local/bin/libofp'
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
 LOGGER = logging.getLogger('pylibofp.controller')
