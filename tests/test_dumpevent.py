@@ -1,0 +1,45 @@
+import unittest
+from pylibofp.event import dump_event, Event
+
+
+class DumpEventTestCase(unittest.TestCase):
+
+    def test_empty_dict(self):
+        # Test empty event as Python object.
+        data = dump_event({})
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, b'{}\n')
+
+    def test_empty_dict2(self):
+        # Test empty event as Event object.
+        data = dump_event(Event({}))
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, b'{}\n')
+
+    def test_hello(self):
+        # Test hello event as Python object.
+        data = dump_event(dict(msg=dict(type='foo')))
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, b'{"msg":{"type":"foo"}}\n')
+
+    def test_string(self):
+        # Test event as string.
+        data = dump_event('test string')
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, b'"test string"\n')
+
+    def test_bytes(self):
+        # Test that bytes values are converted to hex strings.
+        data = dump_event({'x': b'12345'})
+        self.assertEqual(data, b'{"x":"3132333435"}\n')
+
+    def test_nonserializable(self):
+        # Test a value that isn't JSON serializable.
+        with self.assertRaisesRegex(TypeError, "Value .+ is not JSON serializable"):
+            dump_event({'x':set()})
+
+    def test_utf8(self):
+        # Test that Unicode/UTF-8 works.
+        data = dump_event({'x': '\u20AC\U00010302\U0010fffd'})
+        self.assertEqual(data, b'{"x":"\xe2\x82\xac\xf0\x90\x8c\x82\xf4\x8f\xbf\xbd"}\n')
+        
