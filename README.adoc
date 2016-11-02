@@ -1,4 +1,4 @@
-= PYLIBOFP: OpenFlow Microframework
+= PYLIBOFP: OpenFlow Python3 Microframework
 :icons: font
 :toc:
 ifdef::env-github[]
