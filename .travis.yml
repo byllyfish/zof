@@ -21,4 +21,4 @@ before_install:
 
 # Per https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
 sudo: required
-#dist: trusty
+dist: trusty
