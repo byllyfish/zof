@@ -2,6 +2,7 @@ language: python
 python:
   - "3.5"
 # - "nightly"
+
 install:
 #  - pip3 install codecov pyyaml
   - pip3 install pyyaml
@@ -12,9 +13,12 @@ script:
 #after_success:
 #  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then codecov; fi
 
-addons:
-  apt:
-    sources:
-      - byllyfish/libofp
-    packages:
-      - libofp
+before_install:
+  # Install libofp from launchpad.
+  - sudo add-apt-repository ppa:byllyfish/libofp -y
+  - sudo apt-get update -qq
+  - sudo apt-get install libofp -y
+
+# Per https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
+sudo: required
+#dist: trusty
