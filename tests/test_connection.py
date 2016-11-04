@@ -10,7 +10,7 @@ MSG_LIMIT = 2**20
 TIMEOUT = 8.0
 
 # Skip tests that send big messages.
-SKIP_BIG_MESSAGES = False
+SKIP_BIG_MESSAGES = True
 
 # Pass these args when launching libofp.
 LIBOFP_ARGS = [] #['--trace=rpc,msg', '--loglevel=debug']
