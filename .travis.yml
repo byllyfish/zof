@@ -18,6 +18,9 @@ before_install:
   - sudo add-apt-repository ppa:byllyfish/libofp-dev -y
   - sudo apt-get update -qq
   - sudo apt-get install libofp -y
+  - dpkg -L libofp
+  - echo "$PATH"
+  - which libofp
 
 # Per https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
 sudo: required
