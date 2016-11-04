@@ -31,7 +31,7 @@ def run(config_file=None, relative_to=None):
         directory = os.path.dirname(os.path.abspath(relative_to))
         config_file = os.path.join(directory, config_file)
 
-    controller = Controller(config_file=config_file)
+    controller = Controller(config_file=config_file, arguments=sys.argv[1:])
     controller.run_loop()
     LOGGER.info('Exiting')
 
@@ -42,7 +42,7 @@ class Controller(object):
     app modules.
     """
 
-    def __init__(self, *, config_file):
+    def __init__(self, *, config_file, arguments=None):
         """
         Initialize controller from the specified configuration file.
         """
@@ -52,7 +52,7 @@ class Controller(object):
         asyncio.set_event_loop(None)
         self._phase = 'INIT'
 
-        self._config = load_config(config_file=config_file)
+        self._config = load_config(config_file=config_file, arguments=arguments)
         LOGGER.info('Pylibofp %s, Python %s', _VERSION, sys.version.split()[0])
 
         self._conn = Connection(libofp_args=self._config.libofp)

@@ -1,5 +1,4 @@
 import os
-import sys
 import io
 import argparse
 import warnings
@@ -26,7 +25,7 @@ _DEFAULT_VALUES = {
 }
 
 
-def load_config(*, config_file):
+def load_config(*, config_file, arguments=None):
     """
     Load configuration from configuration file and command line arguments. 
 
@@ -34,8 +33,11 @@ def load_config(*, config_file):
     Return `config` object.
     """
 
+    if arguments is None:
+        arguments = []
+
     # Parse command line arguments.
-    args = _make_parser().parse_args(sys.argv[1:], namespace=ObjectView({}))
+    args = _make_parser().parse_args(arguments, namespace=ObjectView({}))
 
     # When no config file is specified programmatically, check if one was
     # specified on the command line.
@@ -50,7 +52,6 @@ def load_config(*, config_file):
     # Load yaml configuration file, if present.
     if config_reader:
         config = _yaml_load(config_reader, object_hook=ObjectView)
-        config_reader.close()
     else:
         config = ObjectView({})
 
@@ -132,9 +133,7 @@ def _make_parser():
     """
     Construct and return our ArgumentParser.
     """
-    prog = os.path.basename(sys.argv[0])
-    if prog == '__main__.py':
-        prog = 'pylibofp'
+    prog = 'pylibofp'
     description = 'Run one or more pylibofp apps.'
     epilog = '(M) indicates an option may be used more than once.'
     parser = argparse.ArgumentParser(prog=prog, description=description, epilog=epilog)
@@ -215,9 +214,12 @@ def _yaml_load(stream, object_hook=None):
     def construct_mapping(loader, node):
         return object_hook(loader.construct_mapping(node))
     ObjectLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-    result = yaml.load(stream, ObjectLoader)
-    if not result:
-        raise ValueError('Expecting value')
+    try:
+        result = yaml.load(stream, ObjectLoader)
+        if not result:
+            raise ValueError('Expecting value')
+    finally:
+        stream.close()
     assert isinstance(result, object_hook)
     return result
 
