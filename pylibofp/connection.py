@@ -1,7 +1,7 @@
 import asyncio
 import logging
+import shutil
 
-_LIBOFP_PATH = '/usr/local/bin/libofp'
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
 LOGGER = logging.getLogger('pylibofp.controller')
@@ -26,7 +26,11 @@ class Connection(object):
         Set up connection to the libofp driver.
         """
 
-        cmd = [_LIBOFP_PATH, 'jsonrpc']
+        libofp_path = shutil.which('libofp')
+        if not libofp_path:
+            raise RuntimeError('Unable to find libofp executable.')
+
+        cmd = [libofp_path, 'jsonrpc']
         if self._libofp_args:
             cmd.extend(self._libofp_args)
 
@@ -43,7 +47,7 @@ class Connection(object):
             self._output = proc.stdin
 
         except (PermissionError, FileNotFoundError):
-            LOGGER.error('Unable to find exectuable: "%s"', _LIBOFP_PATH)
+            LOGGER.error('Unable to find exectuable: "%s"', libofp_path)
             raise
 
 
