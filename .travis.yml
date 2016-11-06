@@ -7,8 +7,6 @@ install:
 #  - pip3 install codecov pyyaml
   - pip3 install pyyaml
 script:
-  - libofp version
-  - libofp jsonrpc --loglevel=info < /dev/null
   - python3 -m unittest discover
 #  - python3 -m doctest README.adoc
 #  - coverage run --source pylibofp -m test
@@ -20,7 +18,7 @@ before_install:
   - sudo add-apt-repository ppa:byllyfish/libofp-dev -y
   - sudo apt-get update -qq
   - sudo apt-get install libofp -y
-  - dpkg -L libofp
+  - libofp version
 
 # Per https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
 sudo: required
