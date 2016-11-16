@@ -4,9 +4,9 @@ import asyncio
 
 LOGGER = logging.getLogger('pylibofp.controller')
 
-
 _ALL_SUBTYPE = 'ALL'
-_MSG_SUBTYPES = ('FEATURES_REQUEST', 'FEATURES_REPLY', 'PACKET_IN', 'PORT_STATUS', _ALL_SUBTYPE)
+_MSG_SUBTYPES = ('FEATURES_REQUEST', 'FEATURES_REPLY', 'PACKET_IN',
+                 'PORT_STATUS', _ALL_SUBTYPE)
 
 
 def make_handler(callback, type_, subtype='', options=None):
@@ -77,9 +77,10 @@ class MessageHandler(BaseHandler):
         if not _verify_callback(self.callback, 1):
             return False
         if self.subtype not in _MSG_SUBTYPES:
-            LOGGER.warning('Message handler subtype not recognized: %s',
-                           self.subtype,
-                           stack_info=True)
+            LOGGER.warning(
+                'Message handler subtype not recognized: %s',
+                self.subtype,
+                stack_info=True)
         return True
 
 
@@ -106,7 +107,8 @@ def _verify_callback(callback, param_count):
         return False
     sig = inspect.signature(callback)
     if len(sig.parameters) != param_count:
-        LOGGER.error('Callback has unexpected number of parameters: %s', callback)
+        LOGGER.error('Callback has unexpected number of parameters: %s',
+                     callback)
         return False
     return True
 

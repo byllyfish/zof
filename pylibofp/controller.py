@@ -52,7 +52,8 @@ class Controller(object):
         asyncio.set_event_loop(None)
         self._phase = 'INIT'
 
-        self._config = load_config(config_file=config_file, arguments=arguments)
+        self._config = load_config(
+            config_file=config_file, arguments=arguments)
         LOGGER.info('Pylibofp %s, Python %s', _VERSION, sys.version.split()[0])
 
         self._conn = Connection(libofp_args=self._config.libofp)
@@ -91,11 +92,15 @@ class Controller(object):
 
         We use a KeyboardInterrupt to signal it's time to shutdown.
         """
+
         def handle_signal(signame):
             LOGGER.info('Signal Received: %s', signame)
             raise KeyboardInterrupt
+
         for signame in signals:
-            loop.add_signal_handler(getattr(signal, signame), functools.partial(handle_signal, signame))
+            loop.add_signal_handler(
+                getattr(signal, signame),
+                functools.partial(handle_signal, signame))
 
     def _shutdown_cleanly(self, loop):
         """
@@ -109,7 +114,7 @@ class Controller(object):
                 if not self._run_pending(loop, timeout=5.0):
                     break
 
-        except Exception as ex: # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(ex)
         finally:
             self._set_phase('POSTSTOP')
@@ -159,7 +164,8 @@ class Controller(object):
 
         LOGGER.debug("Controller.run entered")
 
-        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL, self._idle)
+        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL,
+                                                              self._idle)
         self._event_queue = asyncio.Queue()
 
         await self._conn.connect()
@@ -171,7 +177,7 @@ class Controller(object):
 
         await self._read_loop()
         # FIXME: handle case where _read_loop finishes first.
-        
+
         self._set_phase('STOP')
         self._dispatch_event(make_event(event='STOP'))
         await self._conn.disconnect()
@@ -260,10 +266,11 @@ class Controller(object):
         Set up a TLS identity for connections to use.
         """
         try:
-            result = await self._rpc_call('OFP.ADD_IDENTITY',
-                                           certificate=self._config.cert,
-                                           verifier=self._config.cafile,
-                                           password=self._config.password)
+            result = await self._rpc_call(
+                'OFP.ADD_IDENTITY',
+                certificate=self._config.cert,
+                verifier=self._config.cafile,
+                password=self._config.password)
             # Save tls_id from result in config object so we can pass it in
             # our calls to 'OFP.LISTEN' and 'OFP.CONNECT'.
             self._config.tls_id = result.params.tls_id
@@ -283,11 +290,12 @@ class Controller(object):
             ofversion = self._ofp_versions
         try:
             for endpt in self._config.listen:
-                result = await self._rpc_call('OFP.LISTEN',
-                                               endpoint=endpt,
-                                               versions=ofversion,
-                                               tls_id=tls_id,
-                                               options=options)
+                result = await self._rpc_call(
+                    'OFP.LISTEN',
+                    endpoint=endpt,
+                    versions=ofversion,
+                    tls_id=tls_id,
+                    options=options)
                 LOGGER.info('Listening on %s [conn_id=%d, versions=%s]', endpt,
                             result.conn_id, ofversion)
 
@@ -304,11 +312,12 @@ class Controller(object):
         options = self._config.connect_options
         try:
             for endpt in self._config.connect:
-                result = await self._rpc_call('OFP.CONNECT',
-                                               endpoint=endpt,
-                                               versions=ofversion,
-                                               tls_id=tls_id,
-                                               options=options)
+                result = await self._rpc_call(
+                    'OFP.CONNECT',
+                    endpoint=endpt,
+                    versions=ofversion,
+                    tls_id=tls_id,
+                    options=options)
                 LOGGER.info('Connected to %s [conn_id=%d]', endpt,
                             result.conn_id)
 
@@ -434,9 +443,8 @@ class Controller(object):
 
         dpid = params.datapath_id if 'datapath_id' in params else None
         scope_key = dpid if dpid else str(params.conn_id)
-        LOGGER.info('Datapath %s %s [conn_id=%s, version=%s]',
-                    scope_key, params.status, params.conn_id,
-                    params.version)
+        LOGGER.info('Datapath %s %s [conn_id=%s, version=%s]', scope_key,
+                    params.status, params.conn_id, params.version)
         if params.status == 'DOWN':
             if dpid: self._remove_datapath(dpid)
             self._cancel_tasks(scope_key)
@@ -450,11 +458,16 @@ class Controller(object):
         Called when `OFP.ALERT` is received.
         """
 
-        if params.xid and not self._handle_xid(params, params.xid, _exc.OFPDeliveryException):
+        if params.xid and not self._handle_xid(params, params.xid,
+                                               _exc.OFPDeliveryException):
             data = params.data.hex()
             if len(data) > 100:
                 data = '%s...' % data[:100]
-            LOGGER.warning('Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]', params.alert, data, len(params.data), params.conn_id, params.datapath_id, params.xid)
+            LOGGER.warning(
+                'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
+                params.alert, data,
+                len(params.data), params.conn_id, params.datapath_id,
+                params.xid)
 
     def _idle(self):
         """
@@ -469,7 +482,8 @@ class Controller(object):
             fut.set_exception(_exc.TimeoutException(xid))
             del self._reqs[xid]
 
-        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL, self._idle)
+        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL,
+                                                              self._idle)
 
     def _set_phase(self, phase):
         """
@@ -500,21 +514,25 @@ class Controller(object):
         This function automatically captures exceptions from the coroutine. It
         also cleans up after the task when it is done.
         """
+
         async def capture_exception(coroutine):
             try:
                 logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
                 logger.debug('ensure_future done: %s', _coro_name(coroutine))
             except asyncio.CancelledError:
-                logger.debug('ensure_future cancelled: %s', _coro_name(coroutine))
-            except Exception as ex: # pylint: disable=broad-except
+                logger.debug('ensure_future cancelled: %s',
+                             _coro_name(coroutine))
+            except Exception as ex:  # pylint: disable=broad-except
                 logger.exception(ex)
 
         task = asyncio.ensure_future(capture_exception(coroutine))
         if not scope_key:
             scope_key = self._phase
         self._tasks[scope_key].append(task)
-        task.add_done_callback(functools.partial(self._task_callback, scope_key=scope_key))
+        task.add_done_callback(
+            functools.partial(
+                self._task_callback, scope_key=scope_key))
         return task
 
     def _cancel_tasks(self, scope_key):
@@ -573,6 +591,7 @@ def _timestamp():
     """
     return asyncio.get_event_loop().time()
 
+
 def _event_has_more(event):
     try:
         return event.type.startswith('REPLY.') and 'MORE' in event.flags
@@ -609,7 +628,8 @@ class _ReplyFuture:
 
     def __del__(self):
         if self._results:
-            LOGGER.warning('Multiple unread replies xid=%d: %s', self._xid, self._results)
+            LOGGER.warning('Multiple unread replies xid=%d: %s', self._xid,
+                           self._results)
 
     def done(self):
         return not self._results and self._done
@@ -643,7 +663,8 @@ class _ReplyFuture:
         if self._results:
             return _immediate_result(self._results.pop(0)).__await__()
         elif self._done:
-            raise asyncio.InvalidStateError('Called "await" too many times on _ReplyFuture')
+            raise asyncio.InvalidStateError(
+                'Called "await" too many times on _ReplyFuture')
         else:
             self._future = asyncio.Future()
             return self._future.__await__()
@@ -663,7 +684,8 @@ async def _immediate_result(result):
     return result
 
 
-_COROUTINE_REGEX = re.compile(r'^<CoroWrapper (\S+)(?: running at | done, defined at )([^,]+),')
+_COROUTINE_REGEX = re.compile(
+    r'^<CoroWrapper (\S+)(?: running at | done, defined at )([^,]+),')
 
 
 def _coro_name(coroutine):

@@ -63,7 +63,7 @@ def load_config(*, config_file, arguments=None):
 
     # Save remaining command-line arguments in the `config` object.
     config.apps.extend(args.remainder)
-    
+
     # If no "--connect" or "--listen" specified, default to listen.
     if not config.connect and not config.listen:
         config.listen = [OPENFLOW_PORT]
@@ -136,23 +136,41 @@ def _make_parser():
     prog = 'pylibofp'
     description = 'Run one or more pylibofp apps.'
     epilog = '(M) indicates an option may be used more than once.'
-    parser = argparse.ArgumentParser(prog=prog, description=description, epilog=epilog)
-    parser.add_argument('--connect',
-                        help='connect to "host:port" (M)',
-                        action='append')
-    parser.add_argument('--listen',
-                        help='listen on "[host:]port (M)',
-                        action='append')
-    parser.add_argument('--connect_options', help='options to connect (M)', action='append')
-    parser.add_argument('--listen_options', help='options to listen (M)', action='append')
-    parser.add_argument('--config', type=argparse.FileType(encoding='utf-8'), help='path to configuration file')
-    parser.add_argument('--loglevel', type=str.lower, choices=['error', 'warning', 'info', 'debug'], help='logging level (defaults to info)')
-    parser.add_argument('--libofp', help='argument to pass to libofp (M)', action='append')
-    parser.add_argument('--ofversion', type=int, help='openflow version (M)', action='append')
+    parser = argparse.ArgumentParser(
+        prog=prog, description=description, epilog=epilog)
+    parser.add_argument(
+        '--connect', help='connect to "host:port" (M)', action='append')
+    parser.add_argument(
+        '--listen', help='listen on "[host:]port (M)', action='append')
+    parser.add_argument(
+        '--connect_options', help='options to connect (M)', action='append')
+    parser.add_argument(
+        '--listen_options', help='options to listen (M)', action='append')
+    parser.add_argument(
+        '--config',
+        type=argparse.FileType(encoding='utf-8'),
+        help='path to configuration file')
+    parser.add_argument(
+        '--loglevel',
+        type=str.lower,
+        choices=['error', 'warning', 'info', 'debug'],
+        help='logging level (defaults to info)')
+    parser.add_argument(
+        '--libofp', help='argument to pass to libofp (M)', action='append')
+    parser.add_argument(
+        '--ofversion', type=int, help='openflow version (M)', action='append')
     group = parser.add_argument_group('ssl settings')
-    group.add_argument('--cert', type=argparse.FileType(encoding='ascii'), help='path to ssl certificate with its associated private key (PEM format)')
-    group.add_argument('--cafile', type=argparse.FileType(encoding='ascii'), help='path to ssl certificate for authority/verification (PEM format)')
-    group.add_argument('--password', help='password to ssl private key, if necessary')
+    group.add_argument(
+        '--cert',
+        type=argparse.FileType(encoding='ascii'),
+        help='path to ssl certificate with its associated private key (PEM format)'
+    )
+    group.add_argument(
+        '--cafile',
+        type=argparse.FileType(encoding='ascii'),
+        help='path to ssl certificate for authority/verification (PEM format)')
+    group.add_argument(
+        '--password', help='password to ssl private key, if necessary')
     parser.add_argument('remainder', nargs=argparse.REMAINDER)
     return parser
 
@@ -183,7 +201,7 @@ def _logging_config(config):
                 'level': config.loglevel.upper()
             },
             'asyncio': {
-                'level': 'WARNING'      # avoid polling msgs at 'INFO' level
+                'level': 'WARNING'  # avoid polling msgs at 'INFO' level
             }
         },
         'root': {
@@ -209,11 +227,15 @@ def _yaml_load(stream, object_hook=None):
     http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
     """
     import yaml
+
     class ObjectLoader(yaml.SafeLoader):
         pass
+
     def construct_mapping(loader, node):
         return object_hook(loader.construct_mapping(node))
-    ObjectLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+
+    ObjectLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     try:
         result = yaml.load(stream, ObjectLoader)
         if not result:
@@ -222,4 +244,3 @@ def _yaml_load(stream, object_hook=None):
         stream.close()
     assert isinstance(result, object_hook)
     return result
-

@@ -50,7 +50,6 @@ class Connection(object):
             LOGGER.error('Unable to find exectuable: "%s"', libofp_path)
             raise
 
-
     async def disconnect(self):
         """
         Wait for libofp connection to close.
@@ -77,7 +76,8 @@ class Connection(object):
         """
         Wait while the output buffer is flushed.
         """
-        LOGGER.info('libofp connection drain: buffer_size=%d', self.get_write_buffer_size())
+        LOGGER.info('libofp connection drain: buffer_size=%d',
+                    self.get_write_buffer_size())
         return await self._output.drain()
 
     def close(self):

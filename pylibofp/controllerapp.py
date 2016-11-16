@@ -73,8 +73,10 @@ class ControllerApp(object):
                         break
                     except _exc.FallThroughException:
                         self.logger.debug('_handle: FallThroughException')
-        except Exception: # pylint: disable=broad-except
-            self.logger.exception('Exception caught while handling "%s" event: %s', handler_type, event)
+        except Exception:  # pylint: disable=broad-except
+            self.logger.exception(
+                'Exception caught while handling "%s" event: %s', handler_type,
+                event)
 
     def send(self, msg, **kwds):
         """
@@ -127,7 +129,8 @@ class ControllerApp(object):
             else:
                 new_vers = set(self.config.ofversion) & set(ofversion)
                 if not new_vers:
-                    raise ValueError('Unable to use OpenFlow version %s', ofversion)
+                    raise ValueError('Unable to use OpenFlow version %s',
+                                     ofversion)
                 self.config.ofversion = list(new_vers)
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
@@ -136,7 +139,8 @@ class ControllerApp(object):
         scope.
         """
         scope_key = datapath_id if datapath_id else conn_id
-        return self._parent._ensure_future(coroutine, scope_key=scope_key, logger=self.logger)
+        return self._parent._ensure_future(
+            coroutine, scope_key=scope_key, logger=self.logger)
 
     def subscribe(self, callback, type_, subtype, options):
         """
@@ -166,24 +170,30 @@ class ControllerApp(object):
         """
         Message subscribe decorator.
         """
+
         def wrap(func):
             self.subscribe(func, 'message', subtype, kwds)
+
         return wrap
 
     def channel_decorator(self, subtype, **kwds):
         """
         Channel subscribe decorator.
         """
+
         def wrap(func):
             self.subscribe(func, 'channel', subtype, kwds)
+
         return wrap
 
     def event_decorator(self, subtype, **kwds):
         """
         Event subscribe decorator.
         """
+
         def wrap(func):
             self.subscribe(func, 'event', subtype, kwds)
+
         return wrap
 
     def __repr__(self):
@@ -234,23 +244,13 @@ def _translate_msg_str(msg, kwds):
 
 _OFP = collections.namedtuple(
     '_OFP',
-    'message channel event send request post_event configure rpc_call ensure_future shared config datapaths logger subscribe unsubscribe')
+    'message channel event send request post_event configure rpc_call ensure_future shared config datapaths logger subscribe unsubscribe'
+)
 
 
 def _make_ofp(app):
-    return _OFP(app.message_decorator, 
-                app.channel_decorator, 
-                app.event_decorator, 
-                app.send, 
-                app.request,
-                app.post_event, 
-                app.configure, 
-                app.rpc_call, 
-                app.ensure_future, 
-                app.parent.shared,
-                app.parent.config, 
-                app.parent.datapaths,
-                app.logger,
-                app.subscribe,
-                app.unsubscribe)
-
+    return _OFP(app.message_decorator, app.channel_decorator,
+                app.event_decorator, app.send, app.request, app.post_event,
+                app.configure, app.rpc_call, app.ensure_future,
+                app.parent.shared, app.parent.config, app.parent.datapaths,
+                app.logger, app.subscribe, app.unsubscribe)

@@ -63,7 +63,11 @@ class ObjectView(object):
         This is a static method so it can replace calls to `json.dumps(obj)`.
         To dump the object itself, call `obj.json_dumps(obj)`.
         """
-        return json.dumps(obj, separators=(',', ':'), ensure_ascii=False, default=_json_serialize)
+        return json.dumps(
+            obj,
+            separators=(',', ':'),
+            ensure_ascii=False,
+            default=_json_serialize)
 
 
 def _json_serialize(obj):
@@ -73,4 +77,5 @@ def _json_serialize(obj):
         return obj.__dict__
     if isinstance(obj, io.IOBase):
         return 'file:%s' % obj.name
-    raise TypeError('Value "%s" of type %s is not JSON serializable' % (repr(obj), type(obj)))
+    raise TypeError('Value "%s" of type %s is not JSON serializable' %
+                    (repr(obj), type(obj)))
