@@ -1,5 +1,5 @@
 # pylibofp uses the following Exception hierarchy:
-# 
+#
 #     Exception (built into Python)
 #       +-- pylibofp.ControllerException
 #       |     +-- pylibofp.TimeoutException

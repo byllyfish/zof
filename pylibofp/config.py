@@ -27,7 +27,7 @@ _DEFAULT_VALUES = {
 
 def load_config(*, config_file, arguments=None):
     """
-    Load configuration from configuration file and command line arguments. 
+    Load configuration from configuration file and command line arguments.
 
     Merge in settings specified in command line arguments. Configure logging.
     Return `config` object.
@@ -86,7 +86,7 @@ def _default_config(config):
 
 def _make_paths_absolute(config, config_file):
     """
-    Make the paths to the apps absolute. Treat them as relative to the 
+    Make the paths to the apps absolute. Treat them as relative to the
     location of `config_file`.
     """
     config_dir = os.path.dirname(os.path.abspath(config_file))

@@ -487,7 +487,7 @@ class Controller(object):
 
     def _set_phase(self, phase):
         """
-        Called as the run loop changes phase: 
+        Called as the run loop changes phase:
             '' -> PRESTART -> START -> STOP -> POSTSTOP.
         """
         LOGGER.debug('Change phase from "%s" to "%s"', self._phase, phase)
@@ -656,7 +656,7 @@ class _ReplyFuture:
 
     def __await__(self):
         """
-        If there are existing results, return them immediately. Otherwise, if 
+        If there are existing results, return them immediately. Otherwise, if
         we are still expecting more results, return our future.
         """
         assert self._future is None
