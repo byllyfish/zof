@@ -215,7 +215,7 @@ def _check_invariant(config):
     Verify the config object is set up correctly.
     """
     for key in _DEFAULT_VALUES:
-        if type(_DEFAULT_VALUES[key]) != type(config[key]):
+        if not isinstance(config[key], type(_DEFAULT_VALUES[key])):
             raise ValueError('Unexpected type for config key: %s' % key)
 
 
@@ -228,7 +228,7 @@ def _yaml_load(stream, object_hook=None):
     """
     import yaml
 
-    class ObjectLoader(yaml.SafeLoader):
+    class ObjectLoader(yaml.SafeLoader):  # pylint: disable=too-many-ancestors
         pass
 
     def construct_mapping(loader, node):
