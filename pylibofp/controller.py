@@ -54,6 +54,7 @@ class Controller(object):
 
         self._config = load_config(
             config_file=config_file, arguments=arguments)
+
         LOGGER.info('Pylibofp %s, Python %s', _VERSION, sys.version.split()[0])
 
         self._conn = Connection(libofp_args=self._config.libofp)
@@ -110,7 +111,7 @@ class Controller(object):
             self._post_event(make_event(event='EXIT'))
 
             # Try 3 times to finish our pending tasks.
-            for i in range(3):
+            for _ in range(3):
                 if not self._run_pending(loop, timeout=5.0):
                     break
 
@@ -446,10 +447,12 @@ class Controller(object):
         LOGGER.info('Datapath %s %s [conn_id=%s, version=%s]', scope_key,
                     params.status, params.conn_id, params.version)
         if params.status == 'DOWN':
-            if dpid: self._remove_datapath(dpid)
+            if dpid:
+                self._remove_datapath(dpid)
             self._cancel_tasks(scope_key)
         else:
-            if dpid: self._add_datapath(dpid)
+            if dpid:
+                self._add_datapath(dpid)
         for app in self._apps:
             app.channel(params)
 

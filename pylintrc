@@ -39,7 +39,7 @@ exclude-protected=_write,_next_xid,_post_event
 [DESIGN]
 
 # Maximum number of attributes for a class
-max-attributes=10
+max-attributes=15
 
 # Minimum number of public methods for a class
 min-public-methods=0
