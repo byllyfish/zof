@@ -3,9 +3,9 @@
 #     Exception (built into Python)
 #       +-- pylibofp.ControllerException
 #       |     +-- pylibofp.TimeoutException
-#       |     +-- pylibofp.RPCErrorException  <-- RPCException
-#       |     +-- pylibofp.OFPErrorException  <-- ErrorException
-#       |     +-- pylibofp.OFPDeliveryException  <-- DeliveryException
+#       |     +-- pylibofp.RPCException
+#       |     +-- pylibofp.ErrorException
+#       |     +-- pylibofp.DeliveryException
 #       |     +-- pylibofp.ChannelException
 #       +-- pylibofp.ControlFlowException
 #             +-- pylibofp.FallThroughException
@@ -36,7 +36,7 @@ class TimeoutException(ControllerException):
         return '[TimeoutException xid=%s]' % self.xid
 
 
-class RPCErrorException(ControllerException):
+class RPCException(ControllerException):
     """
     Controller exception that indicates an error response to an RPC request.
     """
@@ -47,11 +47,10 @@ class RPCErrorException(ControllerException):
         self.code = event.error.code
 
     def __str__(self):
-        return '[RPCErrorException xid=%s message=%s]' % (self.xid,
-                                                          self.message)
+        return '[RPCException xid=%s message=%s]' % (self.xid, self.message)
 
 
-class OFPErrorException(ControllerException):
+class ErrorException(ControllerException):
     """
     Controller exception that indicates an OpenFlow error response tied to an
     OpenFlow request.
@@ -62,10 +61,10 @@ class OFPErrorException(ControllerException):
         self.event = event
 
     def __str__(self):
-        return '[OFPErrorException xid=%s event=%s]' % (self.xid, self.event)
+        return '[ErrorException xid=%s event=%s]' % (self.xid, self.event)
 
 
-class OFPDeliveryException(ControllerException):
+class DeliveryException(ControllerException):
     """
     Controller exception that indicates a message couldn't be delivered.
     """
@@ -75,8 +74,7 @@ class OFPDeliveryException(ControllerException):
         self.event = event
 
     def __str__(self):
-        return '[OFPDeliveryException xid=%s event=%s]' % (self.xid,
-                                                           self.event)
+        return '[DeliveryException xid=%s event=%s]' % (self.xid, self.event)
 
 
 class ControlFlowException(Exception):

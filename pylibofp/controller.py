@@ -420,7 +420,7 @@ class Controller(object):
             except_class = None
         else:
             result = event
-            except_class = _exc.RPCErrorException
+            except_class = _exc.RPCException
         if not self._handle_xid(result, event.id, except_class):
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
@@ -429,7 +429,7 @@ class Controller(object):
         Called when a `OFP.MESSAGE` is received.
         """
         if params.type == 'ERROR':
-            except_class = _exc.OFPErrorException
+            except_class = _exc.ErrorException
         else:
             except_class = None
 
@@ -462,7 +462,7 @@ class Controller(object):
         """
 
         if params.xid and not self._handle_xid(params, params.xid,
-                                               _exc.OFPDeliveryException):
+                                               _exc.DeliveryException):
             data = params.data.hex()
             if len(data) > 100:
                 data = '%s...' % data[:100]
