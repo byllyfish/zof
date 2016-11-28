@@ -12,13 +12,14 @@ class Connection(object):
     Concrete class representing a connection to the libofp driver.
     """
 
-    def __init__(self, *, libofp_args=None):
+    def __init__(self, *, libofp_cmd='jsonrpc', libofp_args=None):
         """
         Initialize connection.
         """
         self._conn = None
         self._input = None
         self._output = None
+        self._libofp_cmd = libofp_cmd
         self._libofp_args = libofp_args
 
     async def connect(self):
@@ -30,7 +31,7 @@ class Connection(object):
         if not libofp_path:
             raise RuntimeError('Unable to find libofp executable.')
 
-        cmd = [libofp_path, 'jsonrpc']
+        cmd = [libofp_path, self._libofp_cmd]
         if self._libofp_args:
             cmd.extend(self._libofp_args)
 
