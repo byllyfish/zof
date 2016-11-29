@@ -8,7 +8,7 @@ from pylibofp.connection import Connection
 MSG_LIMIT = 2**20
 
 # Skip tests that send big messages.
-SKIP_BIG_MESSAGES = True
+SKIP_BIG_MESSAGES = False
 
 # Pass these args when launching libofp.
 LIBOFP_ARGS = [] #['--trace=rpc,msg', '--loglevel=debug']
