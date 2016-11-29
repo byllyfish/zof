@@ -1,0 +1,52 @@
+=== PacketOut Messages
+
+
+==== Drop a Buffered Packet
+
+[source,yaml]
+----
+type: PACKET_OUT
+msg:
+  buffer_id: 257
+  in_port: 1
+  data: ''
+  actions:
+----
+
+
+==== Send a Packet From the Controller Out Port 1
+
+[source,yaml]
+----
+type: PACKET_OUT
+msg:
+  buffer_id: NO_BUFFER
+  in_port: ANY
+  data: 000000000000000000000000000000000000
+  actions:
+    - action: OUTPUT
+      port: 1
+      max_len: MAX
+----
+
+
+==== Send a Packet From the Controller Out Port 1, 2, and 3
+
+[source,yaml]
+----
+type: PACKET_OUT
+msg:
+  buffer_id: NO_BUFFER
+  in_port: ANY
+  data: 000000000000000000000000000000000000
+  actions:
+    - action: OUTPUT
+      port: 1
+      max_len: MAX
+    - action: OUTPUT
+      port: 2
+      max_len: MAX
+    - action: OUTPUT
+      port: 3
+      max_len: MAX
+----

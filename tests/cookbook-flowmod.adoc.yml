@@ -1,0 +1,99 @@
+---
+# type: FLOW_MOD
+# msg:
+#   command: DELETE
+#   table_id: ALL
+type:            FLOW_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  cookie:          0x0000000000000000
+  cookie_mask:     0x0000000000000000
+  table_id:        ALL
+  command:         DELETE
+  idle_timeout:    0x0000
+  hard_timeout:    0x0000
+  priority:        0x0000
+  buffer_id:       NO_BUFFER
+  out_port:        ANY
+  out_group:       ANY
+  flags:           [  ]
+  match:           
+  instructions:    
+---
+# type: FLOW_MOD
+# msg:
+#   command: DELETE
+#   table_id: 1
+type:            FLOW_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  cookie:          0x0000000000000000
+  cookie_mask:     0x0000000000000000
+  table_id:        0x01
+  command:         DELETE
+  idle_timeout:    0x0000
+  hard_timeout:    0x0000
+  priority:        0x0000
+  buffer_id:       NO_BUFFER
+  out_port:        ANY
+  out_group:       ANY
+  flags:           [  ]
+  match:           
+  instructions:    
+---
+# type: FLOW_MOD
+# msg:
+#   command: ADD
+#   table_id: 0
+#   instructions:
+#     - instruction: APPLY_ACTIONS
+#       actions:
+#         - action: OUTPUT
+#           port: CONTROLLER
+#           max_len: MAX
+type:            FLOW_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  cookie:          0x0000000000000000
+  cookie_mask:     0x0000000000000000
+  table_id:        0x00
+  command:         ADD
+  idle_timeout:    0x0000
+  hard_timeout:    0x0000
+  priority:        0x0000
+  buffer_id:       NO_BUFFER
+  out_port:        ANY
+  out_group:       ANY
+  flags:           [  ]
+  match:           
+  instructions:    
+    - instruction:     APPLY_ACTIONS
+      actions:         
+        - action:          OUTPUT
+          port:            CONTROLLER
+          max_len:         MAX
+---
+# type: FLOW_MOD
+# msg:
+#   command: ADD
+#   table_id: 0
+type:            FLOW_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  cookie:          0x0000000000000000
+  cookie_mask:     0x0000000000000000
+  table_id:        0x00
+  command:         ADD
+  idle_timeout:    0x0000
+  hard_timeout:    0x0000
+  priority:        0x0000
+  buffer_id:       NO_BUFFER
+  out_port:        ANY
+  out_group:       ANY
+  flags:           [  ]
+  match:           
+  instructions:    

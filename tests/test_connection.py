@@ -22,7 +22,9 @@ class ConnectionTestCase(AsyncTestCase):
 
     async def tearDown(self):
         self.conn.close()
-        await self.conn.disconnect()
+        return_code = await self.conn.disconnect()
+        if return_code:
+            raise Exception('libofp exited with return code %d' % return_code)
 
     # Basic tests.
 
@@ -215,6 +217,15 @@ class ConnectionTestCase(AsyncTestCase):
         result = await self.conn.readline()
         self.assertPrefix(result, b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
+
+    # Test close(write=True)
+
+    async def test_close_write(self):
+        self.conn.write(b'{"id":12300,"method":"OFP.DESCRIPTION"}\n')
+        self.conn.close(write=True)
+        result = await self.conn.readline()
+        self.assertPrefix(result, b'{"id":12300,"result":{"major_version":')
+        await self._end_of_input()
 
     # Helper methods
 

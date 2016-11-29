@@ -1,0 +1,69 @@
+---
+# type: PACKET_OUT
+# msg:
+#   buffer_id: 257
+#   in_port: 1
+#   data: ''
+#   actions:
+type:            PACKET_OUT
+xid:             0x00000000
+version:         0x04
+msg:             
+  buffer_id:       0x00000101
+  in_port:         0x00000001
+  actions:         
+  data:            ''
+---
+# type: PACKET_OUT
+# msg:
+#   buffer_id: NO_BUFFER
+#   in_port: ANY
+#   data: 000000000000000000000000000000000000
+#   actions:
+#     - action: OUTPUT
+#       port: 1
+#       max_len: MAX
+type:            PACKET_OUT
+xid:             0x00000000
+version:         0x04
+msg:             
+  buffer_id:       NO_BUFFER
+  in_port:         ANY
+  actions:         
+    - action:          OUTPUT
+      port:            0x00000001
+      max_len:         MAX
+  data:            000000000000000000000000000000000000
+---
+# type: PACKET_OUT
+# msg:
+#   buffer_id: NO_BUFFER
+#   in_port: ANY
+#   data: 000000000000000000000000000000000000
+#   actions:
+#     - action: OUTPUT
+#       port: 1
+#       max_len: MAX
+#     - action: OUTPUT
+#       port: 2
+#       max_len: MAX
+#     - action: OUTPUT
+#       port: 3
+#       max_len: MAX
+type:            PACKET_OUT
+xid:             0x00000000
+version:         0x04
+msg:             
+  buffer_id:       NO_BUFFER
+  in_port:         ANY
+  actions:         
+    - action:          OUTPUT
+      port:            0x00000001
+      max_len:         MAX
+    - action:          OUTPUT
+      port:            0x00000002
+      max_len:         MAX
+    - action:          OUTPUT
+      port:            0x00000003
+      max_len:         MAX
+  data:            000000000000000000000000000000000000

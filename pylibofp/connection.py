@@ -55,11 +55,15 @@ class Connection(object):
         """
         Wait for libofp connection to close.
         """
+        if self._conn is None:
+            return 0
         return_code = await self._conn.wait()
-        LOGGER.info("libofp exited with return code %s", return_code)
+        if return_code:
+            LOGGER.error("libofp exited with return code %s", return_code)
         self._input = None
         self._output = None
         self._conn = None
+        return return_code
 
     async def readline(self):
         """
@@ -81,15 +85,20 @@ class Connection(object):
                     self.get_write_buffer_size())
         return await self._output.drain()
 
-    def close(self):
+    def close(self, write=False):
         """
         Close the connection.
         """
-        try:
-            self._conn.terminate()
-        except ProcessLookupError:
-            # Ignore failure when process already died.
-            pass
+        if self._conn is None:
+            return
+        if write:
+            self._output.close()
+        else:
+            try:
+                self._conn.terminate()
+            except ProcessLookupError:
+                # Ignore failure when process already died.
+                pass
 
     def get_write_buffer_size(self):
         """
