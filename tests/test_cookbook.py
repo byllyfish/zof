@@ -59,16 +59,6 @@ class CookbookTestCase(AsyncTestCase):
         self.conn.write(bytes(data, 'utf-8') + b'\n---\n')
 
 
-    async def _read_all(self):
-        result = []
-        while True:
-            line = await self.conn.readline()
-            if not line:
-                break
-            result.append(line.decode('utf-8'))
-        return ''.join(result)
-
-
     async def _read_msg(self):
         result = []
         while True:
