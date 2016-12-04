@@ -1,5 +1,4 @@
-""" Implements AsyncTestCase class.
-"""
+"""Implements AsyncTestCase class."""
 
 import asyncio
 import inspect
@@ -18,7 +17,7 @@ def _wrap_async(func):
 
 
 class AsyncTestCase(unittest.TestCase):
-    """ TestCase subclass that supports `async def` tests.
+    """TestCase subclass that supports `async def` tests.
 
     Coroutine functions are wrapped in a function that runs them using
     `AsyncTestCase.loop.run_until_complete`.

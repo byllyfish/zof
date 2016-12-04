@@ -1,6 +1,8 @@
 # This is a mock module used by `ControllerAppTestCase` in test_controllerapp.py.
 
-@OFP.channel('all')
+OFP = ofp_app(name='mock')
+
+@OFP.channel('any')
 def channel_default(event):
     OFP.shared['handler'] = 'channel_default'
 

@@ -1,9 +1,7 @@
 import unittest
 import os
 from pylibofp.controllerapp import ControllerApp
-
-
-MOCK_APP = '%s/mock_module.py' % os.path.dirname(__file__)
+from pylibofp.appfacade import AppFacade
 
 
 class MockController(object):
@@ -11,15 +9,31 @@ class MockController(object):
         self.shared = None
         self.config = None
         self.datapaths = None
+        self.apps = []
+
 
 class ControllerAppTestCase(unittest.TestCase):
 
     def setUp(self):
-        app = ControllerApp(MockController(), MOCK_APP)
+        app = ControllerApp(MockController(), name='mock-app')
+        ofp = AppFacade(app)
+
+        @ofp.channel('all')
+        def _channel_default(event):
+            ofp.shared['handler'] = 'channel_default'
+
+        @ofp.message('all')
+        def _message_default(event):
+            ofp.shared['handler'] = 'message_default'
+
+        @ofp.event('all')
+        def _event_default(event):
+            ofp.shared['handler'] = 'event_default'
+
         self.handlers = app._handlers
 
     def test_handlers(self):
-        "Test that all handlers are loaded."
+        """Test that all handlers are loaded."""
         
         self.assertEqual(3, len(self.handlers))
         self.assertEqual(1, len(self.handlers['channel']))

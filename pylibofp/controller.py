@@ -1,14 +1,12 @@
+"""Implements Controller class."""
+
 import asyncio
 import logging
-import os
-import sys
 import re
 import signal
 import functools
 from collections import defaultdict
 from pylibofp.event import load_event, dump_event, make_event
-from pylibofp.config import load_config
-from pylibofp.controllerapp import ControllerApp
 from pylibofp.connection import Connection
 from pylibofp.objectview import ObjectView
 import pylibofp.exception as _exc
@@ -20,72 +18,55 @@ _MAX_XID = 0xFFFFFFFF
 _API_VERSION = 1
 _VERSION = '0.1.0'
 
-LOGGER = logging.getLogger('pylibofp.controller')
-
-
-def run(config_file=None, relative_to=None):
-    """
-    Convenience function for running a controller.
-    """
-    if relative_to:
-        directory = os.path.dirname(os.path.abspath(relative_to))
-        config_file = os.path.join(directory, config_file)
-
-    controller = Controller(config_file=config_file, arguments=sys.argv[1:])
-    controller.run_loop()
-    LOGGER.info('Exiting')
+LOGGER = logging.getLogger('pylibofp')
 
 
 class Controller(object):
+    """Concrete class that supports multiple app modules.
+
+    Attributes:
+        apps (List[ControllerApp]): List of apps.
     """
-    Concrete class representing an OpenFlow controller that supports multiple
-    app modules.
-    """
 
-    def __init__(self, *, config_file, arguments=None):
-        """
-        Initialize controller from the specified configuration file.
-        """
+    _singleton = None
 
-        # Clear default event_loop; async tasks are forbidden during INIT and
-        # PRESTART phases.
-        asyncio.set_event_loop(None)
-        self._phase = 'INIT'
+    @staticmethod
+    def singleton():
+        """Return global singleton object."""
+        if not Controller._singleton:
+            Controller._singleton = Controller()
+        return Controller._singleton
 
-        self._config = load_config(
-            config_file=config_file, arguments=arguments)
+    def __init__(self):
+        self.apps = []
+        self.datapaths = set()
+        self.shared = ObjectView({})
 
-        LOGGER.info('Pylibofp %s, Python %s', _VERSION, sys.version.split()[0])
-
-        self._conn = Connection(libofp_args=self._config.libofp)
+        self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
         self._idle_task = None
         self._event_queue = None
-        self._shared = ObjectView({})
-        self._datapaths = set()
         self._ofp_versions = []
+        self._tls_id = 0
         self._tasks = defaultdict(list)
+        self._phase = 'INIT'
         self._set_phase('PRESTART')
-        self._apps = [ControllerApp(self, name) for name in self._config.apps]
 
-    def run_loop(self):
+    def run_loop(self, *, loop=None, listen_endpoints=None, libofp_args=None, security=None):
         """
         Main entry point for running a controller.
         """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
-        LOGGER.debug('asyncio loop started')
         try:
-            loop.run_until_complete(self._run())
+            LOGGER.debug('asyncio loop started')
+            loop.run_until_complete(self._run(listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security))
         except KeyboardInterrupt:
             # Shutdown cleanly when we get an interrupt.
             self._shutdown_cleanly(loop)
         finally:
             loop.close()
-            asyncio.set_event_loop(None)
-        LOGGER.debug('asyncio loop stopped')
+            LOGGER.debug('asyncio loop stopped')
 
     def _add_signal_handlers(self, loop, signals):
         """
@@ -137,28 +118,7 @@ class Controller(object):
                 return True
             raise
 
-    @property
-    def config(self):
-        """
-        Return the controller's configuration object.
-        """
-        return self._config
-
-    @property
-    def shared(self):
-        """
-        Return the controller's shared object.
-        """
-        return self._shared
-
-    @property
-    def datapaths(self):
-        """
-        Return list of datapath id's.
-        """
-        return self._datapaths
-
-    async def _run(self):
+    async def _run(self, *, listen_endpoints=None, libofp_args=None, security=None):
         """
         Run the controller within asyncio.
         """
@@ -169,11 +129,12 @@ class Controller(object):
                                                               self._idle)
         self._event_queue = asyncio.Queue()
 
+        self._conn = Connection(libofp_args=libofp_args)
         await self._conn.connect()
         self._set_phase('START')
         self._dispatch_event(make_event(event='START'))
 
-        asyncio.ensure_future(self._start())
+        asyncio.ensure_future(self._start(listen_endpoints=listen_endpoints, security=security))
         asyncio.ensure_future(self._event_loop())
 
         await self._read_loop()
@@ -192,22 +153,21 @@ class Controller(object):
         """
         Run the event loop to handle events.
         """
-
-        LOGGER.debug('_event_loop entered')
         try:
+            LOGGER.debug('_event_loop entered')
             while True:
                 event = await self._event_queue.get()
                 self._dispatch_event(event)
 
         except _exc.ExitException:
             self._conn.close()
-        LOGGER.debug('_event_loop exited')
+        finally:
+            LOGGER.debug('_event_loop exited')
 
     async def _read_loop(self):
         """
         Read messages from the driver and push them onto the event queue.
         """
-
         LOGGER.debug('_read_loop entered')
         running = True
         while running:
@@ -221,7 +181,7 @@ class Controller(object):
 
         LOGGER.debug('_read_loop exited')
 
-    async def _start(self):
+    async def _start(self, *, listen_endpoints, security):
         """
         Configure the libofp driver based on controller arguments.
         This method runs concurrently with `run()`.
@@ -229,13 +189,10 @@ class Controller(object):
 
         try:
             await self._get_description()
-
-            if self._config.cert:
-                await self._configure_tls()
-
-            await self._listen_on_endpoints()
-            await self._connect_to_endpoints()
-
+            if security:
+                await self._configure_tls(security)
+            if listen_endpoints:
+                await self._listen_on_endpoints(listen_endpoints)
             self._post_event(make_event(event='READY'))
 
         except _exc.ControllerException:
@@ -262,68 +219,44 @@ class Controller(object):
             LOGGER.error('Unable to get description from libofp %s', ex)
             raise
 
-    async def _configure_tls(self):
+    async def _configure_tls(self, security):
         """
         Set up a TLS identity for connections to use.
         """
         try:
             result = await self._rpc_call(
                 'OFP.ADD_IDENTITY',
-                certificate=self._config.cert,
-                verifier=self._config.cafile,
-                password=self._config.password)
-            # Save tls_id from result in config object so we can pass it in
-            # our calls to 'OFP.LISTEN' and 'OFP.CONNECT'.
-            self._config.tls_id = result.params.tls_id
+                certificate=security['cert'],
+                verifier=security['cafile'],
+                password=security.get('password', ''))
+            # Save tls_id from result so we can pass it in our calls to 
+            # 'OFP.LISTEN' and 'OFP.CONNECT'.
+            self._tls_id = result.params.tls_id
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to create TLS identity: %s', ex.message)
             raise
 
-    async def _listen_on_endpoints(self):
+    async def _listen_on_endpoints(self, listen_endpoints):
+        """Listen on a list of endpoints.
         """
-        Listen on a list of endpoints.
-        """
-        tls_id = self._config.tls_id
-        ofversion = self._config.ofversion
-        options = self._config.listen_options
+        ofversion = None        # TODO: replace self._config.ofversion
+        options = ['DEFAULT_CONTROLLER']
         if not ofversion:
             ofversion = self._ofp_versions
         try:
-            for endpt in self._config.listen:
+            for endpt in listen_endpoints:
                 result = await self._rpc_call(
                     'OFP.LISTEN',
                     endpoint=endpt,
                     versions=ofversion,
-                    tls_id=tls_id,
+                    tls_id=self._tls_id,
                     options=options)
                 LOGGER.info('Listening on %s [conn_id=%d, versions=%s]', endpt,
                             result.conn_id, ofversion)
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to listen on %s: %s', endpt, ex.message)
-            raise
-
-    async def _connect_to_endpoints(self):
-        """
-        Connect to a list of endpoints.
-        """
-        tls_id = self._config.tls_id
-        ofversion = self._config.ofversion
-        options = self._config.connect_options
-        try:
-            for endpt in self._config.connect:
-                result = await self._rpc_call(
-                    'OFP.CONNECT',
-                    endpoint=endpt,
-                    versions=ofversion,
-                    tls_id=tls_id,
-                    options=options)
-                LOGGER.info('Connected to %s [conn_id=%d]', endpt,
-                            result.conn_id)
-
-        except _exc.ControllerException as ex:
-            LOGGER.error('Unable to connect to %s: %s', endpt, ex.message)
             raise
 
     def _post_event(self, event):
@@ -377,6 +310,7 @@ class Controller(object):
         Send a RPC request and return a future for the reply.
         """
 
+        LOGGER.debug('_rpc_call %s', method)
         xid = self._next_xid()
         event = dict(id=xid, method=method, params=params)
         return self._write(event, xid)
@@ -408,7 +342,7 @@ class Controller(object):
         """
         if event['event'] == 'EXIT':
             raise _exc.ExitException()
-        for app in self._apps:
+        for app in self.apps:
             app.event(event)
 
     def _handle_rpc_reply(self, event):
@@ -434,7 +368,7 @@ class Controller(object):
             except_class = None
 
         if not self._handle_xid(params, params.xid, except_class):
-            for app in self._apps:
+            for app in self.apps:
                 app.message(params)
 
     def _handle_channel(self, params):
@@ -453,7 +387,7 @@ class Controller(object):
         else:
             if dpid:
                 self._add_datapath(dpid)
-        for app in self._apps:
+        for app in self.apps:
             app.channel(params)
 
     def _handle_alert(self, params):
@@ -567,17 +501,17 @@ class Controller(object):
         """
         Add a datapath to the controller.
         """
-        if dpid in self._datapaths:
+        if dpid in self.datapaths:
             LOGGER.warning('_add_datapath: Datapath %s exists', dpid)
         else:
-            self._datapaths.add(dpid)
+            self.datapaths.add(dpid)
 
     def _remove_datapath(self, dpid):
         """
         Remove a datapath from the controller.
         """
         try:
-            self._datapaths.remove(dpid)
+            self.datapaths.remove(dpid)
         except KeyError:
             LOGGER.warning('_remove_datapath: Datapath %s missing', dpid)
 
@@ -585,7 +519,7 @@ class Controller(object):
         """
         Return human-readable description of the controller configuration.
         """
-        return '\n'.join([repr(app) for app in self._apps])
+        return '\n'.join([repr(app) for app in self.apps])
 
 
 def _timestamp():

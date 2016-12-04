@@ -1,47 +1,40 @@
-import os
+"""Implements ControllerApp class."""
+
 import logging
 import textwrap
 import string
 import json
-import runpy
 import collections
 from pylibofp.handler import make_handler
 import pylibofp.exception as _exc
 
 
 class ControllerApp(object):
-    """
-    Concrete class representing a controller application loaded from a
-    python module.
+    """Concrete class representing a controller application.
+
+    Attributes:
+        name (str): App name.
+        ofversion (...): Supported OpenFlow versions
+        parent (Controller): App's parent controller object.
+        logger (Logger): App's logger.
+
+    Args:
+        parent (Controller): Parent controller object.
+        name (str): App name.
+        ofversion (Optional[str]): Supports OpenFlow versions.
     """
 
-    def __init__(self, parent, filename):
-        """
-        Initialize app using path to a python module.
-        """
-        self._name = os.path.basename(filename)
-        self._parent = parent
-        self._filename = filename
+    def __init__(self, parent, *, name, ofversion=None):
+        self.name = name
+        self.ofversion = ofversion
         self._handlers = {}
-        self.logger = logging.getLogger('pylibofp.app.%s' % self._name)
 
-        # Load module and add decorated handlers.
-        self.logger.info('Load "%s"', self._filename)
-        runpy.run_path(filename, init_globals={'OFP': _make_ofp(self)})
+        # Add app to parent's list of app's.
+        parent.apps.append(self)
+        self.parent = parent  # TODO: need weakref?
 
-    @property
-    def parent(self):
-        """
-        Parent controller.
-        """
-        return self._parent
-
-    @property
-    def config(self):
-        """
-        Global config object.
-        """
-        return self.parent.config
+        self.logger = logging.getLogger('pylibofp.%s' % self.name)
+        self.logger.info('Create app "%s"', self.name)
 
     def channel(self, event):
         """
@@ -82,19 +75,19 @@ class ControllerApp(object):
         """
         Function used to send an OpenFlow message (fire and forget).
         """
-        xid = kwds.get('xid', self._parent._next_xid())
+        xid = kwds.get('xid', self.parent._next_xid())
         event = _translate_msg_to_event(msg, kwds, xid)
         self.logger.debug('send {\n%s\n}', event)
-        self._parent._write(event)
+        self.parent._write(event)
 
     def request(self, msg, **kwds):
         """
         Function used to send an OpenFlow request and receive a response.
         """
-        xid = kwds.get('xid', self._parent._next_xid())
+        xid = kwds.get('xid', self.parent._next_xid())
         event = _translate_msg_to_event(msg, kwds, xid)
         self.logger.debug('request {\n%s\n}', event)
-        return self._parent._write(event, xid)
+        return self.parent._write(event, xid)
 
     def post_event(self, **event):
         """
@@ -102,36 +95,14 @@ class ControllerApp(object):
         """
         assert isinstance(event, dict) and 'event' in event
         self.logger.debug('post_event %s', event)
-        self._parent._post_event(event)
+        self.parent._post_event(event)
 
     def rpc_call(self, method, **params):
         """
         Function used to send a RPC request and receive a response.
         """
         self.logger.debug('rpc_call %s', method)
-        return self._parent._rpc_call(method, **params)
-
-    def configure(self, loglevel=None, ofversion=None):
-        """
-        Function used by an app to configure logging and OpenFlow version.
-        """
-        assert not loglevel or isinstance(loglevel, (str, int))
-        assert not ofversion or isinstance(ofversion, list)
-
-        if loglevel is not None:
-            self.logger.setLevel(loglevel.upper())
-
-        if ofversion is not None:
-            # Check if ofversion intersects `config.ofversion`. Be aware that
-            # an empty `config.ofversion` implies all versions.
-            if not self.config.ofversion:
-                self.config.ofversion = ofversion
-            else:
-                new_vers = set(self.config.ofversion) & set(ofversion)
-                if not new_vers:
-                    raise ValueError('Unable to use OpenFlow version %s',
-                                     ofversion)
-                self.config.ofversion = list(new_vers)
+        return self.parent._rpc_call(method, **params)
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
         """
@@ -139,7 +110,7 @@ class ControllerApp(object):
         scope.
         """
         scope_key = datapath_id if datapath_id else conn_id
-        return self._parent._ensure_future(
+        return self.parent._ensure_future(
             coroutine, scope_key=scope_key, logger=self.logger)
 
     def subscribe(self, callback, type_, subtype, options):
@@ -165,36 +136,6 @@ class ControllerApp(object):
                     self.logger.debug('Unsubscribe %s', handler)
                     self._handlers[key].remove(handler)
                     return
-
-    def message_decorator(self, subtype, **kwds):
-        """
-        Message subscribe decorator.
-        """
-
-        def wrap(func):
-            self.subscribe(func, 'message', subtype, kwds)
-
-        return wrap
-
-    def channel_decorator(self, subtype, **kwds):
-        """
-        Channel subscribe decorator.
-        """
-
-        def wrap(func):
-            self.subscribe(func, 'channel', subtype, kwds)
-
-        return wrap
-
-    def event_decorator(self, subtype, **kwds):
-        """
-        Event subscribe decorator.
-        """
-
-        def wrap(func):
-            self.subscribe(func, 'event', subtype, kwds)
-
-        return wrap
 
     def __repr__(self):
         """

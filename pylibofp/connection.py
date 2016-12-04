@@ -1,3 +1,5 @@
+"""Implements Connection class."""
+
 import asyncio
 import logging
 import shutil
@@ -8,14 +10,14 @@ LOGGER = logging.getLogger('pylibofp.controller')
 
 
 class Connection(object):
-    """
-    Concrete class representing a connection to the libofp driver.
+    """Concrete class representing a connection to the libofp driver.
+
+    Keyword Args:
+        libofp_cmd (str): Subcommand name (defaults to 'jsonrpc')
+        libofp_args (Optional[List[str]]): Command line arguments.
     """
 
     def __init__(self, *, libofp_cmd='jsonrpc', libofp_args=None):
-        """
-        Initialize connection.
-        """
         self._conn = None
         self._input = None
         self._output = None
@@ -23,10 +25,8 @@ class Connection(object):
         self._libofp_args = libofp_args
 
     async def connect(self):
+        """Set up connection to the libofp driver.
         """
-        Set up connection to the libofp driver.
-        """
-
         libofp_path = shutil.which('libofp')
         if not libofp_path:
             raise RuntimeError('Unable to find libofp executable.')
@@ -52,8 +52,7 @@ class Connection(object):
             raise
 
     async def disconnect(self):
-        """
-        Wait for libofp connection to close.
+        """Wait for libofp connection to close.
         """
         if self._conn is None:
             return 0
@@ -66,28 +65,24 @@ class Connection(object):
         return return_code
 
     async def readline(self):
-        """
-        Return next incoming line from the connection.
+        """Read next incoming line from the connection.
         """
         return await self._input.readline()
 
     def write(self, data):
-        """
-        Write data to the connection.
+        """Write data to the connection.
         """
         self._output.write(data)
 
     async def drain(self):
-        """
-        Wait while the output buffer is flushed.
+        """Wait while the output buffer is flushed.
         """
         LOGGER.info('libofp connection drain: buffer_size=%d',
                     self.get_write_buffer_size())
         return await self._output.drain()
 
     def close(self, write=False):
-        """
-        Close the connection.
+        """Close the connection.
         """
         if self._conn is None:
             return
@@ -101,7 +96,6 @@ class Connection(object):
                 pass
 
     def get_write_buffer_size(self):
-        """
-        Return size of the write buffer.
+        """Get size of the write buffer.
         """
         return self._output.transport.get_write_buffer_size()
