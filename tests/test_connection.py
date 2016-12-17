@@ -54,7 +54,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"method":"OFP.SEND","params":{"version":4,"type":"FEATURES_REQUEST","xid":12}}\n'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"method":"OFP.ALERT","params":{"conn_id":0,"datapath_id":"","xid":12,"time":')
+        self.assertRegex(result, b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","conn_id":0,"datapath_id":"","xid":12,')
 
     async def test_rpc_send_missing_datapath(self):
         # If we write a valid JSON-RPC OFP.SEND method, there should be a response.
@@ -181,11 +181,11 @@ class ConnectionTestCase(AsyncTestCase):
 
     async def test_ofp_send_invalid_no_id(self):
         # If we write an invalid OFP.SEND message with no id, we should get back
-        # a OFP.ALERT notification.
+        # a OFP.MESSAGE notification.
         msg = b'{"method":"OFP.SEND","params":{"type":"foo","xid":133}}\n'
         self.conn.write(msg)
         result = await asyncio.wait_for(self.conn.readline(), 1.0)
-        self.assertPrefix(result, b'{"method":"OFP.ALERT","params":{"conn_id":0,"datapath_id":"","xid":133,"time":')
+        self.assertRegex(result, b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","conn_id":0,"datapath_id":"","xid":133,')
         await self._still_alive()
 
     # The following tests are taken from http://www.jsonrpc.org/specification

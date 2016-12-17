@@ -6,9 +6,9 @@ from pylibofp.appfacade import AppFacade
 
 class MockController(object):
     def __init__(self):
-        self.shared = None
-        self.config = None
-        self.datapaths = None
+        #self.shared = None
+        #self.config = None
+        #self.datapaths = None
         self.apps = []
 
 
@@ -17,10 +17,6 @@ class ControllerAppTestCase(unittest.TestCase):
     def setUp(self):
         app = ControllerApp(MockController(), name='mock-app')
         ofp = AppFacade(app)
-
-        @ofp.channel('all')
-        def _channel_default(event):
-            ofp.shared['handler'] = 'channel_default'
 
         @ofp.message('all')
         def _message_default(event):
@@ -35,18 +31,12 @@ class ControllerAppTestCase(unittest.TestCase):
     def test_handlers(self):
         """Test that all handlers are loaded."""
         
-        self.assertEqual(3, len(self.handlers))
-        self.assertEqual(1, len(self.handlers['channel']))
+        self.assertEqual(2, len(self.handlers))
         self.assertEqual(1, len(self.handlers['message']))
         self.assertEqual(1, len(self.handlers['event']))
         
-        channel = self.handlers['channel'][0]
         message = self.handlers['message'][0]
         event = self.handlers['event'][0]
-
-        self.assertEqual('channel', channel.type)
-        self.assertEqual('ALL', channel.subtype)
-        self.assertEqual({}, channel.options)
 
         self.assertEqual('message', message.type)
         self.assertEqual('ALL', message.subtype)

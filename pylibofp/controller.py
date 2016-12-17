@@ -39,9 +39,6 @@ class Controller(object):
 
     def __init__(self):
         self.apps = []
-        self.datapaths = set()
-        self.shared = ObjectView({})
-
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
@@ -241,7 +238,7 @@ class Controller(object):
         """Listen on a list of endpoints.
         """
         ofversion = None        # TODO: replace self._config.ofversion
-        options = ['DEFAULT_CONTROLLER']
+        options = ['FEATURES_REQ']
         if not ofversion:
             ofversion = self._ofp_versions
         try:
@@ -267,10 +264,9 @@ class Controller(object):
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
+        """Dispatch an event we receive from libofp.
         """
-        Dispatch an event we receive from libofp.
-        """
-        LOGGER.debug('_dispatch_event %s', event)
+        LOGGER.debug('_dispatch_event %r', event)
 
         try:
             if 'event' in event:
@@ -278,13 +274,15 @@ class Controller(object):
             elif 'id' in event:
                 self._handle_rpc_reply(event)
             elif event.method == 'OFP.MESSAGE':
-                self._handle_message(event.params)
-            elif event.method == 'OFP.CHANNEL':
-                self._handle_channel(event.params)
-            elif event.method == 'OFP.ALERT':
-                self._handle_alert(event.params)
+                type_ = event.params.type
+                if not type_.startswith('CHANNEL_'):
+                    self._handle_message(event.params)
+                elif type_ == 'CHANNEL_ALERT':
+                    self._handle_alert(event.params)
+                else:
+                    self._handle_channel(event.params)
             else:
-                LOGGER.warning('Unhandled event: %s', event)
+                LOGGER.warning('Unhandled event: %r', event)
         except _exc.BreakException:
             LOGGER.debug('_dispatch_event: BreakException caught')
 
@@ -306,8 +304,7 @@ class Controller(object):
         return fut
 
     def _rpc_call(self, method, **params):
-        """
-        Send a RPC request and return a future for the reply.
+        """Send a RPC request and return a future for the reply.
         """
 
         LOGGER.debug('_rpc_call %s', method)
@@ -316,8 +313,8 @@ class Controller(object):
         return self._write(event, xid)
 
     def _handle_xid(self, event, xid, except_class=None):
-        """
-        Lookup future associated with given xid and give it the event.
+        """Lookup future associated with given xid and give it the event.
+
         Return False if no matching xid is found.
         """
 
@@ -337,8 +334,7 @@ class Controller(object):
         return True
 
     def _handle_internal_event(self, event):
-        """
-        Called when an internal event is received.
+        """Called when an internal event is received.
         """
         if event['event'] == 'EXIT':
             raise _exc.ExitException()
@@ -346,8 +342,7 @@ class Controller(object):
             app.event(event)
 
     def _handle_rpc_reply(self, event):
-        """
-        Called when a RPC reply is received.
+        """Called when a RPC reply is received.
         """
         if 'result' in event:
             result = event.result
@@ -359,8 +354,7 @@ class Controller(object):
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
     def _handle_message(self, params):
-        """
-        Called when a `OFP.MESSAGE` is received.
+        """Called when a `OFP.MESSAGE` is received.
         """
         if params.type == 'ERROR':
             except_class = _exc.ErrorException
@@ -370,41 +364,47 @@ class Controller(object):
         if not self._handle_xid(params, params.xid, except_class):
             for app in self.apps:
                 app.message(params)
+            # Log all OpenFlow error messages not associated with requests.
+            if params.type == 'ERROR':
+                LOGGER.error('ERROR: %s', params)
 
     def _handle_channel(self, params):
+        """Called when a `OFP.MESSAGE` is received with type 'CHANNEL_*'.
         """
-        Called when a `OFP.CHANNEL` is received.
-        """
-
-        dpid = params.datapath_id if 'datapath_id' in params else None
-        scope_key = dpid if dpid else str(params.conn_id)
-        LOGGER.info('Datapath %s %s [conn_id=%s, version=%s]', scope_key,
-                    params.status, params.conn_id, params.version)
-        if params.status == 'DOWN':
-            if dpid:
-                self._remove_datapath(dpid)
-            self._cancel_tasks(scope_key)
+        dpid = params('datapath_id')
+        if dpid:
+            scope_key = 'Datapath %s' % dpid
         else:
-            if dpid:
-                self._add_datapath(dpid)
+            scope_key = 'Channel %s' % params.conn_id
+
+        LOGGER.info('%s %s [conn_id=%s, version=%s]', scope_key,
+                    params.type, params.conn_id, params.version)
+        
+        if params.type == 'CHANNEL_DOWN':
+            self._cancel_tasks(scope_key)
+
         for app in self.apps:
-            app.channel(params)
+            app.message(params)
 
     def _handle_alert(self, params):
+        """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'.
         """
-        Called when `OFP.ALERT` is received.
-        """
+        # First check if this alert was sent in response to something we said.
+        if params.xid and self._handle_xid(params, params.xid,
+                                           _exc.DeliveryException):
+            return
+        # Otherwise, we need to report it.
+        data = params.data.hex()
+        if len(data) > 100:
+            data = '%s...' % data[:100]
+        LOGGER.warning(
+            'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
+            params.alert, data,
+            len(params.data), params.conn_id, params('datapath_id'),
+            params.xid)
 
-        if params.xid and not self._handle_xid(params, params.xid,
-                                               _exc.DeliveryException):
-            data = params.data.hex()
-            if len(data) > 100:
-                data = '%s...' % data[:100]
-            LOGGER.warning(
-                'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-                params.alert, data,
-                len(params.data), params.conn_id, params.datapath_id,
-                params.xid)
+        for app in self.apps:
+            app.message(params)
 
     def _idle(self):
         """
@@ -452,6 +452,7 @@ class Controller(object):
         also cleans up after the task when it is done.
         """
 
+        @functools.wraps(coroutine)
         async def capture_exception(coroutine):
             try:
                 logger.debug('ensure_future: %s', _coro_name(coroutine))
@@ -494,26 +495,8 @@ class Controller(object):
         """
         Called when a task is done.
         """
-        LOGGER.debug('_task_callback: %s', task)
+        LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
         self._tasks[scope_key].remove(task)
-
-    def _add_datapath(self, dpid):
-        """
-        Add a datapath to the controller.
-        """
-        if dpid in self.datapaths:
-            LOGGER.warning('_add_datapath: Datapath %s exists', dpid)
-        else:
-            self.datapaths.add(dpid)
-
-    def _remove_datapath(self, dpid):
-        """
-        Remove a datapath from the controller.
-        """
-        try:
-            self.datapaths.remove(dpid)
-        except KeyError:
-            LOGGER.warning('_remove_datapath: Datapath %s missing', dpid)
 
     def __repr__(self):
         """

@@ -1,5 +1,6 @@
 import unittest
-from pylibofp.objectview import ObjectView
+from types import FunctionType
+from pylibofp.objectview import ObjectView, to_json
 
 
 def _test_dict():
@@ -23,6 +24,19 @@ class ObjectViewTestCase(unittest.TestCase):
         # Nested dictionaries aren't wrapped.
         with self.assertRaisesRegex(AttributeError, "'dict' object has no attribute 'y'"):
             print(self.obj.z.y)
+
+    def test_special_property(self):
+        obj = ObjectView({'get': 42, 'to_json': 'foo'})
+        self.assertEqual(obj['get'], 42)
+        self.assertEqual(obj.get, 42)
+
+        self.assertEqual(obj.to_json, 'foo')
+        obj.to_json = 4
+        self.assertEqual(obj['to_json'], 4)
+        self.assertEqual(obj.to_json, 4)
+        del obj.to_json
+        with self.assertRaises(AttributeError):
+            print(obj.to_json)
 
     def test_setproperty(self):
         self.assertEqual(self.obj.a, 1)
@@ -80,6 +94,12 @@ class ObjectViewTestCase(unittest.TestCase):
         with self.assertRaisesRegex(AttributeError, 'aa'):
             print(self.obj.aa)
 
+    def test_callable(self):
+        self.assertEqual(self.obj('a'), 1)
+        self.assertEqual(self.obj('b'), 2)
+        self.assertEqual(self.obj('c'), None)
+        self.assertEqual(self.obj('c', default=5), 5)
+
     def test_eq(self):
         self.assertEqual(self.obj, _test_dict())
         self.assertTrue(self.obj == _test_dict())
@@ -102,10 +122,9 @@ class ObjectViewTestCase(unittest.TestCase):
         s = str(o)
         self.assertEqual(s, '{"q":[1,2,3]}')
 
-    def test_json_dumps(self):
+    def test_to_json(self):
         o = ObjectView(dict(q=[1, 2, 3]))
-        # json_dumps is a static method.
-        s = o.json_dumps(o)
+        s = to_json(o)
         self.assertEqual(s, '{"q":[1,2,3]}')
 
 

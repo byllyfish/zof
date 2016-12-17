@@ -5,23 +5,92 @@ import asyncio
 LOGGER = logging.getLogger('pylibofp.controller')
 
 _ALL_SUBTYPE = 'ALL'
-_MSG_SUBTYPES = ('FEATURES_REQUEST', 'FEATURES_REPLY', 'PACKET_IN',
-                 'PORT_STATUS', _ALL_SUBTYPE)
+_MSG_SUBTYPES = { 
+_ALL_SUBTYPE,
+"CHANNEL_UP",
+"CHANNEL_DOWN",
+"CHANNEL_ALERT",
+"HELLO",
+"ERROR",
+"ECHO_REQUEST",
+"ECHO_REPLY",
+"EXPERIMENTER",
+"FEATURES_REQUEST",
+"FEATURES_REPLY",
+"GET_CONFIG_REQUEST",
+"GET_CONFIG_REPLY",
+"SET_CONFIG",
+"PACKET_IN",
+"FLOW_REMOVED",
+"PORT_STATUS",
+"PACKET_OUT",
+"FLOW_MOD",
+"GROUP_MOD",
+"PORT_MOD",
+"TABLE_MOD",
+"REQUEST.DESC",
+"REQUEST.FLOW",
+"REQUEST.AGGREGATE",
+"REQUEST.TABLE",
+"REQUEST.PORT_STATS",
+"REQUEST.QUEUE",
+"REQUEST.GROUP",
+"REQUEST.GROUP_DESC",
+"REQUEST.GROUP_FEATURES",
+"REQUEST.METER",
+"REQUEST.METER_CONFIG",
+"REQUEST.METER_FEATURES",
+"REQUEST.TABLE_FEATURES",
+"REQUEST.PORT_DESC",
+"REQUEST.TABLE_DESC",
+"REQUEST.QUEUE_DESC",
+"REQUEST.FLOW_MONITOR",
+"REPLY.DESC",
+"REPLY.FLOW",
+"REPLY.AGGREGATE",
+"REPLY.TABLE",
+"REPLY.PORT_STATS",
+"REPLY.QUEUE",
+"REPLY.GROUP",
+"REPLY.GROUP_DESC",
+"REPLY.GROUP_FEATURES",
+"REPLY.METER",
+"REPLY.METER_CONFIG",
+"REPLY.METER_FEATURES",
+"REPLY.TABLE_FEATURES",
+"REPLY.PORT_DESC",
+"REPLY.TABLE_DESC",
+"REPLY.QUEUE_DESC",
+"REPLY.FLOW_MONITOR",
+"BARRIER_REQUEST",
+"BARRIER_REPLY",
+"QUEUE_GET_CONFIG_REQUEST",
+"QUEUE_GET_CONFIG_REPLY",
+"ROLE_REQUEST",
+"ROLE_REPLY",
+"GET_ASYNC_REQUEST",
+"GET_ASYNC_REPLY",
+"SET_ASYNC",
+"METER_MOD",
+"ROLE_STATUS",
+"TABLE_STATUS",
+"REQUESTFORWARD",
+"BUNDLE_CONTROL",
+"BUNDLE_ADD_MESSAGE" }
 
 
 def make_handler(callback, type_, subtype='', options=None):
-    """
-    Factory function to create appropriate handler.
+    """Factory function to create appropriate handler.
 
-    Supported types: message, channel, event
+    Supported types: message, event
     """
     if type_ == 'message':
         return MessageHandler(callback, type_, subtype, options)
-    if type_ == 'channel':
-        return ChannelHandler(callback, type_, subtype, options)
+    #if type_ == 'channel':
+    #   return ChannelHandler(callback, type_, subtype, options)
     if type_ == 'event':
         return EventHandler(callback, type_, subtype, options)
-    raise ValueError('make_handler: Unknown handler type: %s' % type_)
+    raise ValueError('make_handler: Unknown handler type: "%s"' % type_)
 
 
 class BaseHandler(object):
@@ -34,8 +103,10 @@ class BaseHandler(object):
     def match(self, event):
         raise NotImplementedError("Please implement this method")
 
-    def __call__(self, event):
-        if self.match(event):
+    def __call__(self, event, app):
+        if asyncio.iscoroutinefunction(self.callback):
+            app.ensure_future(self.callback(event), datapath_id=event('datapath_id'), conn_id=event('conn_id'))
+        else:
             self.callback(event)
 
     def __repr__(self):
@@ -48,26 +119,19 @@ class BaseHandler(object):
         return True
 
 
-class ChannelHandler(BaseHandler):
+class MessageHandler(BaseHandler):
     def match(self, event):
-        # Channel handler needs to check for raw channel.
+        # Quick check to see if we can return False immediately.
+        if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
+            return False
+        # Check for events that don't have a datapath_id. For these, the app
+        # must explicitly opt in using `datapath_id=None`.
         if 'datapath_id' not in event:
             if 'datapath_id' not in self.options:
                 return False
             elif self.options['datapath_id'] is not None:
                 return False
-        return event.status == self.subtype or self.subtype == _ALL_SUBTYPE
-
-    def verify(self):
-        if not _verify_callback(self.callback, 1):
-            return False
-        return True
-
-
-class MessageHandler(BaseHandler):
-    def match(self, event):
-        if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
-            return False
+        # Check for matching option values in event.
         for key, value in self.options.items():
             if not _match_message_event(key, value, event):
                 return False
@@ -102,9 +166,9 @@ def _verify_callback(callback, param_count):
     if not inspect.isfunction(callback):
         LOGGER.error('Callback is not a function: %s', callback)
         return False
-    if asyncio.iscoroutinefunction(callback):
-        LOGGER.error('Callback must not be a coroutine function: %s', callback)
-        return False
+    #if asyncio.iscoroutinefunction(callback):
+    #    LOGGER.error('Callback must not be a coroutine function: %s', callback)
+    #    return False
     sig = inspect.signature(callback)
     if len(sig.parameters) != param_count:
         LOGGER.error('Callback has unexpected number of parameters: %s',

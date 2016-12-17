@@ -10,6 +10,7 @@ from .appfacade import AppFacade
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
+
 def ofp_app(name, *, ofversion=None):
     """Construct a new app.
 
@@ -38,8 +39,8 @@ def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, 
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
         libofp_args (Optional[List[str]]): Command line arguments to libofp.
-        loglevel (Optional[str]): Default log level. If None, logging is not 
-            configured.
+        loglevel (Optional[str]): Default log level (info). If None, logging is
+            left unconfigured.
         security (Optional[Dict[str, str]]): Dictionary with security settings
             for libofp connections:
                 - "cert": SSL Certificate with Private Key (PEM)

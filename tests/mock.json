@@ -1,5 +1,0 @@
-{
-  "apps": ["mock_module.py"],
-  "loglevel": "warning"
-}
-

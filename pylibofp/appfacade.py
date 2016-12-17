@@ -1,3 +1,5 @@
+from .compiledmessage import CompiledMessage
+from .event import make_event
 
 
 class AppFacade(object):
@@ -51,24 +53,20 @@ class AppFacade(object):
     Attributes:
         name (str): App name.
         logger (Logger): App's logger.
-        shared (Dict): Shared dictionary.
-        datapaths (Set): Set of connected datapaths.
     """
 
     def __init__(self, app):
-        #self._app = app
+        self._app = app
         self.name = app.name
         self.logger = app.logger
-        self.shared = app.parent.shared
-        self.datapaths = app.parent.datapaths
 
-        self.send = app.send
-        self.request = app.request
+        #self.send = app.send
+        #self.request = app.request
         self.ensure_future = app.ensure_future
         self.subscribe = app.subscribe
         self.unsubscribe = app.subscribe
-        self.post_event = app.post_event
-        self.rpc_call = app.rpc_call
+        #self.post_event = app.post_event
+        #self.rpc_call = app.rpc_call
 
     # Decorators
 
@@ -80,14 +78,6 @@ class AppFacade(object):
 
         return _wrap
 
-    def channel(self, subtype, **kwds):
-        """ Channel subscribe decorator.
-        """
-        def _wrap(func):
-            self.subscribe(func, 'channel', subtype, kwds)
-
-        return _wrap
-
     def event(self, subtype, **kwds):
         """ Event subscribe decorator.
         """
@@ -95,6 +85,25 @@ class AppFacade(object):
             self.subscribe(func, 'event', subtype, kwds)
 
         return _wrap
+
+    # Basic Functions
+
+    def compile(self, msg):
+        """ Compile an OpenFlow message template.
+        """
+        return CompiledMessage(self._app, msg)
+
+    # RPC Functions
+
+    async def connect(self, endpoint, options):
+        """ Make an outgoing OpenFlow connection.
+        """
+        result = await self._app.rpc_call('OFP.CONNECT', endpoint=endpoint, options=options)
+        return result.conn_id
+
+
+    def post_event(self, event, **kwds):
+        self._app.post_event(make_event(event=event.upper(), **kwds))
 
 #    # Basic Functions
 #

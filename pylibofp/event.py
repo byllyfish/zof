@@ -1,5 +1,5 @@
 import json
-from pylibofp.objectview import ObjectView
+from pylibofp.objectview import ObjectView, to_json
 
 
 class Event(ObjectView):
@@ -40,7 +40,7 @@ def load_event(event):
 
 
 def dump_event(event):
-    return ObjectView.json_dumps(event).encode('utf-8') + b'\n'
+    return to_json(event).encode('utf-8') + b'\n'
 
 
 def make_event(**kwds):

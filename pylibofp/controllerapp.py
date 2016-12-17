@@ -7,6 +7,7 @@ import json
 import collections
 from pylibofp.handler import make_handler
 import pylibofp.exception as _exc
+from .event import Event
 
 
 class ControllerApp(object):
@@ -14,7 +15,7 @@ class ControllerApp(object):
 
     Attributes:
         name (str): App name.
-        ofversion (...): Supported OpenFlow versions
+        ofversion (...): Supported OpenFlow versions.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
 
@@ -34,7 +35,7 @@ class ControllerApp(object):
         self.parent = parent  # TODO: need weakref?
 
         self.logger = logging.getLogger('pylibofp.%s' % self.name)
-        self.logger.info('Create app "%s"', self.name)
+        self.logger.info('Create app "%s"', self.name, repr(self))
 
     def channel(self, event):
         """
@@ -62,7 +63,7 @@ class ControllerApp(object):
             for handler in self._handlers.get(handler_type, []):
                 if handler.match(event):
                     try:
-                        handler(event)
+                        handler(event, self)
                         break
                     except _exc.FallThroughException:
                         self.logger.debug('_handle: FallThroughException')
@@ -71,29 +72,35 @@ class ControllerApp(object):
                 'Exception caught while handling "%s" event: %s', handler_type,
                 event)
 
-    def send(self, msg, **kwds):
+    def send(self, template, kwds):
+        """Send an OpenFlow message (fire and forget).
+
+        Args:
+            template (StringTemplate): Compiled OFP.SEND template.
+            kwds (dict): Template argument values.
         """
-        Function used to send an OpenFlow message (fire and forget).
-        """
-        xid = kwds.get('xid', self.parent._next_xid())
-        event = _translate_msg_to_event(msg, kwds, xid)
+        xid = kwds.setdefault('xid', self.parent._next_xid())
+        event = _compile_template(template, kwds)
         self.logger.debug('send {\n%s\n}', event)
         self.parent._write(event)
 
-    def request(self, msg, **kwds):
+    def request(self, template, kwds):
+        """Send an OpenFlow request and receive a response.
+
+        Args:
+            template (StringTemplate): Compiled OFP.SEND template.
+            kwds (dict): Template argument values.
         """
-        Function used to send an OpenFlow request and receive a response.
-        """
-        xid = kwds.get('xid', self.parent._next_xid())
-        event = _translate_msg_to_event(msg, kwds, xid)
+        xid = kwds.setdefault('xid', self.parent._next_xid())
+        event = _compile_template(template, kwds)
         self.logger.debug('request {\n%s\n}', event)
         return self.parent._write(event, xid)
 
-    def post_event(self, **event):
+    def post_event(self, event):
         """
         Function used to send an internal event to all app modules.
         """
-        assert isinstance(event, dict) and 'event' in event
+        assert isinstance(event, Event)
         self.logger.debug('post_event %s', event)
         self.parent._post_event(event)
 
@@ -141,13 +148,13 @@ class ControllerApp(object):
         """
         Return human-readable description of app's configuration.
         """
-        text = ['%s:' % self._name]
+        text = ['%s:' % self.name]
         for handlers in self._handlers.values():
             for h in handlers:
                 text.append('  ' + repr(h))
         return '\n'.join(text)
 
-
+'''
 def _translate_msg_to_event(msg, kwds, xid):
     """
     Helper function to translate an OpenFlow message in string or object format
@@ -181,17 +188,17 @@ def _translate_msg_str(msg, kwds):
         elif isinstance(val, str):
             kwds[key] = json.dumps(val)
     return string.Template(textwrap.dedent(msg).strip()).substitute(kwds)
+'''
 
+def _compile_template(template, kwds):
+    """Substitute keywords into OFP.SEND template.
 
-_OFP = collections.namedtuple(
-    '_OFP',
-    'message channel event send request post_event configure rpc_call ensure_future shared config datapaths logger subscribe unsubscribe'
-)
-
-
-def _make_ofp(app):
-    return _OFP(app.message_decorator, app.channel_decorator,
-                app.event_decorator, app.send, app.request, app.post_event,
-                app.configure, app.rpc_call, app.ensure_future,
-                app.parent.shared, app.parent.config, app.parent.datapaths,
-                app.logger, app.subscribe, app.unsubscribe)
+    Translate `bytes` values to hexadecimal and escape all string values.
+    """
+    for key in kwds:
+        val = kwds[key]
+        if isinstance(val, bytes):
+            kwds[key] = val.hex()
+        elif isinstance(val, str):
+            kwds[key] = json.dumps(val)
+    return template.substitute(kwds)

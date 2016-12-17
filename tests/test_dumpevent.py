@@ -43,3 +43,13 @@ class DumpEventTestCase(unittest.TestCase):
         data = dump_event({'x': '\u20AC\U00010302\U0010fffd'})
         self.assertEqual(data, b'{"x":"\xe2\x82\xac\xf0\x90\x8c\x82\xf4\x8f\xbf\xbd"}\n')
         
+    def test_getstate(self):
+        # Test custom class with __getstate__.
+        class Foo:
+            def __init__(self):
+                self.y = 1
+            def __getstate__(self):
+                return self.__dict__
+
+        data = dump_event({'x': Foo()})
+        self.assertEqual(data, b'{"x":{"y":1}}\n')

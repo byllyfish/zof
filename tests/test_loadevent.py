@@ -1,5 +1,6 @@
 import unittest
 from pylibofp.event import load_event, Event
+from pylibofp.objectview import to_json
 
 
 class LoadEventTestCase(unittest.TestCase):
@@ -82,9 +83,9 @@ class LoadEventTestCase(unittest.TestCase):
         s = str(event)
         self.assertEqual(s, '{"foo":"bar"}')
 
-    def test_json_dumps(self):
-        # Test that event.json_dumps also works.
+    def test_to_json(self):
+        # Test that to_json also works.
         event = load_event(b'{"foo":"bar"}')
-        s = event.json_dumps(event)
+        s = to_json(event)
         self.assertEqual(s, '{"foo":"bar"}')
 
