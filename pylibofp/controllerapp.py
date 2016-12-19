@@ -37,11 +37,11 @@ class ControllerApp(object):
         self.logger = logging.getLogger('pylibofp.%s' % self.name)
         self.logger.info('Create app "%s"', self.name, repr(self))
 
-    def channel(self, event):
-        """
-        Invoked by Controller when an 'OFP.CHANNEL' notification is received.
-        """
-        self._handle(event, 'channel')
+    #def channel(self, event):
+    #    """
+    #    Invoked by Controller when an 'OFP.CHANNEL' notification is received.
+    #    """
+    #    self._handle(event, 'channel')
 
     def message(self, event):
         """
@@ -154,41 +154,6 @@ class ControllerApp(object):
                 text.append('  ' + repr(h))
         return '\n'.join(text)
 
-'''
-def _translate_msg_to_event(msg, kwds, xid):
-    """
-    Helper function to translate an OpenFlow message in string or object format
-    to a valid `OFP.SEND` event.
-
-    `msg` may be a YAML string or an object.
-    """
-    if isinstance(msg, str):
-        msg = _translate_msg_str(msg, kwds)
-        hdr = ''
-        if 'datapath_id' in kwds:
-            hdr += 'datapath_id: %s\n' % kwds['datapath_id']
-        if xid is not None:
-            hdr += 'xid: %d\n' % xid
-        msg = hdr + msg
-        return 'method: OFP.SEND\nparams:\n  %s' % msg.replace('\n', '\n  ')
-    else:
-        if 'datapath_id' in kwds:
-            msg['datapath_id'] = kwds['datapath_id']
-        if xid is not None:
-            msg['xid'] = xid
-        return dict(method='OFP.SEND', params=msg)
-
-
-def _translate_msg_str(msg, kwds):
-    # Translate `bytes` values to hexadecimal and escape all string values.
-    for key in kwds:
-        val = kwds[key]
-        if isinstance(val, bytes):
-            kwds[key] = val.hex()
-        elif isinstance(val, str):
-            kwds[key] = json.dumps(val)
-    return string.Template(textwrap.dedent(msg).strip()).substitute(kwds)
-'''
 
 def _compile_template(template, kwds):
     """Substitute keywords into OFP.SEND template.
@@ -201,4 +166,6 @@ def _compile_template(template, kwds):
             kwds[key] = val.hex()
         elif isinstance(val, str):
             kwds[key] = json.dumps(val)
+        elif val is None:
+            kwds[key] = 'null'
     return template.substitute(kwds)
