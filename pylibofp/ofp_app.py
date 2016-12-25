@@ -7,6 +7,7 @@ import logging.config
 from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
+from .logging import TailBufferedHandler
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
@@ -30,7 +31,7 @@ def ofp_app(name, *, ofversion=None):
     return AppFacade(app)
 
 
-def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, loglevel='info', security=None):
+def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, loglevel='info', security=None, command_shell=True):
     """Run event loop for ofp_app's.
 
     Args:
@@ -49,6 +50,8 @@ def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, 
     """
     if not loop:
         loop = asyncio.get_event_loop()
+    if command_shell:
+        import pylibofp.service.command_shell
     if loglevel:
         _init_logging(loglevel)
     Controller.singleton().run_loop(loop=loop, listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security)
@@ -64,6 +67,8 @@ def _init_logging(loglevel):
         os.environ['PYTHONASYNCIODEBUG'] = '1'
 
     logging.config.dictConfig(_logging_config(loglevel))
+    TailBufferedHandler.install()
+
     logging.captureWarnings(True)
     warnings.simplefilter('always')
 
@@ -82,7 +87,17 @@ def _logging_config(loglevel):
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'formatter': 'complete'
+                'formatter': 'complete',
+                'level': 'WARNING',
+                "stream": "ext://sys.stdout"
+            },
+            'logfile': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'complete',
+                'filename': 'ofp_app.log',
+                'maxBytes': 2**20,
+                'backupCount': 20,
+                'encoding': 'utf8'
             }
         },
         'loggers': {
@@ -97,6 +112,6 @@ def _logging_config(loglevel):
             }
         },
         'root': {
-            'handlers': ['console']
+            'handlers': ['console', 'logfile'] #['console', 'logfile']
         }
     }

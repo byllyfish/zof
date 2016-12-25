@@ -5,6 +5,7 @@ import logging
 import re
 import signal
 import functools
+from datetime import datetime
 from collections import defaultdict
 from pylibofp.event import load_event, dump_event, make_event
 from pylibofp.connection import Connection
@@ -48,20 +49,22 @@ class Controller(object):
         self._tls_id = 0
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
-        self._set_phase('PRESTART')
+        self._loop = None
+        self._interruptable_task = None
 
-    def run_loop(self, *, loop=None, listen_endpoints=None, libofp_args=None, security=None):
+    def run_loop(self, *, loop, listen_endpoints=None, libofp_args=None, security=None):
+        """Main entry point for running a controller.
         """
-        Main entry point for running a controller.
-        """
-        self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
-        try:
+        self._loop = loop
+        try:            
+            self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
+            loop.create_task(self._run(listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security))
+
             LOGGER.debug('asyncio loop started')
-            loop.run_until_complete(self._run(listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security))
-        except KeyboardInterrupt:
-            # Shutdown cleanly when we get an interrupt.
-            self._shutdown_cleanly(loop)
+            self._loop.run_forever()
+
         finally:
+            self._shutdown_cleanly(loop)
             loop.close()
             LOGGER.debug('asyncio loop stopped')
 
@@ -72,21 +75,26 @@ class Controller(object):
         We use a KeyboardInterrupt to signal it's time to shutdown.
         """
 
-        def handle_signal(signame):
+        def _handle_signal(signame, loop, controller):
             LOGGER.info('Signal Received: %s', signame)
-            raise KeyboardInterrupt
+            if signame == 'SIGINT' and controller._interruptable_task:
+                controller._interruptable_task.cancel()
+            else:
+                controller._post_event(make_event('EXIT'))
+                #loop.stop()
+            #raise KeyboardInterrupt
 
         for signame in signals:
             loop.add_signal_handler(
                 getattr(signal, signame),
-                functools.partial(handle_signal, signame))
+                functools.partial(_handle_signal, signame, loop, self))
 
     def _shutdown_cleanly(self, loop):
+        """Give existing tasks a chance to complete.
         """
-        Give existing tasks a chance to complete.
-        """
+        LOGGER.debug('_shutdown_cleanly')
         try:
-            self._post_event(make_event(event='EXIT'))
+            #self._post_event(make_event(event='EXIT'))
 
             # Try 3 times to finish our pending tasks.
             for _ in range(3):
@@ -128,8 +136,7 @@ class Controller(object):
 
         self._conn = Connection(libofp_args=libofp_args)
         await self._conn.connect()
-        self._set_phase('START')
-        self._dispatch_event(make_event(event='START'))
+        self._set_phase('PRESTART')
 
         asyncio.ensure_future(self._start(listen_endpoints=listen_endpoints, security=security))
         asyncio.ensure_future(self._event_loop())
@@ -138,7 +145,6 @@ class Controller(object):
         # FIXME: handle case where _read_loop finishes first.
 
         self._set_phase('STOP')
-        self._dispatch_event(make_event(event='STOP'))
         await self._conn.disconnect()
 
         self._idle_task.cancel()
@@ -157,7 +163,8 @@ class Controller(object):
                 self._dispatch_event(event)
 
         except _exc.ExitException:
-            self._conn.close()
+            self._conn.close(True)
+            self._loop.stop()
         finally:
             LOGGER.debug('_event_loop exited')
 
@@ -190,7 +197,8 @@ class Controller(object):
                 await self._configure_tls(security)
             if listen_endpoints:
                 await self._listen_on_endpoints(listen_endpoints)
-            self._post_event(make_event(event='READY'))
+
+            self._set_phase('START')
 
         except _exc.ControllerException:
             self._post_event(make_event(event='STARTFAIL'))
@@ -274,6 +282,8 @@ class Controller(object):
             elif 'id' in event:
                 self._handle_rpc_reply(event)
             elif event.method == 'OFP.MESSAGE':
+                # Convert time field to datetime object.
+                event.params.time = datetime.fromtimestamp(float(event.params.time))
                 type_ = event.params.type
                 if not type_.startswith('CHANNEL_'):
                     self._handle_message(event.params)
@@ -428,8 +438,11 @@ class Controller(object):
             '' -> PRESTART -> START -> STOP -> POSTSTOP.
         """
         LOGGER.debug('Change phase from "%s" to "%s"', self._phase, phase)
-        self._cancel_tasks(self._phase)
+        if self._phase != 'PRESTART':
+            self._cancel_tasks(self._phase)
         self._phase = phase
+        if self._event_queue:
+            self._post_event(make_event(event=phase))
 
     def _next_xid(self):
         """
@@ -444,7 +457,7 @@ class Controller(object):
         self._xid += 1
         return self._xid
 
-    def _ensure_future(self, coroutine, *, scope_key=None, logger=LOGGER):
+    def _ensure_future(self, coroutine, *, scope_key=None, app, task_locals):
         """
         Run an async coroutine, within the scope of a specific scope_key.
 
@@ -455,19 +468,21 @@ class Controller(object):
         @functools.wraps(coroutine)
         async def capture_exception(coroutine):
             try:
-                logger.debug('ensure_future: %s', _coro_name(coroutine))
+                app.logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
-                logger.debug('ensure_future done: %s', _coro_name(coroutine))
+                app.logger.debug('ensure_future done: %s', _coro_name(coroutine))
             except asyncio.CancelledError:
-                logger.debug('ensure_future cancelled: %s',
-                             _coro_name(coroutine))
+                app.logger.debug('ensure_future cancelled: %s', _coro_name(coroutine))
             except Exception as ex:  # pylint: disable=broad-except
-                logger.exception(ex)
+                app.logger.exception(ex)
 
         task = asyncio.ensure_future(capture_exception(coroutine))
         if not scope_key:
             scope_key = self._phase
         self._tasks[scope_key].append(task)
+        task.ofp_task_app = app
+        task.ofp_task_scope = scope_key
+        task.ofp_task_locals = task_locals
         task.add_done_callback(
             functools.partial(
                 self._task_callback, scope_key=scope_key))
@@ -497,12 +512,20 @@ class Controller(object):
         """
         LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
         self._tasks[scope_key].remove(task)
+        task.ofp_task_app.counters['done'] += 1
 
-    def __repr__(self):
+    def tasks(self):
+        result = []
+        for task_list in self._tasks.values():
+            result += task_list
+        return result
+
+
+    @staticmethod
+    def set_interruptable_task(task):
+        """Assign an interruptable_task to be the target for KeyboardInterrupts.
         """
-        Return human-readable description of the controller configuration.
-        """
-        return '\n'.join([repr(app) for app in self.apps])
+        Controller._singleton._interruptable_task = task
 
 
 def _timestamp():

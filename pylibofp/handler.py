@@ -1,6 +1,7 @@
 import inspect
 import logging
 import asyncio
+from pylibofp.objectview import ObjectView
 
 LOGGER = logging.getLogger('pylibofp.controller')
 
@@ -86,10 +87,10 @@ def make_handler(callback, type_, subtype='', options=None):
     """
     if type_ == 'message':
         return MessageHandler(callback, type_, subtype, options)
-    #if type_ == 'channel':
-    #   return ChannelHandler(callback, type_, subtype, options)
     if type_ == 'event':
         return EventHandler(callback, type_, subtype, options)
+    if type_ == 'command':
+        return CommandHandler(callback, type_, subtype, options)
     raise ValueError('make_handler: Unknown handler type: "%s"' % type_)
 
 
@@ -99,15 +100,21 @@ class BaseHandler(object):
         self.type = type_
         self.subtype = subtype.upper()
         self.options = options
+        self.count = 0
 
     def match(self, event):
         raise NotImplementedError("Please implement this method")
 
     def __call__(self, event, app):
+        self.count += 1
+        datapath_id = event('datapath_id')
+        conn_id = event('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
-            app.ensure_future(self.callback(event), datapath_id=event('datapath_id'), conn_id=event('conn_id'))
+            return app.ensure_future(self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
-            self.callback(event)
+            task = asyncio.Task.current_task()
+            task.ofp_task_locals = ObjectView(dict(datapath_id=datapath_id, conn_id=conn_id))
+            return self.callback(event)
 
     def __repr__(self):
         return '%s[%s] %s@%s' % (self.type, self.subtype,
@@ -158,17 +165,24 @@ class EventHandler(BaseHandler):
         return True
 
 
+class CommandHandler(BaseHandler):
+    def __call__(self, event, app):
+        self.count += 1
+        if asyncio.iscoroutinefunction(self.callback):
+            return self.callback(event)
+        else:
+            return self.callback(event)
+
+    def verify(self):
+        return True
+
+
 def _verify_callback(callback, param_count):
-    """
-    Make sure callback function is not a co-routine. Make sure
-    it has the expected number of positional parameters.
+    """Make sure callback  has the expected number of positional parameters.
     """
     if not inspect.isfunction(callback):
         LOGGER.error('Callback is not a function: %s', callback)
         return False
-    #if asyncio.iscoroutinefunction(callback):
-    #    LOGGER.error('Callback must not be a coroutine function: %s', callback)
-    #    return False
     sig = inspect.signature(callback)
     if len(sig.parameters) != param_count:
         LOGGER.error('Callback has unexpected number of parameters: %s',

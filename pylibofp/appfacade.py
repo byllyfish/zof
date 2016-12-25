@@ -59,6 +59,7 @@ class AppFacade(object):
         self._app = app
         self.name = app.name
         self.logger = app.logger
+        self.controller = app.parent
 
         #self.send = app.send
         #self.request = app.request
@@ -86,6 +87,15 @@ class AppFacade(object):
 
         return _wrap
 
+    def command(self, subtype, *, help):
+        """ Command subscribe decorator.
+        """
+        def _wrap(func):
+            self.subscribe(func, 'command', subtype, dict(help=help))
+
+        return _wrap
+
+
     # Basic Functions
 
     def compile(self, msg):
@@ -104,3 +114,4 @@ class AppFacade(object):
 
     def post_event(self, event, **kwds):
         self._app.post_event(make_event(event=event.upper(), **kwds))
+
