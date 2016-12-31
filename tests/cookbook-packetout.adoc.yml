@@ -1,23 +1,20 @@
 ---
+# # Drop a buffered packet.
 # type: PACKET_OUT
 # msg:
 #   buffer_id: 257
-#   in_port: 1
-#   data: ''
-#   actions:
 type:            PACKET_OUT
 xid:             0x00000000
 version:         0x04
 msg:             
   buffer_id:       0x00000101
-  in_port:         0x00000001
+  in_port:         CONTROLLER
   actions:         
   data:            ''
 ---
+# # Send packet data out port 1.
 # type: PACKET_OUT
 # msg:
-#   buffer_id: NO_BUFFER
-#   in_port: ANY
 #   data: 000000000000000000000000000000000000
 #   actions:
 #     - action: OUTPUT
@@ -28,17 +25,16 @@ xid:             0x00000000
 version:         0x04
 msg:             
   buffer_id:       NO_BUFFER
-  in_port:         ANY
+  in_port:         CONTROLLER
   actions:         
     - action:          OUTPUT
       port:            0x00000001
       max_len:         MAX
   data:            000000000000000000000000000000000000
 ---
+# # Send packet data out port 1, 2 and 3.
 # type: PACKET_OUT
 # msg:
-#   buffer_id: NO_BUFFER
-#   in_port: ANY
 #   data: 000000000000000000000000000000000000
 #   actions:
 #     - action: OUTPUT
@@ -55,7 +51,7 @@ xid:             0x00000000
 version:         0x04
 msg:             
   buffer_id:       NO_BUFFER
-  in_port:         ANY
+  in_port:         CONTROLLER
   actions:         
     - action:          OUTPUT
       port:            0x00000001
@@ -67,3 +63,15 @@ msg:
       port:            0x00000003
       max_len:         MAX
   data:            000000000000000000000000000000000000
+---
+# # Drop an unbuffered, empty packet (pointlessly).
+# type: PACKET_OUT
+# msg: {}
+type:            PACKET_OUT
+xid:             0x00000000
+version:         0x04
+msg:             
+  buffer_id:       NO_BUFFER
+  in_port:         CONTROLLER
+  actions:         
+  data:            ''

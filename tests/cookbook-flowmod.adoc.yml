@@ -1,4 +1,5 @@
 ---
+# # Delete all flows in all tables.
 # type: FLOW_MOD
 # msg:
 #   command: DELETE
@@ -21,6 +22,7 @@ msg:
   match:           
   instructions:    
 ---
+# # Delete flows in table 1.
 # type: FLOW_MOD
 # msg:
 #   command: DELETE
@@ -43,6 +45,7 @@ msg:
   match:           
   instructions:    
 ---
+# # Add table miss flow entry to send packets to controller.
 # type: FLOW_MOD
 # msg:
 #   command: ADD
@@ -76,6 +79,7 @@ msg:
           port:            CONTROLLER
           max_len:         MAX
 ---
+# # Add table miss flow entry to drop all packets.
 # type: FLOW_MOD
 # msg:
 #   command: ADD

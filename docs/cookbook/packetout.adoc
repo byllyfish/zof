@@ -5,12 +5,10 @@
 
 [source,yaml]
 ----
+# Drop a buffered packet.
 type: PACKET_OUT
 msg:
   buffer_id: 257
-  in_port: 1
-  data: ''
-  actions:
 ----
 
 
@@ -18,10 +16,9 @@ msg:
 
 [source,yaml]
 ----
+# Send packet data out port 1.
 type: PACKET_OUT
 msg:
-  buffer_id: NO_BUFFER
-  in_port: ANY
   data: 000000000000000000000000000000000000
   actions:
     - action: OUTPUT
@@ -34,10 +31,9 @@ msg:
 
 [source,yaml]
 ----
+# Send packet data out port 1, 2 and 3.
 type: PACKET_OUT
 msg:
-  buffer_id: NO_BUFFER
-  in_port: ANY
   data: 000000000000000000000000000000000000
   actions:
     - action: OUTPUT
@@ -49,4 +45,13 @@ msg:
     - action: OUTPUT
       port: 3
       max_len: MAX
+----
+
+==== Drop an Empty Unbuffered Packet (i.e. a pointless operation).
+
+[source,yaml]
+----
+# Drop an unbuffered, empty packet (pointlessly).
+type: PACKET_OUT
+msg: {}
 ----

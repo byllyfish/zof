@@ -1,14 +1,10 @@
 import unittest
-import os
 from pylibofp.controllerapp import ControllerApp
 from pylibofp.appfacade import AppFacade
 
 
 class MockController(object):
     def __init__(self):
-        #self.shared = None
-        #self.config = None
-        #self.datapaths = None
         self.apps = []
 
 
@@ -20,13 +16,13 @@ class ControllerAppTestCase(unittest.TestCase):
 
         @ofp.message('all')
         def _message_default(event):
-            ofp.shared['handler'] = 'message_default'
+            pass
 
         @ofp.event('all')
         def _event_default(event):
-            ofp.shared['handler'] = 'event_default'
+            pass
 
-        self.handlers = app._handlers
+        self.handlers = app.handlers
 
     def test_handlers(self):
         """Test that all handlers are loaded."""

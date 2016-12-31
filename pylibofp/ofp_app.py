@@ -1,13 +1,10 @@
 """Main ofp_app functions."""
 
 import asyncio
-import os
-import warnings
-import logging.config
 from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
-from .logging import TailBufferedHandler
+from .logging import init_logging
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
@@ -47,71 +44,15 @@ def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, 
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.
+        command_shell (bool): If true, load the built-in command_shell app.
     """
     if not loop:
         loop = asyncio.get_event_loop()
+
     if command_shell:
         import pylibofp.service.command_shell
+
     if loglevel:
-        _init_logging(loglevel)
+        init_logging(loglevel)
+
     Controller.singleton().run_loop(loop=loop, listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security)
-
-
-
-def _init_logging(loglevel):
-    """Set up logging.
-
-    This routine also enables asyncio debug mode if `loglevel` is 'debug'.
-    """
-    if loglevel.lower() == 'debug':
-        os.environ['PYTHONASYNCIODEBUG'] = '1'
-
-    logging.config.dictConfig(_logging_config(loglevel))
-    TailBufferedHandler.install()
-
-    logging.captureWarnings(True)
-    warnings.simplefilter('always')
-
-
-def _logging_config(loglevel):
-    """Construct dictionary to configure logging via `dictConfig`.
-    """
-    return {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'complete': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'complete',
-                'level': 'WARNING',
-                "stream": "ext://sys.stdout"
-            },
-            'logfile': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'complete',
-                'filename': 'ofp_app.log',
-                'maxBytes': 2**20,
-                'backupCount': 20,
-                'encoding': 'utf8'
-            }
-        },
-        'loggers': {
-            'pylibofp': {
-                'level': loglevel.upper()
-            },
-            #'pylibofp.app': {
-            #    'level': loglevel.upper()
-            #},
-            'asyncio': {
-                'level': 'WARNING'  # avoid polling msgs at 'INFO' level
-            }
-        },
-        'root': {
-            'handlers': ['console', 'logfile'] #['console', 'logfile']
-        }
-    }

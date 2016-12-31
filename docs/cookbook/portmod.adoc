@@ -1,0 +1,43 @@
+=== PortMod Packet
+
+==== Configure Port Down
+
+[source,yaml]
+----
+type: PORT_MOD
+msg:
+  port_no: 1
+  hw_addr: '00:01:02:03:04:05'
+  config: [ PORT_DOWN ]
+  mask: [ PORT_DOWN ]
+----
+
+==== Configure Port Up
+
+[source,yaml]
+----
+type: PORT_MOD
+msg:
+  port_no: 1
+  hw_addr: '00:01:02:03:04:05'
+  config: [ ]
+  mask: [ PORT_DOWN ]
+----
+
+==== Configure Port Experimenter Property (OpenFlow 1.4)
+
+[source,yaml]
+----
+version: 5
+type: PORT_MOD
+msg:
+  port_no: 1
+  hw_addr: '00:01:02:03:04:05'
+  config: [ ]
+  mask: [ ]
+  properties:
+    - property: EXPERIMENTER
+      experimenter: 0x01020304
+      exp_type: 0x05060708
+      data:   DEADBEEF
+----

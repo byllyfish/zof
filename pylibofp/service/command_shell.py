@@ -3,7 +3,7 @@ import inspect
 import asyncio
 import logging
 import inspect
-import concurrent
+
 from pylibofp import ofp_app, ofp_run
 from pylibofp.event import make_event
 from pylibofp.logging import TailBufferedHandler
@@ -20,7 +20,7 @@ from prompt_toolkit import AbortAction
 
 example_style = style_from_dict({
     # User input.
-    Token:          '#6666ff bold'
+    Token:          'bold'
 })
 
 
@@ -152,6 +152,19 @@ async def log(event):
     finally:
         # Change console log handler's level back to warning.
         console.setLevel('WARNING')
+
+
+@ofp.command('netstat', help='List network connections.')
+async def netstat(event):
+    result = await ofp.rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
+    for conn in result.stats:
+        print(conn)
+
+
+@ofp.command('close', help='Close a connection.')
+async def close(event):
+    result = await ofp.rpc_call('OFP.CLOSE', conn_id=int(event.args[0]))
+    print(result)
 
 
 @ofp.command('exit', help='Exit the program.')

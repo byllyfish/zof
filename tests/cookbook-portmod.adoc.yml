@@ -1,0 +1,64 @@
+---
+# type: PORT_MOD
+# msg:
+#   port_no: 1
+#   hw_addr: '00:01:02:03:04:05'
+#   config: [ PORT_DOWN ]
+#   mask: [ PORT_DOWN ]
+type:            PORT_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  port_no:         0x00000001
+  hw_addr:         '00:01:02:03:04:05'
+  config:          [ PORT_DOWN ]
+  mask:            [ PORT_DOWN ]
+  ethernet:        
+    advertise:       [  ]
+  properties:      
+---
+# type: PORT_MOD
+# msg:
+#   port_no: 1
+#   hw_addr: '00:01:02:03:04:05'
+#   config: [ ]
+#   mask: [ PORT_DOWN ]
+type:            PORT_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  port_no:         0x00000001
+  hw_addr:         '00:01:02:03:04:05'
+  config:          [  ]
+  mask:            [ PORT_DOWN ]
+  ethernet:        
+    advertise:       [  ]
+  properties:      
+---
+# version: 5
+# type: PORT_MOD
+# msg:
+#   port_no: 1
+#   hw_addr: '00:01:02:03:04:05'
+#   config: [ ]
+#   mask: [ ]
+#   properties:
+#     - property: EXPERIMENTER
+#       experimenter: 0x01020304
+#       exp_type: 0x05060708
+#       data:   DEADBEEF
+type:            PORT_MOD
+xid:             0x00000000
+version:         0x05
+msg:             
+  port_no:         0x00000001
+  hw_addr:         '00:01:02:03:04:05'
+  config:          [  ]
+  mask:            [  ]
+  ethernet:        
+    advertise:       [  ]
+  properties:      
+    - property:        EXPERIMENTER
+      experimenter:    0x01020304
+      exp_type:        0x05060708
+      data:            DEADBEEF

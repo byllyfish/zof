@@ -67,7 +67,7 @@ class AppFacade(object):
         self.subscribe = app.subscribe
         self.unsubscribe = app.subscribe
         #self.post_event = app.post_event
-        #self.rpc_call = app.rpc_call
+        self.rpc_call = app.rpc_call
 
     # Decorators
 

@@ -1,0 +1,44 @@
+=== GroupMod Packet
+
+==== Add an Indirect Group
+
+[source,yaml]
+----
+type: GROUP_MOD
+msg:
+  command: ADD
+  type: INDIRECT
+  group_id: 1
+  buckets:
+    - actions:
+      - action: SET_FIELD
+        field: ETH_SRC
+        value: '11:22:33:44:55:66'
+      - action: SET_FIELD
+        field: ETH_DST
+        value: '00:01:02:03:04:05'
+      - action: OUTPUT
+        port: 1
+        max_len: MAX
+----
+
+==== Add an All Group
+
+[source,yaml]
+----
+type: GROUP_MOD
+msg:
+  command: ADD
+  type: ALL
+  group_id: 2
+  buckets:
+    - actions:
+      - action: OUTPUT
+        port: 1
+        max_len: MAX
+    - actions: 
+      - action: OUTPUT
+        port: 2
+        max_len: MAX
+----
+
