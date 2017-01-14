@@ -5,6 +5,7 @@ from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
 from .logging import init_logging
+from .compiledmessage import CompiledMessage
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
@@ -55,4 +56,12 @@ def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, 
     if loglevel:
         init_logging(loglevel)
 
-    Controller.singleton().run_loop(loop=loop, listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security)
+    controller = Controller.singleton()
+    controller.run_loop(loop=loop, listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security)
+
+
+def ofp_compile(msg):
+    """Compile an OpenFlow message template.
+    """
+    controller = Controller.singleton()
+    return CompiledMessage(controller, msg)

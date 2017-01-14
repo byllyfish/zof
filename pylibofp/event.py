@@ -3,8 +3,7 @@ from pylibofp.objectview import ObjectView, to_json
 
 
 class Event(ObjectView):
-    """
-    Concrete class that represents an Event.
+    """Concrete class that represents an Event.
     """
 
     def __init__(self, d):
@@ -18,8 +17,7 @@ class Event(ObjectView):
 
 
 class MatchObject(ObjectView):
-    """
-    Concrete class that represents a Match with convenient accessors.
+    """Concrete class that represents a Match with convenient accessors.
     """
 
     def __init__(self, match):

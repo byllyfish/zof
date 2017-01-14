@@ -5,11 +5,9 @@ import logging
 import re
 import signal
 import functools
-from datetime import datetime
 from collections import defaultdict
-from pylibofp.event import load_event, dump_event, make_event
+from pylibofp.event import load_event, dump_event, make_event, Event
 from pylibofp.connection import Connection
-from pylibofp.objectview import ObjectView
 import pylibofp.exception as _exc
 
 _XID_TIMEOUT = 10.0  # Seconds
@@ -43,30 +41,28 @@ class Controller(object):
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
-        self._idle_task = None
         self._event_queue = None
         self._ofp_versions = []
         self._tls_id = 0
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
-        self._loop = None
         self._interruptable_task = None
 
     def run_loop(self, *, loop, listen_endpoints=None, libofp_args=None, security=None):
         """Main entry point for running a controller.
         """
-        self._loop = loop
         try:            
             self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
             loop.create_task(self._run(listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security))
 
-            LOGGER.debug('asyncio loop started')
-            self._loop.run_forever()
+            LOGGER.debug('run_forever started')
+            loop.run_forever()
+            LOGGER.debug('run_forever stopped')
 
         finally:
             self._shutdown_cleanly(loop)
             loop.close()
-            LOGGER.debug('asyncio loop stopped')
+            LOGGER.info('Exiting')
 
     def _add_signal_handlers(self, loop, signals):
         """
@@ -75,28 +71,25 @@ class Controller(object):
         We use a KeyboardInterrupt to signal it's time to shutdown.
         """
 
-        def _handle_signal(signame, loop, controller):
+        def _handle_signal(signame, controller):
             LOGGER.info('Signal Received: %s', signame)
             if signame == 'SIGINT' and controller._interruptable_task:
                 controller._interruptable_task.cancel()
             else:
                 controller._post_event(make_event('EXIT'))
-                #loop.stop()
-            #raise KeyboardInterrupt
 
         for signame in signals:
             loop.add_signal_handler(
                 getattr(signal, signame),
-                functools.partial(_handle_signal, signame, loop, self))
+                functools.partial(_handle_signal, signame, self))
 
     def _shutdown_cleanly(self, loop):
         """Give existing tasks a chance to complete.
         """
         LOGGER.debug('_shutdown_cleanly')
         try:
-            #self._post_event(make_event(event='EXIT'))
-
-            # Try 3 times to finish our pending tasks.
+            # Try 3 times to finish our pending tasks. We give it three tries
+            # to permit stopping tasks to create more async tasks to clean up.
             for _ in range(3):
                 if not self._run_pending(loop, timeout=5.0):
                     break
@@ -105,6 +98,7 @@ class Controller(object):
             LOGGER.exception(ex)
         finally:
             self._set_phase('POSTSTOP')
+            self._event_queue = None
 
     def _run_pending(self, loop, timeout=None):
         """
@@ -130,31 +124,26 @@ class Controller(object):
 
         LOGGER.debug("Controller.run entered")
 
-        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL,
-                                                              self._idle)
-        self._event_queue = asyncio.Queue()
-
         self._conn = Connection(libofp_args=libofp_args)
         await self._conn.connect()
+
+        self._event_queue = asyncio.Queue()
         self._set_phase('PRESTART')
 
         asyncio.ensure_future(self._start(listen_endpoints=listen_endpoints, security=security))
         asyncio.ensure_future(self._event_loop())
+        idle = asyncio.ensure_future(self._idle_task())
 
         await self._read_loop()
-        # FIXME: handle case where _read_loop finishes first.
 
+        idle.cancel()
         self._set_phase('STOP')
         await self._conn.disconnect()
-
-        self._idle_task.cancel()
-        self._event_queue = None
 
         LOGGER.debug("Controller.run exited")
 
     async def _event_loop(self):
-        """
-        Run the event loop to handle events.
+        """Run the event loop to handle events.
         """
         try:
             LOGGER.debug('_event_loop entered')
@@ -164,13 +153,12 @@ class Controller(object):
 
         except _exc.ExitException:
             self._conn.close(True)
-            self._loop.stop()
+            asyncio.get_event_loop().stop()
         finally:
             LOGGER.debug('_event_loop exited')
 
     async def _read_loop(self):
-        """
-        Read messages from the driver and push them onto the event queue.
+        """Read messages from the driver and push them onto the event queue.
         """
         LOGGER.debug('_read_loop entered')
         running = True
@@ -265,10 +253,9 @@ class Controller(object):
             raise
 
     def _post_event(self, event):
+        """Post an event to our event queue.
         """
-        Post an event to our event queue.
-        """
-        assert isinstance(event, ObjectView)
+        assert isinstance(event, Event)
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
@@ -282,8 +269,6 @@ class Controller(object):
             elif 'id' in event:
                 self._handle_rpc_reply(event)
             elif event.method == 'OFP.MESSAGE':
-                # Convert time field to datetime object.
-                event.params.time = datetime.fromtimestamp(float(event.params.time))
                 type_ = event.params.type
                 if not type_.startswith('CHANNEL_'):
                     self._handle_message(event.params)
@@ -416,21 +401,18 @@ class Controller(object):
         for app in self.apps:
             app.message(params)
 
-    def _idle(self):
+    async def _idle_task(self):
+        """Task to check for requests that have timed out.
         """
-        Called once a second to check for timeout expirations.
-        """
-
-        now = _timestamp()
-        timed_out = [(xid, fut)
-                     for (xid, (fut, expiration)) in self._reqs.items()
-                     if expiration <= now]
-        for xid, fut in timed_out:
-            fut.set_exception(_exc.TimeoutException(xid))
-            del self._reqs[xid]
-
-        self._idle_task = asyncio.get_event_loop().call_later(_IDLE_INTERVAL,
-                                                              self._idle)
+        while True:
+            await asyncio.sleep(_IDLE_INTERVAL)
+            now = _timestamp()
+            timed_out = [(xid, fut)
+                         for (xid, (fut, expiration)) in self._reqs.items()
+                         if expiration <= now]
+            for xid, fut in timed_out:
+                fut.set_exception(_exc.TimeoutException(xid))
+                del self._reqs[xid]
 
     def _set_phase(self, phase):
         """

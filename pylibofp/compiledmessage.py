@@ -1,26 +1,42 @@
 import string
 import textwrap
+import json
+import asyncio
 
 
 class CompiledMessage(object):
     """Concrete class representing a compiled OpenFlow message template.
 
     Attributes:
-        _app (ControllerApp): App object.
+        _parent (Controller): Controller object.
         _template (StringTemplate): Prepared message template.
     """
 
-    def __init__(self, app, msg):
-        self._app = app
+    def __init__(self, parent, msg):
+        self._parent = parent
         self._template = None
         self._compile(msg)
 
     def send(self, **kwds):
-        self._app.send(self._template, kwds)
+        """Send an OpenFlow message (fire and forget).
+
+        Args:
+            kwds (dict): Template argument values.
+        """
+        kwds.setdefault('xid', self._parent._next_xid())
+        task_locals = asyncio.Task.current_task().ofp_task_locals
+        self._parent._write(self._complete(kwds, task_locals))
 
 
     def request(self, **kwds):
-        return self._app.request(self._template, kwds)
+        """Send an OpenFlow request and receive a response.
+
+        Args:
+            kwds (dict): Template argument values.
+        """
+        xid = kwds.setdefault('xid', self._parent._next_xid())
+        task_locals = asyncio.Task.current_task().ofp_task_locals
+        return self._parent._write(self._complete(kwds, task_locals), xid)
 
 
     def _compile(self, msg):
@@ -35,6 +51,32 @@ class CompiledMessage(object):
         msg = msg.replace('\n', '\n  ')
         self._template = string.Template(_TEMPLATE % msg)
 
+
+    def _complete(self, kwds, task_locals):
+        """Substitute keywords into OFP.SEND template.
+
+        Translate `bytes` values to hexadecimal and escape all string values.
+        """
+        
+        kwds.setdefault('datapath_id', task_locals['datapath_id'])
+        kwds.setdefault('conn_id', task_locals['conn_id'])
+
+        if kwds.get('conn_id') is None:
+            # Either conn_id is not present *or* it's equal to None.
+            kwds['conn_id'] = 0
+            if not kwds['datapath_id']:
+                raise ValueError('Must specify either datapath_id or conn_id.')
+
+        for key in kwds:
+            val = kwds[key]
+            if isinstance(val, bytes):
+                kwds[key] = val.hex()
+            elif isinstance(val, str):
+                kwds[key] = json.dumps(val)
+            elif val is None:
+                kwds[key] = 'null'
+
+        return self._template.substitute(kwds)
 
 
 _TEMPLATE = """\

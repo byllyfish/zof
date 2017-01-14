@@ -1,13 +1,8 @@
 """Implements ControllerApp class."""
 
 import logging
-import textwrap
-import string
-import json
-import asyncio
 from collections import defaultdict
 from pylibofp.handler import make_handler
-from pylibofp.objectview import ObjectView
 import pylibofp.exception as _exc
 from .event import Event
 
@@ -75,32 +70,6 @@ class ControllerApp(object):
                 'Exception caught while handling "%s" event: %s', handler_type,
                 event)
 
-    def send(self, template, kwds):
-        """Send an OpenFlow message (fire and forget).
-
-        Args:
-            template (StringTemplate): Compiled OFP.SEND template.
-            kwds (dict): Template argument values.
-        """
-        xid = kwds.setdefault('xid', self.parent._next_xid())
-        event = _compile_template(template, kwds)
-        self.logger.debug('send {\n%s\n}', event)
-        self.counters['send'] += 1
-        self.parent._write(event)
-
-    def request(self, template, kwds):
-        """Send an OpenFlow request and receive a response.
-
-        Args:
-            template (StringTemplate): Compiled OFP.SEND template.
-            kwds (dict): Template argument values.
-        """
-        xid = kwds.setdefault('xid', self.parent._next_xid())
-        event = _compile_template(template, kwds)
-        self.logger.debug('request {\n%s\n}', event)
-        self.counters['request'] += 1
-        return self.parent._write(event, xid)
-
     def post_event(self, event):
         """
         Function used to send an internal event to all app modules.
@@ -124,7 +93,7 @@ class ControllerApp(object):
         scope.
         """
         scope_key = datapath_id if datapath_id else conn_id
-        task_locals = ObjectView(dict(datapath_id=datapath_id, conn_id=conn_id))
+        task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
         return self.parent._ensure_future(
             coroutine, scope_key=scope_key, app=self, task_locals=task_locals)
 
@@ -156,30 +125,3 @@ class ControllerApp(object):
     def next_app_id():
         ControllerApp._curr_app_id += 1
         return ControllerApp._curr_app_id
-
-
-def _compile_template(template, kwds):
-    """Substitute keywords into OFP.SEND template.
-
-    Translate `bytes` values to hexadecimal and escape all string values.
-    """
-    
-    task_locals = asyncio.Task.current_task().ofp_task_locals
-    kwds.setdefault('datapath_id', task_locals.datapath_id)
-    kwds.setdefault('conn_id', task_locals.conn_id)
-
-    if kwds.get('conn_id') is None:
-        kwds['conn_id'] = 0
-        if not kwds['datapath_id']:
-            raise ValueError('Must specify either datapath_id or conn_id.')
-
-    for key in kwds:
-        val = kwds[key]
-        if isinstance(val, bytes):
-            kwds[key] = val.hex()
-        elif isinstance(val, str):
-            kwds[key] = json.dumps(val)
-        elif val is None:
-            kwds[key] = 'null'
-
-    return template.substitute(kwds)

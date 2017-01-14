@@ -101,7 +101,7 @@ class AppFacade(object):
     def compile(self, msg):
         """ Compile an OpenFlow message template.
         """
-        return CompiledMessage(self._app, msg)
+        return CompiledMessage(self._app.parent, msg)
 
     # RPC Functions
 

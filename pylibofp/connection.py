@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import shutil
-import os
 
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
@@ -39,15 +38,15 @@ class Connection(object):
         LOGGER.debug("Launch libofp (%s)", cmd[0])
 
         try:
-            # When we create the subprocess, we force it into its own process
-            # group using the `prexec_fn` argument. We do not want SIGINT 
-            # signals sent from the terminal to reach the subprocess.
+            # When we create the subprocess, make it a session leader.
+            # We do not want SIGINT signals sent from the terminal to reach 
+            # the subprocess.
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 limit=_DEFAULT_LIMIT,
-                preexec_fn=os.setpgrp)
+                start_new_session=True)
             self._conn = proc
             self._input = proc.stdout
             self._output = proc.stdin
