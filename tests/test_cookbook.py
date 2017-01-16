@@ -56,18 +56,18 @@ class CookbookTestCase(AsyncTestCase):
 
 
     def _write(self, data):
-        self.conn.write(bytes(data, 'utf-8') + b'\n---\n')
+        self.conn.write(bytes(data, 'utf-8'), delimiter=b'\n---\n')
 
 
     async def _read_msg(self):
         result = []
         while True:
-            line = await self.conn.readline()
-            if not line or line == b'...\n':
+            line = await self.conn.readline(b'\n')
+            if not line or line == b'...':
                 break
-            if line == b'---\n' or not line.rstrip():
+            if line == b'---' or not line.rstrip():
                 continue
-            result.append(line.decode('utf-8'))
+            result.append(line.decode('utf-8')+'\n')
         return result
 
 

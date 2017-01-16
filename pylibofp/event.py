@@ -38,7 +38,9 @@ def load_event(event):
 
 
 def dump_event(event):
-    return to_json(event).encode('utf-8') + b'\n'
+    if isinstance(event, str):
+        return event.encode('utf-8')
+    return to_json(event).encode('utf-8')
 
 
 def make_event(**kwds):

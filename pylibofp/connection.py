@@ -68,15 +68,21 @@ class Connection(object):
         self._conn = None
         return return_code
 
-    async def readline(self):
+    async def readline(self, delimiter=b'\x00'):
         """Read next incoming line from the connection.
         """
-        return await self._input.readline()
+        try:
+            result = await self._input.readuntil(delimiter)
+            return result[0:-1]
+        except asyncio.streams.IncompleteReadError as ex:
+            if ex.partial:
+                LOGGER.warning('libofp incomplete read: %d bytes ignored', len(ex.partial))
+            return b''
 
-    def write(self, data):
+    def write(self, data, delimiter=b'\x00'):
         """Write data to the connection.
         """
-        self._output.write(data)
+        self._output.write(data + delimiter if delimiter else data)
 
     async def drain(self):
         """Wait while the output buffer is flushed.
