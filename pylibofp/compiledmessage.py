@@ -1,7 +1,7 @@
 import string
 import textwrap
-import json
 import asyncio
+from .objectview import ObjectView, to_json
 
 
 class CompiledMessage(object):
@@ -71,8 +71,8 @@ class CompiledMessage(object):
             val = kwds[key]
             if isinstance(val, bytes):
                 kwds[key] = val.hex()
-            elif isinstance(val, str):
-                kwds[key] = json.dumps(val)
+            elif isinstance(val, (str, dict, ObjectView)):
+                kwds[key] = to_json(val)
             elif val is None:
                 kwds[key] = 'null'
 

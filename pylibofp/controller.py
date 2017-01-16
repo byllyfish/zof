@@ -511,8 +511,7 @@ class Controller(object):
 
 
 def _timestamp():
-    """
-    Return a monotonic timestamp in seconds.
+    """Return a monotonic timestamp in seconds.
     """
     return asyncio.get_event_loop().time()
 
