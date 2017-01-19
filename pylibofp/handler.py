@@ -6,78 +6,28 @@ from pylibofp.objectview import ObjectView
 LOGGER = logging.getLogger('pylibofp.controller')
 
 _ALL_SUBTYPE = 'ALL'
-_MSG_SUBTYPES = { 
-_ALL_SUBTYPE,
-"CHANNEL_UP",
-"CHANNEL_DOWN",
-"CHANNEL_ALERT",
-"HELLO",
-"ERROR",
-"ECHO_REQUEST",
-"ECHO_REPLY",
-"EXPERIMENTER",
-"FEATURES_REQUEST",
-"FEATURES_REPLY",
-"GET_CONFIG_REQUEST",
-"GET_CONFIG_REPLY",
-"SET_CONFIG",
-"PACKET_IN",
-"FLOW_REMOVED",
-"PORT_STATUS",
-"PACKET_OUT",
-"FLOW_MOD",
-"GROUP_MOD",
-"PORT_MOD",
-"TABLE_MOD",
-"REQUEST.DESC",
-"REQUEST.FLOW",
-"REQUEST.AGGREGATE",
-"REQUEST.TABLE",
-"REQUEST.PORT_STATS",
-"REQUEST.QUEUE",
-"REQUEST.GROUP",
-"REQUEST.GROUP_DESC",
-"REQUEST.GROUP_FEATURES",
-"REQUEST.METER",
-"REQUEST.METER_CONFIG",
-"REQUEST.METER_FEATURES",
-"REQUEST.TABLE_FEATURES",
-"REQUEST.PORT_DESC",
-"REQUEST.TABLE_DESC",
-"REQUEST.QUEUE_DESC",
-"REQUEST.FLOW_MONITOR",
-"REPLY.DESC",
-"REPLY.FLOW",
-"REPLY.AGGREGATE",
-"REPLY.TABLE",
-"REPLY.PORT_STATS",
-"REPLY.QUEUE",
-"REPLY.GROUP",
-"REPLY.GROUP_DESC",
-"REPLY.GROUP_FEATURES",
-"REPLY.METER",
-"REPLY.METER_CONFIG",
-"REPLY.METER_FEATURES",
-"REPLY.TABLE_FEATURES",
-"REPLY.PORT_DESC",
-"REPLY.TABLE_DESC",
-"REPLY.QUEUE_DESC",
-"REPLY.FLOW_MONITOR",
-"BARRIER_REQUEST",
-"BARRIER_REPLY",
-"QUEUE_GET_CONFIG_REQUEST",
-"QUEUE_GET_CONFIG_REPLY",
-"ROLE_REQUEST",
-"ROLE_REPLY",
-"GET_ASYNC_REQUEST",
-"GET_ASYNC_REPLY",
-"SET_ASYNC",
-"METER_MOD",
-"ROLE_STATUS",
-"TABLE_STATUS",
-"REQUESTFORWARD",
-"BUNDLE_CONTROL",
-"BUNDLE_ADD_MESSAGE" }
+_MSG_SUBTYPES = {
+    _ALL_SUBTYPE, "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO",
+    "ERROR", "ECHO_REQUEST", "ECHO_REPLY", "EXPERIMENTER", "FEATURES_REQUEST",
+    "FEATURES_REPLY", "GET_CONFIG_REQUEST", "GET_CONFIG_REPLY", "SET_CONFIG",
+    "PACKET_IN", "FLOW_REMOVED", "PORT_STATUS", "PACKET_OUT", "FLOW_MOD",
+    "GROUP_MOD", "PORT_MOD", "TABLE_MOD", "REQUEST.DESC", "REQUEST.FLOW",
+    "REQUEST.AGGREGATE", "REQUEST.TABLE", "REQUEST.PORT_STATS",
+    "REQUEST.QUEUE", "REQUEST.GROUP", "REQUEST.GROUP_DESC",
+    "REQUEST.GROUP_FEATURES", "REQUEST.METER", "REQUEST.METER_CONFIG",
+    "REQUEST.METER_FEATURES", "REQUEST.TABLE_FEATURES", "REQUEST.PORT_DESC",
+    "REQUEST.TABLE_DESC", "REQUEST.QUEUE_DESC", "REQUEST.FLOW_MONITOR",
+    "REPLY.DESC", "REPLY.FLOW", "REPLY.AGGREGATE", "REPLY.TABLE",
+    "REPLY.PORT_STATS", "REPLY.QUEUE", "REPLY.GROUP", "REPLY.GROUP_DESC",
+    "REPLY.GROUP_FEATURES", "REPLY.METER", "REPLY.METER_CONFIG",
+    "REPLY.METER_FEATURES", "REPLY.TABLE_FEATURES", "REPLY.PORT_DESC",
+    "REPLY.TABLE_DESC", "REPLY.QUEUE_DESC", "REPLY.FLOW_MONITOR",
+    "BARRIER_REQUEST", "BARRIER_REPLY", "QUEUE_GET_CONFIG_REQUEST",
+    "QUEUE_GET_CONFIG_REPLY", "ROLE_REQUEST", "ROLE_REPLY",
+    "GET_ASYNC_REQUEST", "GET_ASYNC_REPLY", "SET_ASYNC", "METER_MOD",
+    "ROLE_STATUS", "TABLE_STATUS", "REQUESTFORWARD", "BUNDLE_CONTROL",
+    "BUNDLE_ADD_MESSAGE"
+}
 
 
 def make_handler(callback, type_, subtype='', options=None):
@@ -110,10 +60,13 @@ class BaseHandler(object):
         datapath_id = event('datapath_id')
         conn_id = event('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
-            return app.ensure_future(self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
+            return app.ensure_future(
+                self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
             task = asyncio.Task.current_task()
-            task.ofp_task_locals = ObjectView(dict(datapath_id=datapath_id, conn_id=conn_id))
+            task.ofp_task_locals = ObjectView(
+                dict(
+                    datapath_id=datapath_id, conn_id=conn_id))
             return self.callback(event)
 
     def __repr__(self):

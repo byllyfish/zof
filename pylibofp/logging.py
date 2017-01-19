@@ -33,7 +33,6 @@ class TailBufferedHandler(logging.Handler):
         super().close()
         self._tail.clear()
 
-
     @staticmethod
     def install():
         """Install tail logging handler.

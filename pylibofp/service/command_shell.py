@@ -17,15 +17,12 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
-
 example_style = style_from_dict({
     # User input.
-    Token:          'bold'
+    Token: 'bold'
 })
 
-
 ofp = ofp_app('service.command_shell')
-
 
 # def command(cmd, *, help):
 #     def _wrap(func):
@@ -43,7 +40,14 @@ async def command_shell(event):
     history = InMemoryHistory()
     while True:
         try:
-            command = await prompt_async('ofp_app> ', history=history, completer=completer, style=example_style, patch_stdout=True, complete_while_typing=False, on_abort=AbortAction.RETRY)
+            command = await prompt_async(
+                'ofp_app> ',
+                history=history,
+                completer=completer,
+                style=example_style,
+                patch_stdout=True,
+                complete_while_typing=False,
+                on_abort=AbortAction.RETRY)
             if command:
                 await run_command(command)
         except EOFError:
@@ -76,7 +80,6 @@ async def run_command(command):
             ofp.logger.debug('CancelledError')
         except Exception as ex:
             ofp.logger.exception(ex)
-
 
 
 def find_command_handler(cmd):
@@ -123,7 +126,9 @@ def app_list(event):
         send = app.counters['send']
         req = app.counters['request']
 
-        yield '%2d %4d %-28s %4s %4s %4s/%-4s  %4s %4s' % (app.id, app.precedence, app.name, msgs, evts, tasks, done, send, req)
+        yield '%2d %4d %-28s %4s %4s %4s/%-4s  %4s %4s' % (
+            app.id, app.precedence, app.name, msgs, evts, tasks, done, send,
+            req)
 
 
 @ofp.command('task', help='List all running tasks.')
@@ -131,7 +136,9 @@ def task_list(event):
     yield 'ID  NAME   SCOPE   APP   AWAIT RUNNING'
     for task in ofp.controller.tasks():
         coro = task._coro
-        yield '%s %s %s %r %s' % (coro.__qualname__, task.ofp_task_scope, task.ofp_task_app.name, coro.cr_await, coro.cr_running)
+        yield '%s %s %s %r %s' % (coro.__qualname__, task.ofp_task_scope,
+                                  task.ofp_task_app.name, coro.cr_await,
+                                  coro.cr_running)
     yield 'Other tasks'
     for task in asyncio.Task.all_tasks():
         yield '%r' % task._coro

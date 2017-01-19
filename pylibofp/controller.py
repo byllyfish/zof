@@ -48,12 +48,21 @@ class Controller(object):
         self._phase = 'INIT'
         self._interruptable_task = None
 
-    def run_loop(self, *, loop, listen_endpoints=None, libofp_args=None, security=None):
+    def run_loop(self,
+                 *,
+                 loop,
+                 listen_endpoints=None,
+                 libofp_args=None,
+                 security=None):
         """Main entry point for running a controller.
         """
-        try:            
+        try:
             self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
-            loop.create_task(self._run(listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security))
+            loop.create_task(
+                self._run(
+                    listen_endpoints=listen_endpoints,
+                    libofp_args=libofp_args,
+                    security=security))
 
             LOGGER.debug('run_forever started')
             loop.run_forever()
@@ -117,7 +126,11 @@ class Controller(object):
                 return True
             raise
 
-    async def _run(self, *, listen_endpoints=None, libofp_args=None, security=None):
+    async def _run(self,
+                   *,
+                   listen_endpoints=None,
+                   libofp_args=None,
+                   security=None):
         """
         Run the controller within asyncio.
         """
@@ -130,7 +143,9 @@ class Controller(object):
         self._event_queue = asyncio.Queue()
         self._set_phase('PRESTART')
 
-        asyncio.ensure_future(self._start(listen_endpoints=listen_endpoints, security=security))
+        asyncio.ensure_future(
+            self._start(
+                listen_endpoints=listen_endpoints, security=security))
         asyncio.ensure_future(self._event_loop())
         idle = asyncio.ensure_future(self._idle_task())
 
@@ -233,7 +248,7 @@ class Controller(object):
     async def _listen_on_endpoints(self, listen_endpoints):
         """Listen on a list of endpoints.
         """
-        ofversion = None        # TODO: replace self._config.ofversion
+        ofversion = None  # TODO: replace self._config.ofversion
         options = ['FEATURES_REQ']
         if not ofversion:
             ofversion = self._ofp_versions
@@ -372,9 +387,9 @@ class Controller(object):
         else:
             scope_key = 'Channel %s' % params.conn_id
 
-        LOGGER.info('%s %s [conn_id=%s, version=%s]', scope_key,
-                    params.type, params.conn_id, params.version)
-        
+        LOGGER.info('%s %s [conn_id=%s, version=%s]', scope_key, params.type,
+                    params.conn_id, params.version)
+
         if params.type == 'CHANNEL_DOWN':
             self._cancel_tasks(scope_key)
 
@@ -395,8 +410,8 @@ class Controller(object):
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
             params.alert, data,
-            len(params.data), params.conn_id, params('datapath_id'),
-            params.xid)
+            len(params.data), params.conn_id,
+            params('datapath_id'), params.xid)
 
         for app in self.apps:
             app.message(params)
@@ -452,9 +467,11 @@ class Controller(object):
             try:
                 app.logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
-                app.logger.debug('ensure_future done: %s', _coro_name(coroutine))
+                app.logger.debug('ensure_future done: %s',
+                                 _coro_name(coroutine))
             except asyncio.CancelledError:
-                app.logger.debug('ensure_future cancelled: %s', _coro_name(coroutine))
+                app.logger.debug('ensure_future cancelled: %s',
+                                 _coro_name(coroutine))
             except Exception as ex:  # pylint: disable=broad-except
                 app.logger.exception(ex)
 
@@ -501,7 +518,6 @@ class Controller(object):
         for task_list in self._tasks.values():
             result += task_list
         return result
-
 
     @staticmethod
     def set_interruptable_task(task):

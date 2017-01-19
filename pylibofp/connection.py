@@ -76,7 +76,8 @@ class Connection(object):
             return result[0:-1]
         except asyncio.streams.IncompleteReadError as ex:
             if ex.partial:
-                LOGGER.warning('libofp incomplete read: %d bytes ignored', len(ex.partial))
+                LOGGER.warning('libofp incomplete read: %d bytes ignored',
+                               len(ex.partial))
             return b''
 
     def write(self, data, delimiter=b'\x00'):

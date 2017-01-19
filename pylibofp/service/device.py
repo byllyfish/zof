@@ -18,9 +18,7 @@ import asyncio
 from pylibofp import ofp_app, ofp_run
 from collections import OrderedDict
 
-
 OPENFLOW_VERSION_1 = 0
-
 
 OFP = ofp_app('service.device')  #, precedence=-100)
 
@@ -82,7 +80,11 @@ class Device(object):
               config: [ $port_down ]
               mask: [ PORT_DOWN ]
         ''')
-        req.send(datapath_id=self.datapath_id, port_no=port_no, hw_addr=port.hw_addr, port_down=port_down)
+        req.send(
+            datapath_id=self.datapath_id,
+            port_no=port_no,
+            hw_addr=port.hw_addr,
+            port_down=port_down)
 
 
 class Port(object):
@@ -124,8 +126,6 @@ class Port(object):
         self.config = port.config
 
         return event
-        
-
 
     def up(self):
         return 'LINK_DOWN' not in self.state
@@ -134,14 +134,13 @@ class Port(object):
         return 'PORT_DOWN' not in self.config
 
 
-
-
 @OFP.event('start')
 async def poll_portstats(event):
     while True:
         for device in DEVICES.values():
             if device.ports:
-                reply = await PORT_STATS.request(datapath_id=device.datapath_id)
+                reply = await PORT_STATS.request(
+                    datapath_id=device.datapath_id)
                 for stat in reply.msg:
                     device.ports[stat.port_no].stats = stat
                     del stat['port_no']
@@ -168,7 +167,8 @@ async def features_reply(event):
 
     device = DEVICES[event.datapath_id]
     device.n_buffers = event.msg.n_buffers
-    device.ports = OrderedDict((i.port_no, Port(i)) for i in await _fetch_ports(event))
+    device.ports = OrderedDict((i.port_no, Port(i))
+                               for i in await _fetch_ports(event))
 
     if device.n_buffers > 0:
         await _set_config()
@@ -182,9 +182,6 @@ async def features_reply(event):
     #OFP.logger.info('desc %r', desc)
 
     OFP.post_event('device_ready', device=device)
-
-
-
 
 
 @OFP.message('port_status')
@@ -232,6 +229,7 @@ async def _fetch_ports(features_reply):
         result = await PORT_REQ.request()
         return result.msg
 
+
 async def _set_config():
     SET_CONFIG.send()
     #OFP.logger.info('_set_config %r', result)
@@ -242,12 +240,15 @@ async def _fetch_desc():
     return await DESC_REQ.request()
 
 
-
 @OFP.command('device', help='List all devices.')
 def device_list(event):
     yield 'VER  NAME               DPID                   ENDPOINT  PORT BUF  CONN'
     for device in DEVICES.values():
-        yield '%3d %-20s %s %s  %d %d %d %s' % (device.version, device.name, device.datapath_id, device.endpoint, len(device.ports), device.n_buffers, device.conn_id, device.hw_desc)
+        yield '%3d %-20s %s %s  %d %d %d %s' % (
+            device.version, device.name, device.datapath_id, device.endpoint,
+            len(device.ports), device.n_buffers, device.conn_id,
+            device.hw_desc)
+
 
 @OFP.command('port', help='List all ports.')
 def port_list(event):
@@ -256,10 +257,14 @@ def port_list(event):
         for port in device.ports.values():
             s = port.stats
             if s:
-                stats = '%d %d %d %d' % (s.tx_packets, s.tx_bytes, s.rx_packets, s.rx_bytes)
+                stats = '%d %d %d %d' % (s.tx_packets, s.tx_bytes,
+                                         s.rx_packets, s.rx_bytes)
             else:
                 stats = '<nostats>'
-            yield '%5s %-20s %s %s %s %s %s' % (port.port_no, port.name, port.hw_addr, device.name, port.config, port.state, stats)
+            yield '%5s %-20s %s %s %s %s %s' % (port.port_no, port.name,
+                                                port.hw_addr, device.name,
+                                                port.config, port.state, stats)
+
 
 @OFP.command('portmod', help='Change port state.')
 async def portmod(event):
@@ -267,6 +272,7 @@ async def portmod(event):
     portnum = int(event.args[1])
     device = DEVICES[dpid.lower()]
     await device.port_mod(portnum, port_down=True)
+
 
 if __name__ == '__main__':
     ofp_run()

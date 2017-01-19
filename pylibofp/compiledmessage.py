@@ -27,7 +27,6 @@ class CompiledMessage(object):
         task_locals = asyncio.Task.current_task().ofp_task_locals
         self._parent._write(self._complete(kwds, task_locals))
 
-
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
 
@@ -37,7 +36,6 @@ class CompiledMessage(object):
         xid = kwds.setdefault('xid', self._parent._next_xid())
         task_locals = asyncio.Task.current_task().ofp_task_locals
         return self._parent._write(self._complete(kwds, task_locals), xid)
-
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.
@@ -51,13 +49,12 @@ class CompiledMessage(object):
         msg = msg.replace('\n', '\n  ')
         self._template = string.Template(_TEMPLATE % msg)
 
-
     def _complete(self, kwds, task_locals):
         """Substitute keywords into OFP.SEND template.
 
         Translate `bytes` values to hexadecimal and escape all string values.
         """
-        
+
         kwds.setdefault('datapath_id', task_locals['datapath_id'])
         kwds.setdefault('conn_id', task_locals['conn_id'])
 

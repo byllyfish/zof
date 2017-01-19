@@ -29,7 +29,13 @@ def ofp_app(name, *, ofversion=None):
     return AppFacade(app)
 
 
-def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, loglevel='info', security=None, command_shell=True):
+def ofp_run(*,
+            loop=None,
+            listen_endpoints=_LISTEN_ENDPOINTS,
+            libofp_args=None,
+            loglevel='info',
+            security=None,
+            command_shell=True):
     """Run event loop for ofp_app's.
 
     Args:
@@ -57,7 +63,11 @@ def ofp_run(*, loop=None, listen_endpoints=_LISTEN_ENDPOINTS, libofp_args=None, 
         init_logging(loglevel)
 
     controller = Controller.singleton()
-    controller.run_loop(loop=loop, listen_endpoints=listen_endpoints, libofp_args=libofp_args, security=security)
+    controller.run_loop(
+        loop=loop,
+        listen_endpoints=listen_endpoints,
+        libofp_args=libofp_args,
+        security=security)
 
 
 def ofp_compile(msg):

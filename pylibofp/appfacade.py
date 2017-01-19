@@ -74,6 +74,7 @@ class AppFacade(object):
     def message(self, subtype, **kwds):
         """ Message subscribe decorator.
         """
+
         def _wrap(func):
             self.subscribe(func, 'message', subtype, kwds)
 
@@ -82,6 +83,7 @@ class AppFacade(object):
     def event(self, subtype, **kwds):
         """ Event subscribe decorator.
         """
+
         def _wrap(func):
             self.subscribe(func, 'event', subtype, kwds)
 
@@ -90,11 +92,11 @@ class AppFacade(object):
     def command(self, subtype, *, help):
         """ Command subscribe decorator.
         """
+
         def _wrap(func):
             self.subscribe(func, 'command', subtype, dict(help=help))
 
         return _wrap
-
 
     # Basic Functions
 
@@ -108,10 +110,9 @@ class AppFacade(object):
     async def connect(self, endpoint, options):
         """ Make an outgoing OpenFlow connection.
         """
-        result = await self._app.rpc_call('OFP.CONNECT', endpoint=endpoint, options=options)
+        result = await self._app.rpc_call(
+            'OFP.CONNECT', endpoint=endpoint, options=options)
         return result.conn_id
-
 
     def post_event(self, event, **kwds):
         self._app.post_event(make_event(event=event.upper(), **kwds))
-
