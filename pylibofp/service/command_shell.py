@@ -2,7 +2,6 @@ import shlex
 import inspect
 import asyncio
 import logging
-import inspect
 
 from pylibofp import ofp_app, ofp_run
 from pylibofp.event import make_event
@@ -13,7 +12,7 @@ from prompt_toolkit.shortcuts import prompt_async
 from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+#from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
@@ -63,7 +62,7 @@ async def run_command(command):
         print('Unknown command "%s"' % cmd[0])
     else:
         try:
-            event = make_event(command=cmd[0], args=cmd[1:])
+            event = make_event(event='COMMAND', command=cmd[0], args=cmd[1:])
             result = handler(event, ofp)
             # Result of executing a handler may be:
             #  None:  handler already printed output.
@@ -98,13 +97,13 @@ def all_command_handlers():
 
 
 @ofp.command('help', help='List all commands.')
-def help(event):
+def help_cmd(event):
     for handler in all_command_handlers():
         yield '%-12s - %s' % (handler.subtype.lower(), handler.options['help'])
 
 
 @ofp.command('app', help='List all apps.')
-def app_list(event):
+def app_cmd(event):
     yield 'ID PREC NAME                          MSG  EVT TASK/DONE   SND  REQ'
     all_tasks = ofp.controller.tasks()
 
@@ -132,7 +131,7 @@ def app_list(event):
 
 
 @ofp.command('task', help='List all running tasks.')
-def task_list(event):
+def task_cmd(event):
     yield 'ID  NAME   SCOPE   APP   AWAIT RUNNING'
     for task in ofp.controller.tasks():
         coro = task._coro
@@ -145,7 +144,7 @@ def task_list(event):
 
 
 @ofp.command('log', help='Show log.')
-async def log(event):
+async def log_cmd(event):
     # Print out lines from tail buffer.
     for line in TailBufferedHandler.tail():
         print(line)
@@ -162,20 +161,20 @@ async def log(event):
 
 
 @ofp.command('netstat', help='List network connections.')
-async def netstat(event):
+async def netstat_cmd(event):
     result = await ofp.rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
     for conn in result.stats:
         print(conn)
 
 
 @ofp.command('close', help='Close a connection.')
-async def close(event):
+async def close_cmd(event):
     result = await ofp.rpc_call('OFP.CLOSE', conn_id=int(event.args[0]))
     print(result)
 
 
 @ofp.command('exit', help='Exit the program.')
-def exit(event):
+def exit_cmd(event):
     ofp.post_event('EXIT')
 
 

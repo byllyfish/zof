@@ -27,7 +27,7 @@ argument-rgx=[a-z_]{1,30}$
 [VARIABLES]
 
 # List of additional names supposed to be defined in builtins.
-additional-builtins=OFP
+#additional-builtins=OFP
 
 [CLASSES]
 

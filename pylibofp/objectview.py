@@ -16,8 +16,8 @@ class ObjectView(object):
         obj.to_json = 1
         assert obj.to_json == 1
 
-    If you access a value that does not exist, ObjectView raises a KeyError. 
-    Use callable syntax to access a value using a default if the key is not 
+    If you access a value that does not exist, ObjectView raises a KeyError.
+    Use callable syntax to access a value using a default if the key is not
     present, e.g. `obj('foo', default='bar')`.
 
     This class does _not_ recursively wrap sub-objects; it's designed to be

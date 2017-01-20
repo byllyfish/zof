@@ -16,7 +16,7 @@ def ofp_app(name, *, ofversion=None):
     Args:
         name (str): Name of the app.
         ofversion (Optional[str]): Supported OpenFlow versions.
-            Example values: 
+            Example values:
                 - "1.0" = OpenFlow 1.0 only.
                 - "1.3+" = OpenFlow 1.3 and later.
                 - "1.0, 1.3+" = OpenFlow 1.0 along with OF 1.3 and later.
@@ -57,7 +57,8 @@ def ofp_run(*,
         loop = asyncio.get_event_loop()
 
     if command_shell:
-        import pylibofp.service.command_shell
+        # pylint: disable=cyclic-import
+        import pylibofp.service.command_shell as _
 
     if loglevel:
         init_logging(loglevel)

@@ -44,6 +44,8 @@ def dump_event(event):
 
 
 def make_event(**kwds):
+    if 'event' not in kwds:
+        raise ValueError('Missing event argument')
     return _make_event(kwds)
 
 

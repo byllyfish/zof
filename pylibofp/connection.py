@@ -39,7 +39,7 @@ class Connection(object):
 
         try:
             # When we create the subprocess, make it a session leader.
-            # We do not want SIGINT signals sent from the terminal to reach 
+            # We do not want SIGINT signals sent from the terminal to reach
             # the subprocess.
             proc = await asyncio.create_subprocess_exec(
                 *cmd,

@@ -70,6 +70,8 @@ class Controller(object):
 
         finally:
             self._shutdown_cleanly(loop)
+            self._set_phase('POSTSTOP')
+            #self._event_queue = None
             loop.close()
             LOGGER.info('Exiting')
 
@@ -85,7 +87,7 @@ class Controller(object):
             if signame == 'SIGINT' and controller._interruptable_task:
                 controller._interruptable_task.cancel()
             else:
-                controller._post_event(make_event('EXIT'))
+                controller._post_event(make_event(event='EXIT'))
 
         for signame in signals:
             loop.add_signal_handler(
@@ -105,13 +107,9 @@ class Controller(object):
 
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(ex)
-        finally:
-            self._set_phase('POSTSTOP')
-            self._event_queue = None
 
     def _run_pending(self, loop, timeout=None):
-        """
-        Run until pending tasks are complete. Return true if we still have
+        """Run until pending tasks are complete. Return true if we still have
         pending tasks when the pending tasks complete.
         """
         try:
@@ -237,7 +235,7 @@ class Controller(object):
                 certificate=security['cert'],
                 verifier=security['cafile'],
                 password=security.get('password', ''))
-            # Save tls_id from result so we can pass it in our calls to 
+            # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
             self._tls_id = result.params.tls_id
 

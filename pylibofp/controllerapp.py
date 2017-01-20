@@ -34,7 +34,7 @@ class ControllerApp(object):
         self.handlers = {}
         self.counters = defaultdict(lambda: 0)
 
-        # Add app to parent's list of app's.
+        # Add this app to parent's list of app's.
         parent.apps.append(self)
         self.parent = parent  # TODO: need weakref?
 
