@@ -33,7 +33,7 @@ ofp = ofp_app('service.command_shell')
 @ofp.event('start')
 async def command_shell(event):
     # The command shell task can be interrupted with CTRL-C (KeyboardInterrupt).
-    Controller.set_interruptable_task(asyncio.Task.current_task())
+    Controller.set_interruptible_task(asyncio.Task.current_task())
     cmds = [h.subtype.lower() for h in all_command_handlers()]
     completer = WordCompleter(cmds)
     history = InMemoryHistory()
@@ -52,7 +52,7 @@ async def command_shell(event):
         except EOFError:
             ofp.post_event('EXIT')
             break
-    Controller.set_interruptable_task(None)
+    Controller.set_interruptible_task(None)
 
 
 async def run_command(command):
@@ -90,7 +90,7 @@ def find_command_handler(cmd):
 
 def all_command_handlers():
     result = []
-    for app in ofp.controller.apps:
+    for app in ofp.all_apps():
         if 'command' in app.handlers:
             result += app.handlers['command']
     return result

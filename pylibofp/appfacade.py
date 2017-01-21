@@ -1,5 +1,3 @@
-from .compiledmessage import CompiledMessage
-from .event import make_event
 
 
 class AppFacade(object):
@@ -59,20 +57,18 @@ class AppFacade(object):
         self._app = app
         self.name = app.name
         self.logger = app.logger
-        self.controller = app.parent
+        #self.controller = app.parent
 
-        #self.send = app.send
-        #self.request = app.request
         self.ensure_future = app.ensure_future
         self.subscribe = app.subscribe
         self.unsubscribe = app.subscribe
-        #self.post_event = app.post_event
+        self.post_event = app.post_event
         self.rpc_call = app.rpc_call
 
     # Decorators
 
     def message(self, subtype, **kwds):
-        """ Message subscribe decorator.
+        """Message decorator.
         """
 
         def _wrap(func):
@@ -81,7 +77,7 @@ class AppFacade(object):
         return _wrap
 
     def event(self, subtype, **kwds):
-        """ Event subscribe decorator.
+        """Event decorator.
         """
 
         def _wrap(func):
@@ -90,7 +86,7 @@ class AppFacade(object):
         return _wrap
 
     def command(self, subtype, *, help): # pylint: disable=redefined-builtin
-        """ Command subscribe decorator.
+        """Command decorator.
         """
 
         def _wrap(func):
@@ -100,19 +96,23 @@ class AppFacade(object):
 
     # Basic Functions
 
-    def compile(self, msg):
-        """ Compile an OpenFlow message template.
-        """
-        return CompiledMessage(self._app.parent, msg)
+    #def compile(self, msg):
+    #    """Compile an OpenFlow message template.
+    #    """
+    #    return CompiledMessage(self._app.parent, msg)
 
     # RPC Functions
 
     async def connect(self, endpoint, options):
-        """ Make an outgoing OpenFlow connection.
+        """Make an outgoing OpenFlow connection.
         """
-        result = await self._app.rpc_call(
+        result = await self.rpc_call(
             'OFP.CONNECT', endpoint=endpoint, options=options)
         return result.conn_id
 
-    def post_event(self, event, **kwds):
-        self._app.post_event(make_event(event=event.upper(), **kwds))
+
+    def all_apps(self):
+        return list(self._app.parent.apps)
+
+    #def post_event(self, event, **kwds):
+    #    self._app.post_event(make_event(event=event.upper(), **kwds))

@@ -19,7 +19,7 @@ class TailBufferedHandler(logging.Handler):
         for record in self._tail:
             try:
                 yield self.format(record)
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 self.handleError(record)
 
     def emit(self, record):

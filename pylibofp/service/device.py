@@ -15,14 +15,14 @@ Event attributes added:
 """
 
 import asyncio
-from pylibofp import ofp_app, ofp_run
 from collections import OrderedDict
+from pylibofp import ofp_app, ofp_run, ofp_compile
 
 OPENFLOW_VERSION_1 = 0
 
 OFP = ofp_app('service.device')  #, precedence=-100)
 
-SET_CONFIG = OFP.compile("""
+SET_CONFIG = ofp_compile("""
   type: SET_CONFIG
   msg:
     flags: [FRAG_NORMAL]
@@ -35,18 +35,18 @@ SET_CONFIG = OFP.compile("""
   type: GET_CONFIG_REQUEST
 '''
 
-GET_CONFIG = OFP.compile("""
+GET_CONFIG = ofp_compile("""
   type: GET_CONFIG_REQUEST
 """)
 
-DESC_REQ = OFP.compile('type: REQUEST.DESC')
-PORT_REQ = OFP.compile('type: REQUEST.PORT_DESC')
-PORT_STATS = OFP.compile("""
+DESC_REQ = ofp_compile('type: REQUEST.DESC')
+PORT_REQ = ofp_compile('type: REQUEST.PORT_DESC')
+PORT_STATS = ofp_compile("""
     type: REQUEST.PORT_STATS
     msg:
       port_no: ANY
 """)
-BARRIER = OFP.compile('type: BARRIER_REQUEST')
+BARRIER = ofp_compile('type: BARRIER_REQUEST')
 
 DEVICES = OrderedDict()
 
@@ -72,7 +72,7 @@ class Device(object):
     async def port_mod(self, port_no, *, port_down=False):
         port = self.ports[port_no]
         port_down = 'PORT_DOWN' if port_down else ''
-        req = OFP.compile('''
+        req = ofp_compile('''
             type: PORT_MOD
             msg:
               port_no: $port_no

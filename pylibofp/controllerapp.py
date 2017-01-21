@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from pylibofp.handler import make_handler
 import pylibofp.exception as _exc
-from .event import Event
+from .event import make_event
 
 
 class ControllerApp(object):
@@ -41,21 +41,8 @@ class ControllerApp(object):
         self.logger = logging.getLogger('pylibofp.%s' % self.name)
         self.logger.info('Create app "%s"', self.name)
 
-    def message(self, event):
-        """
-        Invoked by Controller when an 'OFP.MESSAGE' notification is received.
-        """
-        self._handle(event, 'message')
-
-    def event(self, event):
-        """
-        Invoked by Controller when an event is received.
-        """
-        self._handle(event, 'event')
-
-    def _handle(self, event, handler_type):
-        """
-        Helper function to handle events.
+    def handle_event(self, event, handler_type):
+        """Handle events.
         """
         try:
             for handler in self.handlers.get(handler_type, []):
@@ -70,22 +57,19 @@ class ControllerApp(object):
                 'Exception caught while handling "%s" event: %s', handler_type,
                 event)
 
-    def post_event(self, event):
+    def post_event(self, event, **kwds):
+        """Function used to send an internal event to all app modules.
         """
-        Function used to send an internal event to all app modules.
-        """
-        assert isinstance(event, Event)
         self.logger.debug('post_event %s', event)
         self.counters['post_event'] += 1
-        self.parent._post_event(event)
+        self.parent.post_event(make_event(event=event.upper(), **kwds))
 
     def rpc_call(self, method, **params):
-        """
-        Function used to send a RPC request and receive a response.
+        """Function used to send a RPC request and receive a response.
         """
         self.logger.debug('rpc_call %s', method)
         self.counters['rpc_call'] += 1
-        return self.parent._rpc_call(method, **params)
+        return self.parent.rpc_call(method, **params)
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
         """
@@ -94,7 +78,7 @@ class ControllerApp(object):
         """
         scope_key = datapath_id if datapath_id else conn_id
         task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
-        return self.parent._ensure_future(
+        return self.parent.ensure_future(
             coroutine, scope_key=scope_key, app=self, task_locals=task_locals)
 
     def subscribe(self, callback, type_, subtype, options):

@@ -25,6 +25,7 @@ class Controller(object):
 
     Attributes:
         apps (List[ControllerApp]): List of apps.
+        interruptible_task (Optional[asyncio.Task]): Foreground async task. 
     """
 
     _singleton = None
@@ -38,6 +39,7 @@ class Controller(object):
 
     def __init__(self):
         self.apps = []
+        self.interruptible_task = None
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
@@ -46,7 +48,6 @@ class Controller(object):
         self._tls_id = 0
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
-        self._interruptable_task = None
 
     def run_loop(self,
                  *,
@@ -76,18 +77,15 @@ class Controller(object):
             LOGGER.info('Exiting')
 
     def _add_signal_handlers(self, loop, signals):
-        """
-        Add signal handlers to the event loop.
-
-        We use a KeyboardInterrupt to signal it's time to shutdown.
+        """Add signal handlers to the event loop.
         """
 
         def _handle_signal(signame, controller):
             LOGGER.info('Signal Received: %s', signame)
-            if signame == 'SIGINT' and controller._interruptable_task:
-                controller._interruptable_task.cancel()
+            if signame == 'SIGINT' and controller.interruptible_task:
+                controller.interruptible_task.cancel()
             else:
-                controller._post_event(make_event(event='EXIT'))
+                controller.post_event(make_event(event='EXIT'))
 
         for signame in signals:
             loop.add_signal_handler(
@@ -178,10 +176,10 @@ class Controller(object):
         while running:
             line = await self._conn.readline()
             if line:
-                self._post_event(load_event(line))
+                self.post_event(load_event(line))
             else:
                 LOGGER.debug('_read_loop: posting EXIT event')
-                self._post_event(make_event(event='EXIT'))
+                self.post_event(make_event(event='EXIT'))
                 running = False
 
         LOGGER.debug('_read_loop exited')
@@ -202,8 +200,8 @@ class Controller(object):
             self._set_phase('START')
 
         except _exc.ControllerException:
-            self._post_event(make_event(event='STARTFAIL'))
-            self._post_event(make_event(event='EXIT'))
+            self.post_event(make_event(event='STARTFAIL'))
+            self.post_event(make_event(event='EXIT'))
 
     async def _get_description(self):
         """
@@ -211,7 +209,7 @@ class Controller(object):
         supported.
         """
         try:
-            result = await self._rpc_call('OFP.DESCRIPTION')
+            result = await self.rpc_call('OFP.DESCRIPTION')
             # Check major API version.
             if result.major_version > _API_VERSION:
                 LOGGER.error('Unsupported API version %d.%d',
@@ -230,7 +228,7 @@ class Controller(object):
         Set up a TLS identity for connections to use.
         """
         try:
-            result = await self._rpc_call(
+            result = await self.rpc_call(
                 'OFP.ADD_IDENTITY',
                 certificate=security['cert'],
                 verifier=security['cafile'],
@@ -252,7 +250,7 @@ class Controller(object):
             ofversion = self._ofp_versions
         try:
             for endpt in listen_endpoints:
-                result = await self._rpc_call(
+                result = await self.rpc_call(
                     'OFP.LISTEN',
                     endpoint=endpt,
                     versions=ofversion,
@@ -265,7 +263,7 @@ class Controller(object):
             LOGGER.error('Unable to listen on %s: %s', endpt, ex.message)
             raise
 
-    def _post_event(self, event):
+    def post_event(self, event):
         """Post an event to our event queue.
         """
         assert isinstance(event, Event)
@@ -311,11 +309,11 @@ class Controller(object):
         self._reqs[xid] = (fut, expiration)
         return fut
 
-    def _rpc_call(self, method, **params):
+    def rpc_call(self, method, **params):
         """Send a RPC request and return a future for the reply.
         """
 
-        LOGGER.debug('_rpc_call %s', method)
+        LOGGER.debug('rpc_call %s', method)
         xid = self._next_xid()
         event = dict(id=xid, method=method, params=params)
         return self._write(event, xid)
@@ -347,7 +345,7 @@ class Controller(object):
         if event['event'] == 'EXIT':
             raise _exc.ExitException()
         for app in self.apps:
-            app.event(event)
+            app.handle_event(event, 'event')
 
     def _handle_rpc_reply(self, event):
         """Called when a RPC reply is received.
@@ -371,7 +369,7 @@ class Controller(object):
 
         if not self._handle_xid(params, params.xid, except_class):
             for app in self.apps:
-                app.message(params)
+                app.handle_event(params, 'message')
             # Log all OpenFlow error messages not associated with requests.
             if params.type == 'ERROR':
                 LOGGER.error('ERROR: %s', params)
@@ -392,7 +390,7 @@ class Controller(object):
             self._cancel_tasks(scope_key)
 
         for app in self.apps:
-            app.message(params)
+            app.handle_event(params, 'message')
 
     def _handle_alert(self, params):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'.
@@ -412,7 +410,7 @@ class Controller(object):
             params('datapath_id'), params.xid)
 
         for app in self.apps:
-            app.message(params)
+            app.handle_event(params, 'message')
 
     async def _idle_task(self):
         """Task to check for requests that have timed out.
@@ -437,7 +435,7 @@ class Controller(object):
             self._cancel_tasks(self._phase)
         self._phase = phase
         if self._event_queue:
-            self._post_event(make_event(event=phase))
+            self.post_event(make_event(event=phase))
 
     def _next_xid(self):
         """
@@ -452,16 +450,15 @@ class Controller(object):
         self._xid += 1
         return self._xid
 
-    def _ensure_future(self, coroutine, *, scope_key=None, app, task_locals):
-        """
-        Run an async coroutine, within the scope of a specific scope_key.
+    def ensure_future(self, coroutine, *, scope_key=None, app, task_locals):
+        """Run an async coroutine, within the scope of a specific scope_key.
 
         This function automatically captures exceptions from the coroutine. It
         also cleans up after the task when it is done.
         """
 
         @functools.wraps(coroutine)
-        async def capture_exception(coroutine):
+        async def _capture_exception(coroutine):
             try:
                 app.logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
@@ -473,7 +470,7 @@ class Controller(object):
             except Exception as ex:  # pylint: disable=broad-except
                 app.logger.exception(ex)
 
-        task = asyncio.ensure_future(capture_exception(coroutine))
+        task = asyncio.ensure_future(_capture_exception(coroutine))
         if not scope_key:
             scope_key = self._phase
         self._tasks[scope_key].append(task)
@@ -518,10 +515,10 @@ class Controller(object):
         return result
 
     @staticmethod
-    def set_interruptable_task(task):
-        """Assign an interruptable_task to be the target for KeyboardInterrupts.
+    def set_interruptible_task(task):
+        """Assign an interruptible_task to be the target for KeyboardInterrupts.
         """
-        Controller._singleton._interruptable_task = task
+        Controller._singleton.interruptible_task = task
 
 
 def _timestamp():
