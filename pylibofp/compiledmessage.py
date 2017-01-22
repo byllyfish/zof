@@ -23,9 +23,9 @@ class CompiledMessage(object):
         Args:
             kwds (dict): Template argument values.
         """
-        kwds.setdefault('xid', self._parent._next_xid())
+        kwds.setdefault('xid', self._parent.next_xid())
         task_locals = asyncio.Task.current_task().ofp_task_locals
-        self._parent._write(self._complete(kwds, task_locals))
+        self._parent.write(self._complete(kwds, task_locals))
 
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
@@ -33,9 +33,9 @@ class CompiledMessage(object):
         Args:
             kwds (dict): Template argument values.
         """
-        xid = kwds.setdefault('xid', self._parent._next_xid())
+        xid = kwds.setdefault('xid', self._parent.next_xid())
         task_locals = asyncio.Task.current_task().ofp_task_locals
-        return self._parent._write(self._complete(kwds, task_locals), xid)
+        return self._parent.write(self._complete(kwds, task_locals), xid)
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.

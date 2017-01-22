@@ -6,13 +6,11 @@ import logging
 from pylibofp import ofp_app, ofp_run
 from pylibofp.event import make_event
 from pylibofp.logging import TailBufferedHandler
-from pylibofp.controller import Controller
 
 from prompt_toolkit.shortcuts import prompt_async
 from prompt_toolkit.styles import style_from_dict
 from prompt_toolkit.token import Token
 from prompt_toolkit.history import InMemoryHistory
-#from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
@@ -22,6 +20,7 @@ example_style = style_from_dict({
 })
 
 ofp = ofp_app('service.command_shell')
+ofp.foreground_task = None
 
 # def command(cmd, *, help):
 #     def _wrap(func):
@@ -33,7 +32,7 @@ ofp = ofp_app('service.command_shell')
 @ofp.event('start')
 async def command_shell(event):
     # The command shell task can be interrupted with CTRL-C (KeyboardInterrupt).
-    Controller.set_interruptible_task(asyncio.Task.current_task())
+    ofp.foreground_task = asyncio.Task.current_task()
     cmds = [h.subtype.lower() for h in all_command_handlers()]
     completer = WordCompleter(cmds)
     history = InMemoryHistory()
@@ -52,7 +51,14 @@ async def command_shell(event):
         except EOFError:
             ofp.post_event('EXIT')
             break
-    Controller.set_interruptible_task(None)
+    ofp.foreground_task = None
+
+
+@ofp.event('signal', signal='SIGINT')
+def handle_sigint(event):
+    if ofp.foreground_task:
+        ofp.foreground_task.cancel()
+        event.exit = False
 
 
 async def run_command(command):
@@ -96,14 +102,14 @@ def all_command_handlers():
     return result
 
 
-@ofp.command('help', help='List all commands.')
+@ofp.command('help')
 def help_cmd(event):
     for handler in all_command_handlers():
-        yield '%-12s - %s' % (handler.subtype.lower(), handler.options['help'])
+        yield '%-12s - %s' % (handler.subtype.lower(), handler.help_brief())
 
 
-@ofp.command('app', help='List all apps.')
-def app_cmd(event):
+@ofp.command('ps')
+def ps_cmd(event):
     yield 'ID PREC NAME                          MSG  EVT TASK/DONE   SND  REQ'
     all_tasks = ofp.controller.tasks()
 
@@ -130,7 +136,7 @@ def app_cmd(event):
             req)
 
 
-@ofp.command('task', help='List all running tasks.')
+@ofp.command('task')
 def task_cmd(event):
     yield 'ID  NAME   SCOPE   APP   AWAIT RUNNING'
     for task in ofp.controller.tasks():
@@ -143,7 +149,7 @@ def task_cmd(event):
         yield '%r' % task._coro
 
 
-@ofp.command('log', help='Show log.')
+@ofp.command('log')
 async def log_cmd(event):
     # Print out lines from tail buffer.
     for line in TailBufferedHandler.tail():
@@ -160,20 +166,20 @@ async def log_cmd(event):
         console.setLevel('WARNING')
 
 
-@ofp.command('netstat', help='List network connections.')
-async def netstat_cmd(event):
+@ofp.command('net')
+async def net_cmd(event):
     result = await ofp.rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
     for conn in result.stats:
         print(conn)
 
 
-@ofp.command('close', help='Close a connection.')
+@ofp.command('close')
 async def close_cmd(event):
     result = await ofp.rpc_call('OFP.CLOSE', conn_id=int(event.args[0]))
     print(result)
 
 
-@ofp.command('exit', help='Exit the program.')
+@ofp.command('exit')
 def exit_cmd(event):
     ofp.post_event('EXIT')
 

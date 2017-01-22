@@ -1,10 +1,10 @@
 """
 
 Events:
-    device_up
-    device_down
+    device_up         device=<Device>
+    device_down       device=<Device>
 
-    port_added
+    port_added        port=<Port>
     port_deleted
     port_up
     port_down
@@ -240,8 +240,12 @@ async def _fetch_desc():
     return await DESC_REQ.request()
 
 
-@OFP.command('device', help='List all devices.')
+@OFP.command('device')
 def device_list(event):
+    """List all devices.
+
+    ls [-la] <dpid>
+    """
     yield 'VER  NAME               DPID                   ENDPOINT  PORT BUF  CONN'
     for device in DEVICES.values():
         yield '%3d %-20s %s %s  %d %d %d %s' % (
@@ -250,7 +254,7 @@ def device_list(event):
             device.hw_desc)
 
 
-@OFP.command('port', help='List all ports.')
+@OFP.command('port')
 def port_list(event):
     yield 'PORT   NAME        MAC   CONFIG   STATE  TX PKTS BYTES  RX PKTS BYTES'
     for device in DEVICES.values():
@@ -266,7 +270,7 @@ def port_list(event):
                                                 port.config, port.state, stats)
 
 
-@OFP.command('portmod', help='Change port state.')
+@OFP.command('portmod')
 async def portmod(event):
     dpid = event.args[0]
     portnum = int(event.args[1])

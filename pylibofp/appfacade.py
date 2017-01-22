@@ -85,12 +85,12 @@ class AppFacade(object):
 
         return _wrap
 
-    def command(self, subtype, *, help): # pylint: disable=redefined-builtin
+    def command(self, subtype):
         """Command decorator.
         """
 
         def _wrap(func):
-            self.subscribe(func, 'command', subtype, dict(help=help))
+            self.subscribe(func, 'command', subtype, {})
 
         return _wrap
 

@@ -79,6 +79,23 @@ class BaseHandler(object):
         return True
 
 
+    def help(self):
+        """Return help text.
+        """
+        text = self.callback.__doc__
+        if not text:
+            return None
+        return inspect.cleandoc(text)
+
+    def help_brief(self):
+        """Return summary line from help text.
+        """
+        text = self.callback.__doc__
+        if not text:
+            return None
+        return text.strip().split('\n', 1)[0]
+
+
 class MessageHandler(BaseHandler):
     def match(self, event):
         # Quick check to see if we can return False immediately.

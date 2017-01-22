@@ -3,12 +3,12 @@
 import asyncio
 import logging
 import re
-import signal
 import functools
 from collections import defaultdict
-from pylibofp.event import load_event, dump_event, make_event, Event
-from pylibofp.connection import Connection
-import pylibofp.exception as _exc
+from .event import load_event, dump_event, make_event, Event
+from .connection import Connection
+from .run_server import run_server
+from . import exception as _exc
 
 _XID_TIMEOUT = 10.0  # Seconds
 _IDLE_INTERVAL = 1.0
@@ -25,7 +25,6 @@ class Controller(object):
 
     Attributes:
         apps (List[ControllerApp]): List of apps.
-        interruptible_task (Optional[asyncio.Task]): Foreground async task. 
     """
 
     _singleton = None
@@ -39,7 +38,6 @@ class Controller(object):
 
     def __init__(self):
         self.apps = []
-        self.interruptible_task = None
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
@@ -58,81 +56,41 @@ class Controller(object):
         """Main entry point for running a controller.
         """
         try:
-            self._add_signal_handlers(loop, ('SIGTERM', 'SIGINT'))
             loop.create_task(
                 self._run(
                     listen_endpoints=listen_endpoints,
                     libofp_args=libofp_args,
                     security=security))
 
-            LOGGER.debug('run_forever started')
-            loop.run_forever()
-            LOGGER.debug('run_forever stopped')
-
-        finally:
-            self._shutdown_cleanly(loop)
+            LOGGER.debug('run_server started')
+            run_server(loop, signal_handler=self._handle_signal)
+            LOGGER.debug('run_server stopped')
             self._set_phase('POSTSTOP')
-            #self._event_queue = None
-            loop.close()
-            LOGGER.info('Exiting')
-
-    def _add_signal_handlers(self, loop, signals):
-        """Add signal handlers to the event loop.
-        """
-
-        def _handle_signal(signame, controller):
-            LOGGER.info('Signal Received: %s', signame)
-            if signame == 'SIGINT' and controller.interruptible_task:
-                controller.interruptible_task.cancel()
-            else:
-                controller.post_event(make_event(event='EXIT'))
-
-        for signame in signals:
-            loop.add_signal_handler(
-                getattr(signal, signame),
-                functools.partial(_handle_signal, signame, self))
-
-    def _shutdown_cleanly(self, loop):
-        """Give existing tasks a chance to complete.
-        """
-        LOGGER.debug('_shutdown_cleanly')
-        try:
-            # Try 3 times to finish our pending tasks. We give it three tries
-            # to permit stopping tasks to create more async tasks to clean up.
-            for _ in range(3):
-                if not self._run_pending(loop, timeout=5.0):
-                    break
 
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(ex)
 
-    def _run_pending(self, loop, timeout=None):
-        """Run until pending tasks are complete. Return true if we still have
-        pending tasks when the pending tasks complete.
+        finally:
+            LOGGER.info('Exiting')
+
+    def _handle_signal(self, signame):
+        """Handle signals.
+
+        Usually, signals indicate that the program should exit. An app can 
+        prevent shutdown by setting the event's `exit` value to False.
         """
-        try:
-            pending = asyncio.Task.all_tasks()
-            LOGGER.debug('Waiting for %d pending tasks', len(pending))
-            loop.run_until_complete(asyncio.wait(pending, timeout=timeout))
-            return False
-        except RuntimeError as ex:
-            # `run_until_complete` throws an exception if new async tasks are
-            # started by the pending tasks. Return true when this happens.
-            if str(ex) == 'Event loop stopped before Future completed.':
-                return True
-            raise
+        LOGGER.info('Signal Received: %s', signame)
+        self.post_event(make_event(event='SIGNAL', signal=signame, exit=True))
 
     async def _run(self,
                    *,
                    listen_endpoints=None,
                    libofp_args=None,
                    security=None):
-        """
-        Run the controller within asyncio.
+        """Async task for running the controller.
         """
 
         LOGGER.debug("Controller.run entered")
-
         self._conn = Connection(libofp_args=libofp_args)
         await self._conn.connect()
 
@@ -150,7 +108,6 @@ class Controller(object):
         idle.cancel()
         self._set_phase('STOP')
         await self._conn.disconnect()
-
         LOGGER.debug("Controller.run exited")
 
     async def _event_loop(self):
@@ -204,9 +161,8 @@ class Controller(object):
             self.post_event(make_event(event='EXIT'))
 
     async def _get_description(self):
-        """
-        Check the api version used by libofp. Also, check the OpenFlow versions
-        supported.
+        """Check the api version used by libofp. Also, check the OpenFlow 
+        versions supported.
         """
         try:
             result = await self.rpc_call('OFP.DESCRIPTION')
@@ -224,8 +180,7 @@ class Controller(object):
             raise
 
     async def _configure_tls(self, security):
-        """
-        Set up a TLS identity for connections to use.
+        """Set up a TLS identity for connections to use.
         """
         try:
             result = await self.rpc_call(
@@ -292,9 +247,8 @@ class Controller(object):
         except _exc.BreakException:
             LOGGER.debug('_dispatch_event: BreakException caught')
 
-    def _write(self, event, xid=None):
-        """
-        Write an event to the output stream. If `xid` is specified, return a
+    def write(self, event, xid=None):
+        """Write an event to the output stream. If `xid` is specified, return a
         `_ReplyFuture` to await the response. Otherwise, return None.
         """
 
@@ -314,9 +268,9 @@ class Controller(object):
         """
 
         LOGGER.debug('rpc_call %s', method)
-        xid = self._next_xid()
+        xid = self.next_xid()
         event = dict(id=xid, method=method, params=params)
-        return self._write(event, xid)
+        return self.write(event, xid)
 
     def _handle_xid(self, event, xid, except_class=None):
         """Lookup future associated with given xid and give it the event.
@@ -342,10 +296,15 @@ class Controller(object):
     def _handle_internal_event(self, event):
         """Called when an internal event is received.
         """
-        if event['event'] == 'EXIT':
+        # Immediately begin shutting down if there is an 'EXIT' event.
+        if event.event == 'EXIT':
             raise _exc.ExitException()
+        # Let apps handle the event.
         for app in self.apps:
             app.handle_event(event, 'event')
+        # Check for SIGNAL event asking for exit.
+        if event.event == 'SIGNAL' and event.exit:
+            raise _exc.ExitException()
 
     def _handle_rpc_reply(self, event):
         """Called when a RPC reply is received.
@@ -437,7 +396,7 @@ class Controller(object):
         if self._event_queue:
             self.post_event(make_event(event=phase))
 
-    def _next_xid(self):
+    def next_xid(self):
         """
         Return next xid to use. The controller reserves xid 0 and low numbered
         xid's.
@@ -506,19 +465,6 @@ class Controller(object):
         """
         LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
         self._tasks[scope_key].remove(task)
-        task.ofp_task_app.counters['done'] += 1
-
-    def tasks(self):
-        result = []
-        for task_list in self._tasks.values():
-            result += task_list
-        return result
-
-    @staticmethod
-    def set_interruptible_task(task):
-        """Assign an interruptible_task to be the target for KeyboardInterrupts.
-        """
-        Controller._singleton.interruptible_task = task
 
 
 def _timestamp():
