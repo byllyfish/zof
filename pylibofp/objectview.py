@@ -2,6 +2,7 @@
 
 import json
 import io
+from ipaddress import IPv4Address, IPv6Address
 
 
 class ObjectView(object):
@@ -101,6 +102,8 @@ def _json_serialize(obj):
         return obj.__dict__
     if isinstance(obj, io.IOBase):
         return 'file:%s' % obj.name
+    if isinstance(obj, (IPv4Address, IPv6Address)):
+        return str(obj)
     try:
         return obj.__getstate__()
     except AttributeError:

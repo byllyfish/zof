@@ -5,7 +5,7 @@ from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
 from .logging import init_logging
-from .compiledmessage import CompiledMessage
+from .compiledmessage import CompiledMessage, CompiledObject
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
@@ -30,7 +30,6 @@ def ofp_app(name, *, ofversion=None):
 
 
 def ofp_run(*,
-            loop=None,
             listen_endpoints=_LISTEN_ENDPOINTS,
             libofp_args=None,
             loglevel='info',
@@ -53,9 +52,6 @@ def ofp_run(*,
                 - "password": Password for "cert", if needed.
         command_shell (bool): If true, load the built-in command_shell app.
     """
-    if not loop:
-        loop = asyncio.get_event_loop()
-
     if command_shell:
         # pylint: disable=cyclic-import
         import pylibofp.service.command_shell as _
@@ -65,7 +61,6 @@ def ofp_run(*,
 
     controller = Controller.singleton()
     controller.run_loop(
-        loop=loop,
         listen_endpoints=listen_endpoints,
         libofp_args=libofp_args,
         security=security)
@@ -75,4 +70,7 @@ def ofp_compile(msg):
     """Compile an OpenFlow message template.
     """
     controller = Controller.singleton()
-    return CompiledMessage(controller, msg)
+    if isinstance(msg, str):
+        return CompiledMessage(controller, msg)
+    else:
+        return CompiledObject(controller, msg)

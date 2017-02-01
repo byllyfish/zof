@@ -49,21 +49,20 @@ class Controller(object):
 
     def run_loop(self,
                  *,
-                 loop,
                  listen_endpoints=None,
                  libofp_args=None,
                  security=None):
         """Main entry point for running a controller.
         """
         try:
-            loop.create_task(
+            asyncio.ensure_future(
                 self._run(
                     listen_endpoints=listen_endpoints,
                     libofp_args=libofp_args,
                     security=security))
 
             LOGGER.debug('run_server started')
-            run_server(loop, signal_handler=self._handle_signal)
+            run_server(signals=['SIGTERM', 'SIGINT', 'SIGHUP'], signal_handler=self._handle_signal)
             LOGGER.debug('run_server stopped')
             self._set_phase('POSTSTOP')
 
@@ -142,8 +141,8 @@ class Controller(object):
         LOGGER.debug('_read_loop exited')
 
     async def _start(self, *, listen_endpoints, security):
-        """
-        Configure the libofp driver based on controller arguments.
+        """Configure the libofp driver based on controller arguments.
+
         This method runs concurrently with `run()`.
         """
 
@@ -161,8 +160,9 @@ class Controller(object):
             self.post_event(make_event(event='EXIT'))
 
     async def _get_description(self):
-        """Check the api version used by libofp. Also, check the OpenFlow 
-        versions supported.
+        """Check the api version used by libofp.
+
+        Also, check the OpenFlow versions supported.
         """
         try:
             result = await self.rpc_call('OFP.DESCRIPTION')
@@ -248,8 +248,10 @@ class Controller(object):
             LOGGER.debug('_dispatch_event: BreakException caught')
 
     def write(self, event, xid=None):
-        """Write an event to the output stream. If `xid` is specified, return a
-        `_ReplyFuture` to await the response. Otherwise, return None.
+        """Write an event to the output stream.
+
+        If `xid` is specified, return a `_ReplyFuture` to await the response.
+        Otherwise, return None.
         """
 
         self._conn.write(dump_event(event))
@@ -385,9 +387,9 @@ class Controller(object):
                 del self._reqs[xid]
 
     def _set_phase(self, phase):
-        """
-        Called as the run loop changes phase:
-            '' -> PRESTART -> START -> STOP -> POSTSTOP.
+        """Called as the run loop changes phase:
+
+            INIT -> PRESTART -> START -> STOP -> POSTSTOP.
         """
         LOGGER.debug('Change phase from "%s" to "%s"', self._phase, phase)
         if self._phase != 'PRESTART':
@@ -397,9 +399,9 @@ class Controller(object):
             self.post_event(make_event(event=phase))
 
     def next_xid(self):
-        """
-        Return next xid to use. The controller reserves xid 0 and low numbered
-        xid's.
+        """Return next xid to use.
+
+        The controller reserves xid 0 and low numbered xid's.
         """
 
         if self._xid == _MAX_XID:
@@ -442,8 +444,7 @@ class Controller(object):
         return task
 
     def _cancel_tasks(self, scope_key):
-        """
-        Cancel async tasks associated with the given scope.
+        """Cancel async tasks associated with the given scope.
 
         The scope may be a datapath_id or a phase. The done callback removes the
         task from self._tasks.
@@ -460,8 +461,7 @@ class Controller(object):
                 task.cancel()
 
     def _task_callback(self, task, scope_key):
-        """
-        Called when a task is done.
+        """Called when a scoped task is done.
         """
         LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
         self._tasks[scope_key].remove(task)

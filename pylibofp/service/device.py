@@ -48,6 +48,19 @@ PORT_STATS = ofp_compile("""
 """)
 BARRIER = ofp_compile('type: BARRIER_REQUEST')
 
+REQ_FLOWS = ofp_compile('''
+    type: REQUEST.FLOW
+    msg:
+      table_id: ALL
+      out_port: ANY
+      out_group: ANY
+      cookie: 0
+      cookie_mask: 0
+      match: []
+''')
+
+
+
 DEVICES = OrderedDict()
 
 
@@ -134,7 +147,8 @@ class Port(object):
         return 'PORT_DOWN' not in self.config
 
 
-@OFP.event('start')
+# TODO(bfish): remove stat polling
+#@OFP.event('start')
 async def poll_portstats(event):
     while True:
         for device in DEVICES.values():
@@ -151,11 +165,13 @@ async def poll_portstats(event):
 @OFP.message('channel_up')
 def channel_up(event):
     DEVICES[event.datapath_id] = Device(event)
-
+    # grab ports here.
 
 @OFP.message('channel_down')
 def channel_down(event):
+    device = DEVICES[event.datapath_id]
     del DEVICES[event.datapath_id]
+    OFP.post_event('device_down', datapath_id=event.datapath_id, device=device)
 
 
 @OFP.message('features_reply')
@@ -181,7 +197,7 @@ async def features_reply(event):
     device.serial_num = desc.msg.serial_num
     #OFP.logger.info('desc %r', desc)
 
-    OFP.post_event('device_ready', device=device)
+    OFP.post_event('device_up', datapath_id=event.datapath_id, device=device)
 
 
 @OFP.message('port_status')
@@ -191,22 +207,21 @@ def port_status(event):
     OFP.logger.debug('port_status %r', event)
 
     device = DEVICES[event.datapath_id]
-    port_data = event.msg.port
-    port_no = port_data.port_no
-    reason = event.msg.reason
+    msg = event.msg
+    port_no = msg.port_no
 
-    if reason == 'ADD':
-        port = device.ports[port_no] = Port(port_data)
+    if msg.reason == 'ADD':
+        port = device.ports[port_no] = Port(msg)
         event = 'port_added'
-    elif reason == 'MODIFY':
+    elif msg.reason == 'MODIFY':
         port = device.ports[port_no]
-        event = port.update(port_data)
-    elif reason == 'DELETE':
+        event = port.update(msg)
+    elif msg.reason == 'DELETE':
         port = device.ports[port_no]
         del device.ports[port_no]
         event = 'port_deleted'
     else:
-        raise ValueError('Unknown port_status reason: %s', reason)
+        raise ValueError('Unknown port_status reason: %s', msg.reason)
 
     OFP.post_event(event, port=port)
 
@@ -244,7 +259,7 @@ async def _fetch_desc():
 def device_list(event):
     """List all devices.
 
-    ls [-la] <dpid>
+    ls [-lap] <dpid>
     """
     yield 'VER  NAME               DPID                   ENDPOINT  PORT BUF  CONN'
     for device in DEVICES.values():
@@ -276,6 +291,14 @@ async def portmod(event):
     portnum = int(event.args[1])
     device = DEVICES[dpid.lower()]
     await device.port_mod(portnum, port_down=True)
+
+
+@OFP.command('flows')
+async def flows(event):
+    for dpid in DEVICES:
+        result = await REQ_FLOWS.request(datapath_id=dpid)
+        for flow in sorted(result.msg, key=lambda x: (x.table_id, -x.priority)):
+            print('%s: table %d pri %d %r\n    %r' % (dpid, flow.table_id, flow.priority, flow.match, flow.instructions))
 
 
 if __name__ == '__main__':

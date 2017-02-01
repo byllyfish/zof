@@ -5,8 +5,8 @@ import warnings
 
 
 class TailBufferedHandler(logging.Handler):
-    """Logging handler that records the last N log records.
-    """
+    """Logging handler that records the last N log records."""
+
     _singleton = None
 
     def __init__(self, maxlen=10):
@@ -14,29 +14,24 @@ class TailBufferedHandler(logging.Handler):
         self._tail = collections.deque(maxlen=maxlen)
 
     def lines(self):
-        """Generator for last N log lines.
-        """
-        for record in self._tail:
-            try:
-                yield self.format(record)
-            except Exception: # pylint: disable=broad-except
-                self.handleError(record)
+        """Return last N log lines."""
+        return self._tail
 
     def emit(self, record):
-        """Log the specified log record.
-        """
-        self._tail.append(record)
+        """Log the specified log record."""
+        try:
+            self._tail.append(self.format(record))
+        except Exception: # pylint: disable=broad-except
+            self.handleError(record)
 
     def close(self):
-        """Close the log handler.
-        """
+        """Close the log handler."""
         super().close()
         self._tail.clear()
 
     @staticmethod
     def install():
-        """Install tail logging handler.
-        """
+        """Install tail logging handler."""
         # Only install it once.
         if TailBufferedHandler._singleton:
             return
@@ -48,8 +43,7 @@ class TailBufferedHandler(logging.Handler):
 
     @staticmethod
     def tail():
-        """Return last N lines.
-        """
+        """Return last N lines."""
         return TailBufferedHandler._singleton.lines()
 
 

@@ -25,6 +25,10 @@ class MatchObject(ObjectView):
         for field in match:
             self.__dict__[field.field.lower()] = field.value
 
+    @staticmethod
+    def to_list(obj):
+        return [ObjectView(dict(field=k, value=v)) for k, v in obj.items()]
+
 
 def load_event(event):
     # If `event` is a byte string, decode it as utf-8.

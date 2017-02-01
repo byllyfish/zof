@@ -19,8 +19,15 @@ def _wrap_async(func):
 class AsyncTestCase(unittest.TestCase):
     """TestCase subclass that supports `async def` tests.
 
-    Coroutine functions are wrapped in a function that runs them using
-    `AsyncTestCase.loop.run_until_complete`.
+    Coroutine functions are automatically wrapped in a function that runs them 
+    using `AsyncTestCase.loop.run_until_complete`.
+
+    To use this class, just create a subclass and write test methods as usual:
+
+        class MyTestCase(AsyncTestCase):
+
+            async def test_foo(self):
+                await asyncio.sleep(5)
     """
 
     @classmethod
