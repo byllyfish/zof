@@ -22,7 +22,7 @@ msg:
   data: 000000000000000000000000000000000000
   actions:
     - action: OUTPUT
-      port: 1
+      port_no: 1
       max_len: MAX
 ----
 
@@ -37,13 +37,13 @@ msg:
   data: 000000000000000000000000000000000000
   actions:
     - action: OUTPUT
-      port: 1
+      port_no: 1
       max_len: MAX
     - action: OUTPUT
-      port: 2
+      port_no: 2
       max_len: MAX
     - action: OUTPUT
-      port: 3
+      port_no: 3
       max_len: MAX
 ----
 

@@ -14,7 +14,7 @@ _XID_TIMEOUT = 10.0  # Seconds
 _IDLE_INTERVAL = 1.0
 _MIN_XID = 8092
 _MAX_XID = 0xFFFFFFFF
-_API_VERSION = 1
+_API_VERSION = 0.9
 _VERSION = '0.1.0'
 
 LOGGER = logging.getLogger('pylibofp')
@@ -50,7 +50,7 @@ class Controller(object):
     def run_loop(self,
                  *,
                  listen_endpoints=None,
-                 libofp_args=None,
+                 oftr_args=None,
                  security=None):
         """Main entry point for running a controller.
         """
@@ -58,7 +58,7 @@ class Controller(object):
             asyncio.ensure_future(
                 self._run(
                     listen_endpoints=listen_endpoints,
-                    libofp_args=libofp_args,
+                    oftr_args=oftr_args,
                     security=security))
 
             LOGGER.debug('run_server started')
@@ -84,30 +84,39 @@ class Controller(object):
     async def _run(self,
                    *,
                    listen_endpoints=None,
-                   libofp_args=None,
+                   oftr_args=None,
                    security=None):
         """Async task for running the controller.
         """
 
-        LOGGER.debug("Controller.run entered")
-        self._conn = Connection(libofp_args=libofp_args)
-        await self._conn.connect()
+        LOGGER.debug("Controller._run entered")
+        try:
+            self._conn = Connection(oftr_args=oftr_args)
+            await self._conn.connect()
 
-        self._event_queue = asyncio.Queue()
-        self._set_phase('PRESTART')
+            self._event_queue = asyncio.Queue()
+            self._set_phase('PRESTART')
 
-        asyncio.ensure_future(
-            self._start(
-                listen_endpoints=listen_endpoints, security=security))
-        asyncio.ensure_future(self._event_loop())
-        idle = asyncio.ensure_future(self._idle_task())
+            asyncio.ensure_future(
+                self._start(
+                    listen_endpoints=listen_endpoints, security=security))
+            asyncio.ensure_future(self._event_loop())
+            idle = asyncio.ensure_future(self._idle_task())
 
-        await self._read_loop()
+            await self._read_loop()
 
-        idle.cancel()
-        self._set_phase('STOP')
-        await self._conn.disconnect()
-        LOGGER.debug("Controller.run exited")
+            idle.cancel()
+            self._set_phase('STOP')
+            await self._conn.disconnect()
+
+        except Exception:
+            LOGGER.exception('Exception in Controller._run')
+            if self._conn:
+                self._conn.close(False)
+            asyncio.get_event_loop().stop()
+
+        finally:
+            LOGGER.debug("Controller._run exited")
 
     async def _event_loop(self):
         """Run the event loop to handle events.
@@ -166,14 +175,13 @@ class Controller(object):
         """
         try:
             result = await self.rpc_call('OFP.DESCRIPTION')
-            # Check major API version.
-            if result.major_version > _API_VERSION:
-                LOGGER.error('Unsupported API version %d.%d',
-                             result.major_version, result.minor_version)
+            # Check API version.
+            if float(result.api_version) != _API_VERSION:
+                LOGGER.error('Unsupported API version %s', result.api_version)
                 raise ValueError('Unsupported API version')
 
-            self._ofp_versions = result.ofp_versions
-            LOGGER.info('Connected to libofp %s', result.software_version)
+            self._ofp_versions = result.versions
+            LOGGER.info('Connected to libofp %s', result.sw_desc)
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to get description from libofp %s', ex)

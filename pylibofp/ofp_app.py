@@ -15,11 +15,7 @@ def ofp_app(name, *, ofversion=None):
 
     Args:
         name (str): Name of the app.
-        ofversion (Optional[str]): Supported OpenFlow versions.
-            Example values:
-                - "1.0" = OpenFlow 1.0 only.
-                - "1.3+" = OpenFlow 1.3 and later.
-                - "1.0, 1.3+" = OpenFlow 1.0 along with OF 1.3 and later.
+        ofversion (Optional[int]): Supported OpenFlow versions.
 
     Returns:
         AppFacade: API object for app.
@@ -31,7 +27,7 @@ def ofp_app(name, *, ofversion=None):
 
 def ofp_run(*,
             listen_endpoints=_LISTEN_ENDPOINTS,
-            libofp_args=None,
+            oftr_args=None,
             loglevel='info',
             security=None,
             command_shell=True):
@@ -42,7 +38,7 @@ def ofp_run(*,
             until complete. If None, use default event loop.
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
-        libofp_args (Optional[List[str]]): Command line arguments to libofp.
+        oftr_args (Optional[List[str]]): Command line arguments to libofp.
         loglevel (Optional[str]): Default log level (info). If None, logging is
             left unconfigured.
         security (Optional[Dict[str, str]]): Dictionary with security settings
@@ -62,7 +58,7 @@ def ofp_run(*,
     controller = Controller.singleton()
     controller.run_loop(
         listen_endpoints=listen_endpoints,
-        libofp_args=libofp_args,
+        oftr_args=oftr_args,
         security=security)
 
 

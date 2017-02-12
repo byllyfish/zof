@@ -1,8 +1,12 @@
 import string
 import textwrap
 import asyncio
+import logging
 from .objectview import ObjectView, to_json
 from .event import MatchObject
+
+
+LOGGER = logging.getLogger('pylibofp')
 
 
 _TEMPLATE = """\
@@ -128,6 +132,11 @@ class CompiledObject(object):
             self._obj['datapath_id'] = kwds['datapath_id']
         if not 'xid' in self._obj:
             self._obj['xid'] = kwds['xid']
+        if not 'conn_id' in self._obj and kwds['conn_id'] is not None:
+            self._obj['conn_id'] = kwds['conn_id']
+
+        if self._obj['datapath_id'] is None and self._obj.get('conn_id') is None:
+            raise ValueError('Must specify either datapath_id or conn_id.')
 
         # TODO(bfish): Handle conn_id.
         return to_json(dict(method='OFP.SEND', params=self._obj))

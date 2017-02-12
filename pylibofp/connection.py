@@ -10,32 +10,32 @@ LOGGER = logging.getLogger('pylibofp.controller')
 
 
 class Connection(object):
-    """Concrete class representing a connection to the libofp driver.
+    """Concrete class representing a connection to the `oftr` driver.
 
     Keyword Args:
-        libofp_cmd (str): Subcommand name (defaults to 'jsonrpc')
-        libofp_args (Optional[List[str]]): Command line arguments.
+        oftr_cmd (str): Subcommand name (defaults to 'jsonrpc')
+        oftr_args (Optional[List[str]]): Command line arguments.
     """
 
-    def __init__(self, *, libofp_cmd='jsonrpc', libofp_args=None):
+    def __init__(self, *, oftr_cmd='jsonrpc', oftr_args=None):
         self._conn = None
         self._input = None
         self._output = None
-        self._libofp_cmd = libofp_cmd
-        self._libofp_args = libofp_args
+        self._oftr_cmd = oftr_cmd
+        self._oftr_args = oftr_args
 
     async def connect(self):
-        """Set up connection to the libofp driver.
+        """Set up connection to the oftr driver.
         """
-        libofp_path = shutil.which('libofp')
-        if not libofp_path:
-            raise RuntimeError('Unable to find libofp executable.')
+        oftr_path = shutil.which('oftr')
+        if not oftr_path:
+            raise RuntimeError('Unable to find oftr executable.')
 
-        cmd = [libofp_path, self._libofp_cmd]
-        if self._libofp_args:
-            cmd.extend(self._libofp_args)
+        cmd = [oftr_path, self._oftr_cmd]
+        if self._oftr_args:
+            cmd.extend(self._oftr_args)
 
-        LOGGER.debug("Launch libofp (%s)", cmd[0])
+        LOGGER.debug("Launch oftr (%s)", cmd[0])
 
         try:
             # When we create the subprocess, make it a session leader.
@@ -52,17 +52,17 @@ class Connection(object):
             self._output = proc.stdin
 
         except (PermissionError, FileNotFoundError):
-            LOGGER.error('Unable to find exectuable: "%s"', libofp_path)
+            LOGGER.error('Unable to find exectuable: "%s"', oftr_path)
             raise
 
     async def disconnect(self):
-        """Wait for libofp connection to close.
+        """Wait for oftr connection to close.
         """
         if self._conn is None:
             return 0
         return_code = await self._conn.wait()
         if return_code:
-            LOGGER.error("libofp exited with return code %s", return_code)
+            LOGGER.error("oftr exited with return code %s", return_code)
         self._input = None
         self._output = None
         self._conn = None
@@ -76,7 +76,7 @@ class Connection(object):
             return result[0:-1]
         except asyncio.streams.IncompleteReadError as ex:
             if ex.partial:
-                LOGGER.warning('libofp incomplete read: %d bytes ignored',
+                LOGGER.warning('oftr incomplete read: %d bytes ignored',
                                len(ex.partial))
             return b''
 
@@ -88,7 +88,7 @@ class Connection(object):
     async def drain(self):
         """Wait while the output buffer is flushed.
         """
-        LOGGER.info('libofp connection drain: buffer_size=%d',
+        LOGGER.info('oftr connection drain: buffer_size=%d',
                     self.get_write_buffer_size())
         return await self._output.drain()
 

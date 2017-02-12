@@ -13,7 +13,7 @@
 #         field: ETH_DST
 #         value: '00:01:02:03:04:05'
 #       - action: OUTPUT
-#         port: 1
+#         port_no: 1
 #         max_len: MAX
 type:            GROUP_MOD
 xid:             0x00000000
@@ -34,7 +34,7 @@ msg:
           field:           ETH_DST
           value:           '00:01:02:03:04:05'
         - action:          OUTPUT
-          port:            0x00000001
+          port_no:         0x00000001
           max_len:         MAX
 ---
 # type: GROUP_MOD
@@ -45,11 +45,11 @@ msg:
 #   buckets:
 #     - actions:
 #       - action: OUTPUT
-#         port: 1
+#         port_no: 1
 #         max_len: MAX
 #     - actions: 
 #       - action: OUTPUT
-#         port: 2
+#         port_no: 2
 #         max_len: MAX
 type:            GROUP_MOD
 xid:             0x00000000
@@ -64,12 +64,12 @@ msg:
       watch_group:     ANY
       actions:         
         - action:          OUTPUT
-          port:            0x00000001
+          port_no:         0x00000001
           max_len:         MAX
     - weight:          0x0000
       watch_port:      ANY
       watch_group:     ANY
       actions:         
         - action:          OUTPUT
-          port:            0x00000002
+          port_no:         0x00000002
           max_len:         MAX

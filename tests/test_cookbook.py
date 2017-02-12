@@ -13,8 +13,8 @@ COOKBOOK_DIR = os.path.join(HERE, '../docs/cookbook')
 
 RECIPE = re.compile(r'(?ms)\n\[source,yaml\]\n----\n(.*?\n)----\n')
 
-# Pass these args when launching libofp.
-LIBOFP_ARGS = ['--roundtrip', '-ofversion=4']
+# Pass these args when launching oftr.
+OFTR_ARGS = ['--roundtrip', '-ofversion=4']
 
 
 class CookbookTestCase(AsyncTestCase):
@@ -24,18 +24,20 @@ class CookbookTestCase(AsyncTestCase):
     """
 
     async def setUp(self):
-        self.conn = Connection(libofp_cmd='encode', libofp_args=LIBOFP_ARGS)
+        self.conn = Connection(oftr_cmd='encode', oftr_args=OFTR_ARGS)
         await self.conn.connect()
 
     async def tearDown(self):
         self.conn.close(write=True)
         return_code = await self.conn.disconnect()
         if return_code:
-            raise Exception('libofp exited with return code %d' % return_code)
+            raise Exception('oftr exited with return code %d' % return_code)
 
     async def test_cookbooks(self):
         for filename in glob(os.path.join(COOKBOOK_DIR, '*.adoc')):
-            await self.check_file(os.path.basename(filename))
+            name = os.path.basename(filename)
+            with self.subTest(name):
+                await self.check_file(name)
 
     async def check_file(self, filename):
         result = []
@@ -52,6 +54,8 @@ class CookbookTestCase(AsyncTestCase):
             _save(result, golden_filename)
         else:
             diff = _compare(result, golden_filename)
+            for line in diff:
+                print(line, end='')
             self.assertFalse(diff)        
 
 
@@ -87,7 +91,7 @@ def _compare(result, filename):
     with open(os.path.join(HERE, filename)) as input_:
         data = input_.readlines()
 
-    return list(difflib.unified_diff(data, result))
+    return list(difflib.unified_diff(data, result, n=1))
 
 
 def _save(result, filename):

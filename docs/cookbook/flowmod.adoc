@@ -38,7 +38,7 @@ msg:
     - instruction: APPLY_ACTIONS
       actions:
         - action: OUTPUT
-          port: CONTROLLER
+          port_no: CONTROLLER
           max_len: MAX
 ----
 

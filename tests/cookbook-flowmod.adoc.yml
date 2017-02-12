@@ -54,7 +54,7 @@ msg:
 #     - instruction: APPLY_ACTIONS
 #       actions:
 #         - action: OUTPUT
-#           port: CONTROLLER
+#           port_no: CONTROLLER
 #           max_len: MAX
 type:            FLOW_MOD
 xid:             0x00000000
@@ -76,7 +76,7 @@ msg:
     - instruction:     APPLY_ACTIONS
       actions:         
         - action:          OUTPUT
-          port:            CONTROLLER
+          port_no:         CONTROLLER
           max_len:         MAX
 ---
 # # Add table miss flow entry to drop all packets.

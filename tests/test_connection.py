@@ -10,21 +10,21 @@ MSG_LIMIT = 2**20
 # Skip tests that send big messages.
 SKIP_BIG_MESSAGES = False
 
-# Pass these args when launching libofp.
-LIBOFP_ARGS = [] #['--trace=rpc,msg', '--loglevel=debug']
+# Pass these args when launching oftr.
+OFTR_ARGS = [] #['--trace=rpc,msg', '--loglevel=debug']
 
 
 class ConnectionTestCase(AsyncTestCase):
 
     async def setUp(self):
-        self.conn = Connection(libofp_args=LIBOFP_ARGS)
+        self.conn = Connection(oftr_args=OFTR_ARGS)
         await self.conn.connect()
 
     async def tearDown(self):
         self.conn.close()
         return_code = await self.conn.disconnect()
         if return_code:
-            raise Exception('libofp exited with return code %d' % return_code)
+            raise Exception('oftr exited with return code %d' % return_code)
 
     # Basic tests.
 
@@ -33,7 +33,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":1234,"method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":1234,"result":{"major_version":0,"minor_version":1,"software_version":')
+        self.assertPrefix(result, b'{"id":1234,"result":{"api_version":"0.9","sw_desc":')
 
     async def test_rpc_no_id(self):
         # If we write a valid JSON-RPC method with no id, there should be no response.
@@ -69,7 +69,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":"0x1234","method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":4660,"result":{"major_version":0,"minor_version":1,"software_version":')
+        self.assertPrefix(result, b'{"id":4660,"result":{"api_version":"0.9","sw_desc":')
 
     # Test the connection transport limits.
 
@@ -152,7 +152,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":null,"method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":null,"result":{"major_version":')
+        self.assertPrefix(result, b'{"id":null,"result":{"api_version":')
         await self._still_alive()
 
     async def test_rpc_id_too_big(self):
@@ -168,7 +168,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":%d,"method":"OFP.DESCRIPTION"}' % id_val
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":%d,"result":{"major_version":' % id_val)
+        self.assertPrefix(result, b'{"id":%d,"result":{"api_version":' % id_val)
         await self._still_alive()
 
     async def test_ofp_send_invalid(self):
@@ -224,7 +224,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(b'{"id":12300,"method":"OFP.DESCRIPTION"}')
         self.conn.close(write=True)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":12300,"result":{"major_version":')
+        self.assertPrefix(result, b'{"id":12300,"result":{"api_version":')
         await self._end_of_input()
 
     async def test_close_incomplete_write(self):
@@ -243,7 +243,7 @@ class ConnectionTestCase(AsyncTestCase):
     async def _still_alive(self):
         self.conn.write(b'{"id":12300,"method":"OFP.DESCRIPTION"}')
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":12300,"result":{"major_version":')
+        self.assertPrefix(result, b'{"id":12300,"result":{"api_version":')
 
     def assertPrefix(self, value, prefix):
         if not value.startswith(prefix):
