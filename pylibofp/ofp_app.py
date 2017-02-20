@@ -38,11 +38,11 @@ def ofp_run(*,
             until complete. If None, use default event loop.
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
-        oftr_args (Optional[List[str]]): Command line arguments to libofp.
+        oftr_args (Optional[List[str]]): Command line arguments to oftr.
         loglevel (Optional[str]): Default log level (info). If None, logging is
             left unconfigured.
         security (Optional[Dict[str, str]]): Dictionary with security settings
-            for libofp connections:
+            for oftr connections:
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.

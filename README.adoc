@@ -12,7 +12,7 @@ Pylibofp is a asyncio-based microframework for creating OpenFlow controllers, ag
 Compared to other OpenFlow controller frameworks:
 
 * Pylibofp is simple and lean; it supports OpenFlow only.
-* Pylibofp adapts the YAML/JSON declarative OpenFlow model from `libofp`.
+* Pylibofp adapts the YAML/JSON declarative OpenFlow model from `oftr`.
 * Pylibofp is intended for learning and experimenting.
 * Pylibofp can be used to emulate OpenFlow switches.
 

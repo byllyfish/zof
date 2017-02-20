@@ -14,11 +14,11 @@ script:
 #  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then codecov; fi
 
 before_install:
-  # Install libofp from launchpad.
-  - sudo add-apt-repository ppa:byllyfish/libofp -y
+  # Install oftr from launchpad.
+  - sudo add-apt-repository ppa:byllyfish/oftr -y
   - sudo apt-get update -qq
-  - sudo apt-get install libofp -y
-  - libofp version
+  - sudo apt-get install oftr -y
+  - oftr version
 
 # Per https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
 sudo: required

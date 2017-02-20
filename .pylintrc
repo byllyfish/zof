@@ -46,4 +46,4 @@ min-public-methods=0
 
 [TYPECHECK]
 
-ignored-classes=ObjectView,Event
+ignored-classes=ObjectView,Event,MatchObject

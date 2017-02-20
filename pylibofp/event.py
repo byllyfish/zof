@@ -9,9 +9,11 @@ class Event(ObjectView):
     def __init__(self, d):
         super().__init__(d)
         try:
+            # If there's no `data` key, the rest of this is skipped.
             self.data = bytes.fromhex(d['data'])
             self.pkt = MatchObject(d['_pkt_decode'])
             del d['_pkt_decode']
+            self.pkt.data = self.data[self.pkt['x_pkt_pos']:]
         except KeyError:
             pass
 

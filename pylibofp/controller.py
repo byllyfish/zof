@@ -150,7 +150,7 @@ class Controller(object):
         LOGGER.debug('_read_loop exited')
 
     async def _start(self, *, listen_endpoints, security):
-        """Configure the libofp driver based on controller arguments.
+        """Configure the oftr driver based on controller arguments.
 
         This method runs concurrently with `run()`.
         """
@@ -169,7 +169,7 @@ class Controller(object):
             self.post_event(make_event(event='EXIT'))
 
     async def _get_description(self):
-        """Check the api version used by libofp.
+        """Check the api version used by oftr.
 
         Also, check the OpenFlow versions supported.
         """
@@ -181,10 +181,10 @@ class Controller(object):
                 raise ValueError('Unsupported API version')
 
             self._ofp_versions = result.versions
-            LOGGER.info('Connected to libofp %s', result.sw_desc)
+            LOGGER.info('Connected to oftr %s', result.sw_desc)
 
         except _exc.ControllerException as ex:
-            LOGGER.error('Unable to get description from libofp %s', ex)
+            LOGGER.error('Unable to get description from oftr %s', ex)
             raise
 
     async def _configure_tls(self, security):
@@ -233,7 +233,7 @@ class Controller(object):
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
-        """Dispatch an event we receive from libofp.
+        """Dispatch an event we receive from oftr.
         """
         LOGGER.debug('_dispatch_event %r', event)
 
