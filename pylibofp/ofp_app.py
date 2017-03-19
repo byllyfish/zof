@@ -10,7 +10,7 @@ from .compiledmessage import CompiledMessage, CompiledObject
 _LISTEN_ENDPOINTS = (6633, 6653)
 
 
-def ofp_app(name, *, ofversion=None):
+def ofp_app(name, *, ofversion=None, kill_on_exception=False):
     """Construct a new app.
 
     Args:
@@ -21,7 +21,7 @@ def ofp_app(name, *, ofversion=None):
         AppFacade: API object for app.
     """
     controller = Controller.singleton()
-    app = ControllerApp(controller, name=name, ofversion=ofversion)
+    app = ControllerApp(controller, name=name, ofversion=ofversion, kill_on_exception=kill_on_exception)
     return AppFacade(app)
 
 

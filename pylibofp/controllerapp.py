@@ -2,6 +2,8 @@
 
 import logging
 import inspect
+import os
+import signal
 from collections import defaultdict
 from pylibofp.handler import make_handler
 import pylibofp.exception as _exc
@@ -15,6 +17,7 @@ class ControllerApp(object):
         name (str): App name.
         precedence (int): App precedence.
         ofversion (...): Supported OpenFlow versions.
+        kill_on_exception (bool): Terminate immediately if app raises exception.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
         handlers (Dict[str,BaseHandler]): App handlers.
@@ -22,14 +25,16 @@ class ControllerApp(object):
         parent (Controller): Parent controller object.
         name (str): App name.
         ofversion (Optional[str]): Supports OpenFlow versions.
+        kill_on_exception (bool): Terminate immediately if app raises exception.
     """
     _curr_app_id = 0
 
-    def __init__(self, parent, *, name, ofversion=None):
+    def __init__(self, parent, *, name, ofversion=None, kill_on_exception=False):
         self.name = name
         self.precedence = 100
         self.ofversion = ofversion
         self.handlers = {}
+        self.kill_on_exception = kill_on_exception
 
         # Add this app to parent's list of app's.
         parent.apps.append(self)
@@ -50,8 +55,16 @@ class ControllerApp(object):
                     except _exc.FallThroughException:
                         self.logger.debug('_handle: FallThroughException')
         except Exception:  # pylint: disable=broad-except
-            self.logger.exception(
-                'Exception caught while handling "%s": %r', handler_type, event)
+            self.handle_exception(event, handler_type)
+
+    def handle_exception(self, event, handler_type):
+        """Handle exception."""
+        self.logger.exception(
+            'Exception caught while handling "%s": %r', handler_type, event)
+        if self.kill_on_exception:
+            self.logger.critical('Terminate controller; kill_on_exception set for app "%s"', self.name)
+            logging.shutdown()
+            os.kill(os.getpid(), signal.SIGKILL)
 
     def post_event(self, event, **kwds):
         """Function used to send an internal event to all app modules.

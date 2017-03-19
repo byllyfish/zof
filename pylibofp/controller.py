@@ -436,8 +436,8 @@ class Controller(object):
             except asyncio.CancelledError:
                 app.logger.debug('ensure_future cancelled: %s',
                                  _coro_name(coroutine))
-            except Exception as ex:  # pylint: disable=broad-except
-                app.logger.exception(ex)
+            except Exception:  # pylint: disable=broad-except
+                app.handle_exception(None, scope_key)
 
         task = asyncio.ensure_future(_capture_exception(coroutine))
         if not scope_key:
