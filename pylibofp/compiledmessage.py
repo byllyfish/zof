@@ -3,7 +3,7 @@ import textwrap
 import asyncio
 import logging
 from .objectview import ObjectView, to_json
-from .event import MatchObject
+from .pktdecode import PktDecode
 
 
 LOGGER = logging.getLogger('pylibofp')
@@ -143,10 +143,13 @@ class CompiledObject(object):
 
 
     def _convert_pkt(self):
+        """Convert high level API `pkt` to low level API."""
         msg = self._obj['msg']
         if 'pkt' in msg:
             msg = msg.copy()
-            msg['_pkt_decode'] = MatchObject.to_list(msg['pkt'])
+            if 'payload' in msg['pkt']:
+                msg['_pkt_data'] = msg['pkt']['payload']
+            msg['_pkt_decode'] = PktDecode.to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
 

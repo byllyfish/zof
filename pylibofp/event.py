@@ -1,5 +1,6 @@
 import json
 from pylibofp.objectview import ObjectView, to_json
+from pylibofp.pktdecode import PktDecode
 
 
 class Event(ObjectView):
@@ -9,27 +10,16 @@ class Event(ObjectView):
     def __init__(self, d):
         super().__init__(d)
         try:
+            # Any value with key 'data' MUST be a binary type.
             # If there's no `data` key, the rest of this is skipped.
             self.data = bytes.fromhex(d['data'])
-            self.pkt = MatchObject(d['_pkt_decode'])
+            # If there's no `_pkt_decode` key, the rest is skipped.
+            self.pkt = PktDecode(d['_pkt_decode'])
             del d['_pkt_decode']
-            self.pkt.data = self.data[self.pkt['x_pkt_pos']:]
+            # If there's no 'x_pkt_pos' key in self.pkt, the rest is skipped.
+            self.pkt.payload = self.data[self.pkt['x_pkt_pos']:]
         except KeyError:
             pass
-
-
-class MatchObject(ObjectView):
-    """Concrete class that represents a Match with convenient accessors.
-    """
-
-    def __init__(self, match):
-        super().__init__({})
-        for field in match:
-            self.__dict__[field.field.lower()] = field.value
-
-    @staticmethod
-    def to_list(obj):
-        return [ObjectView(dict(field=k, value=v)) for k, v in obj.items()]
 
 
 def load_event(event):
