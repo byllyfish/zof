@@ -2,6 +2,7 @@ import collections
 import logging.config
 import os
 import warnings
+import sys
 
 
 class TailBufferedHandler(logging.Handler):
@@ -47,6 +48,32 @@ class TailBufferedHandler(logging.Handler):
         return TailBufferedHandler._singleton.lines()
 
 
+class PatchedConsoleHandler(logging.Handler):
+    """Logging handler that writes to stdout EVEN when stdout is patched.
+
+    The normal StreamHandler grabs a reference to `sys.stdout` once at 
+    initialization time. This class always logs to the current sys.stdout 
+    which may be patched at runtime by prompt_toolkit.
+    """
+
+    def emit(self, record):
+        try:
+            stream = sys.stdout
+            stream.write(self.format(record))
+            stream.write('\n')
+        except Exception: # pylint: disable=broad-except
+            self.handleError(record)
+
+    @staticmethod
+    def install():
+        """Install stdout logging handler."""
+        handler = PatchedConsoleHandler()
+        root_logger = logging.getLogger()
+        handler.setFormatter(root_logger.handlers[0].formatter)
+        handler.setLevel('WARNING')
+        root_logger.addHandler(handler)
+
+
 def init_logging(loglevel):
     """Set up logging.
 
@@ -55,7 +82,11 @@ def init_logging(loglevel):
     if loglevel.lower() == 'debug':
         os.environ['PYTHONASYNCIODEBUG'] = '1'
 
+    # Set up basic logging from config.
     logging.config.dictConfig(_logging_config(loglevel))
+
+    # Create two more output handlers at runtime.
+    PatchedConsoleHandler.install()
     TailBufferedHandler.install()
 
     logging.captureWarnings(True)
@@ -74,12 +105,6 @@ def _logging_config(loglevel):
             }
         },
         'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'complete',
-                'level': 'WARNING',
-                "stream": "ext://sys.stdout"
-            },
             'logfile': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'complete',
@@ -98,6 +123,6 @@ def _logging_config(loglevel):
             }
         },
         'root': {
-            'handlers': ['console', 'logfile']
+            'handlers': ['logfile']
         }
     }
