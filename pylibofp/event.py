@@ -1,6 +1,6 @@
 import json
 from pylibofp.objectview import ObjectView, to_json
-from pylibofp.pktdecode import PktDecode
+from pylibofp.pktview import pktview_from_list
 
 
 class Event(ObjectView):
@@ -14,7 +14,7 @@ class Event(ObjectView):
             # If there's no `data` key, the rest of this is skipped.
             self.data = bytes.fromhex(d['data'])
             # If there's no `_pkt_decode` key, the rest is skipped.
-            self.pkt = PktDecode(d['_pkt_decode'])
+            self.pkt = pktview_from_list(d['_pkt_decode'])
             del d['_pkt_decode']
             # If there's no 'x_pkt_pos' key in self.pkt, the rest is skipped.
             self.pkt.payload = self.data[self.pkt['x_pkt_pos']:]

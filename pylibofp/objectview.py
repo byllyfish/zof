@@ -109,15 +109,3 @@ def _json_serialize(obj):
     except AttributeError:
         raise TypeError('Value "%s" of type %s is not JSON serializable' %
                         (repr(obj), type(obj)))
-
-
-def item_iter(obj):
-    """Accessor for iterating over key-value pairs in ObjectView or dict.
-
-    Usage:
-        for k, v in ObjectView.item_iter(obj):
-            ...
-    """
-    if isinstance(obj, ObjectView):
-        return obj.__dict__.items()
-    return obj.items()

@@ -3,7 +3,7 @@ import textwrap
 import asyncio
 import logging
 from .objectview import ObjectView, to_json
-from .pktdecode import PktDecode
+from .pktview import pktview_to_list
 
 
 LOGGER = logging.getLogger('pylibofp')
@@ -149,7 +149,7 @@ class CompiledObject(object):
             msg = msg.copy()
             if 'payload' in msg['pkt']:
                 msg['_pkt_data'] = msg['pkt']['payload']
-            msg['_pkt_decode'] = PktDecode.to_list(msg['pkt'])
+            msg['_pkt_decode'] = pktview_to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
 
