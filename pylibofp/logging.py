@@ -8,8 +8,6 @@ import sys
 class TailBufferedHandler(logging.Handler):
     """Logging handler that records the last N log records."""
 
-    _singleton = None
-
     def __init__(self, maxlen=10):
         super().__init__()
         self._tail = collections.deque(maxlen=maxlen)
@@ -33,19 +31,10 @@ class TailBufferedHandler(logging.Handler):
     @staticmethod
     def install():
         """Install tail logging handler."""
-        # Only install it once.
-        if TailBufferedHandler._singleton:
-            return
-        handler = TailBufferedHandler()
         root_logger = logging.getLogger()
+        handler = TailBufferedHandler()
         handler.setFormatter(root_logger.handlers[0].formatter)
         root_logger.addHandler(handler)
-        TailBufferedHandler._singleton = handler
-
-    @staticmethod
-    def tail():
-        """Return last N lines."""
-        return TailBufferedHandler._singleton.lines()
 
 
 class PatchedConsoleHandler(logging.Handler):
@@ -58,17 +47,20 @@ class PatchedConsoleHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            stream = sys.stdout
-            stream.write(self.format(record))
-            stream.write('\n')
+            self.write(self.format(record))
         except Exception: # pylint: disable=broad-except
             self.handleError(record)
+
+    def write(self, line):
+        stream = sys.stdout
+        stream.write(line)
+        stream.write('\n')
 
     @staticmethod
     def install():
         """Install stdout logging handler."""
-        handler = PatchedConsoleHandler()
         root_logger = logging.getLogger()
+        handler = PatchedConsoleHandler()
         handler.setFormatter(root_logger.handlers[0].formatter)
         handler.setLevel('WARNING')
         root_logger.addHandler(handler)
@@ -91,6 +83,13 @@ def init_logging(loglevel):
 
     logging.captureWarnings(True)
     warnings.simplefilter('always')
+
+
+def find_log_handler(class_):
+    """Find log handler by class.
+    """
+    root_logger = logging.getLogger()
+    return next(h for h in root_logger.handlers if isinstance(h, class_))
 
 
 def _logging_config(loglevel):

@@ -1,11 +1,10 @@
 import shlex
 import inspect
 import asyncio
-import logging
 
 from pylibofp import ofp_app, ofp_run
 from pylibofp.event import make_event
-from pylibofp.logging import TailBufferedHandler
+from pylibofp.logging import find_log_handler, TailBufferedHandler, PatchedConsoleHandler
 
 from prompt_toolkit.shortcuts import prompt_async
 from prompt_toolkit.styles import style_from_dict
@@ -152,18 +151,20 @@ def task_cmd(event):
 @ofp.command('log')
 async def log_cmd(event):
     # Print out lines from tail buffer.
-    for line in TailBufferedHandler.tail():
-        print(line)
+    tail_handler = find_log_handler(TailBufferedHandler)
+    console_handler = find_log_handler(PatchedConsoleHandler)
+    for line in tail_handler.lines():
+        console_handler.write(line)
     # Temporarily change console log handler's level to use the root log level.
-    console = logging.getLogger().handlers[0]
-    console.setLevel('NOTSET')
+    console_level = console_handler.level
+    console_handler.setLevel('NOTSET')
     try:
         # Wait for cancellation.
         while True:
             await asyncio.sleep(60)
     finally:
-        # Change console log handler's level back to warning.
-        console.setLevel('WARNING')
+        # Change console log handler's level back.
+        console_handler.setLevel(console_level)
 
 
 @ofp.command('net')
