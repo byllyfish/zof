@@ -1,6 +1,5 @@
 """Main ofp_app functions."""
 
-import asyncio
 from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
@@ -34,8 +33,6 @@ def ofp_run(*,
     """Run event loop for ofp_app's.
 
     Args:
-        loop (Optional[asyncio.EventLoop]): Run asyncio tasks on this event loop
-            until complete. If None, use default event loop.
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
         oftr_args (Optional[List[str]]): Command line arguments to oftr.

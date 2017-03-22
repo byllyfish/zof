@@ -32,7 +32,7 @@ argument-rgx=[a-z_]{1,30}$
 [CLASSES]
 
 # List of member names excluded from the protected access warning.
-exclude-protected=_write,_next_xid,_post_event
+#exclude-protected=_write,_next_xid,_post_event
 #_asdict,_fields,_replace,_source,_make
 
 
@@ -46,4 +46,4 @@ min-public-methods=0
 
 [TYPECHECK]
 
-ignored-classes=ObjectView,Event,PktDecode
+ignored-classes=ObjectView,Event,PktView

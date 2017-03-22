@@ -4,16 +4,18 @@ import ipaddress
 # Reserved payload field.
 PAYLOAD = 'payload'
 
+#pylint: skip-file
+# The presence of the _alias_property function causes pylint to crash(?).
 
 def _alias_property(name):
-    def fget(self):
+    """Construct property that aliases specified attribute."""
+    def _fget(self):
         return self.__dict__[name]
-    def fset(self, value):
+    def _fset(self, value):
         self.__dict__[name] = value
-    def fdel(self):
+    def _fdel(self):
         del self.__dict__[name]
-    return property(fget=fget, fset=fset, fdel=fdel)
-
+    return property(fget=_fget, fset=_fset, fdel=_fdel)
 
 
 class PktView(ObjectView):
@@ -46,8 +48,7 @@ def pktview_from_list(fields):
 
 
 def pktview_to_list(pkt):
-    """Convert a PktView object (or dict) into a list of fields.
-    """
+    """Convert a PktView object (or dict) into a list of fields."""
     if not isinstance(pkt, (dict, ObjectView)):
         raise ValueError('Expected a dict or ObjectView')
 
@@ -92,11 +93,10 @@ def _convert_legacy_field(key, ofctl):
 
 
 def _convert_slash_notation(value):
+    """Convert string value in slash notation into a tuple (addr, mask)."""
     if not isinstance(value, str):
         return value
     if '/' not in value:
         return value
     addr = ipaddress.ip_interface(value)
     return (addr.ip, addr.netmask)
-
-
