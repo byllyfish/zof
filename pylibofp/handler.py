@@ -1,7 +1,7 @@
 import inspect
 import logging
 import asyncio
-from pylibofp.objectview import ObjectView
+from .objectview import ObjectView
 
 LOGGER = logging.getLogger('pylibofp.controller')
 

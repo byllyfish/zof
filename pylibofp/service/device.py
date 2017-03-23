@@ -16,7 +16,7 @@ Event attributes added:
 
 import asyncio
 from collections import OrderedDict
-from pylibofp import ofp_app, ofp_run, ofp_compile
+from .. import ofp_app, ofp_run, ofp_compile
 
 OPENFLOW_VERSION_1 = 0
 

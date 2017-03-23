@@ -2,9 +2,9 @@ import shlex
 import inspect
 import asyncio
 
-from pylibofp import ofp_app, ofp_run
-from pylibofp.event import make_event
-from pylibofp.logging import find_log_handler, TailBufferedHandler, PatchedConsoleHandler
+from .. import ofp_app, ofp_run
+from ..event import make_event
+from ..logging import find_log_handler, TailBufferedHandler, PatchedConsoleHandler
 
 from prompt_toolkit.shortcuts import prompt_async
 from prompt_toolkit.styles import style_from_dict

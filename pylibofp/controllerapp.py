@@ -4,9 +4,9 @@ import logging
 import inspect
 import os
 import signal
-from . import exception as _exc
 from .handler import make_handler
 from .event import make_event
+from . import exception as _exc
 
 
 class ControllerApp(object):

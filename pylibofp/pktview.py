@@ -1,5 +1,5 @@
-from .objectview import ObjectView
 import ipaddress
+from .objectview import ObjectView
 
 # Reserved payload field.
 PAYLOAD = 'payload'

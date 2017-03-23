@@ -1,6 +1,6 @@
 import json
-from pylibofp.objectview import ObjectView, to_json
-from pylibofp.pktview import pktview_from_list
+from .objectview import ObjectView, to_json
+from .pktview import pktview_from_list
 
 
 class Event(ObjectView):
