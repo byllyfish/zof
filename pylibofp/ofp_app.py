@@ -20,7 +20,11 @@ def ofp_app(name, *, ofversion=None, kill_on_exception=False):
         AppFacade: API object for app.
     """
     controller = Controller.singleton()
-    app = ControllerApp(controller, name=name, ofversion=ofversion, kill_on_exception=kill_on_exception)
+    app = ControllerApp(
+        controller,
+        name=name,
+        ofversion=ofversion,
+        kill_on_exception=kill_on_exception)
     return AppFacade(app)
 
 

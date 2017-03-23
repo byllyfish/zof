@@ -47,10 +47,7 @@ class Controller(object):
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
 
-    def run_loop(self,
-                 *,
-                 listen_endpoints=None,
-                 oftr_args=None,
+    def run_loop(self, *, listen_endpoints=None, oftr_args=None,
                  security=None):
         """Main entry point for running a controller.
         """
@@ -62,7 +59,9 @@ class Controller(object):
                     security=security))
 
             LOGGER.debug('run_server started')
-            run_server(signals=['SIGTERM', 'SIGINT', 'SIGHUP'], signal_handler=self._handle_signal)
+            run_server(
+                signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
+                signal_handler=self._handle_signal)
             LOGGER.debug('run_server stopped')
             self._set_phase('POSTSTOP')
 
@@ -75,7 +74,7 @@ class Controller(object):
     def _handle_signal(self, signame):
         """Handle signals.
 
-        Usually, signals indicate that the program should exit. An app can 
+        Usually, signals indicate that the program should exit. An app can
         prevent shutdown by setting the event's `exit` value to False.
         """
         LOGGER.info('Signal Received: %s', signame)
@@ -109,7 +108,7 @@ class Controller(object):
             self._set_phase('STOP')
             await self._conn.disconnect()
 
-        except Exception:
+        except Exception:    # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._run')
             if self._conn:
                 self._conn.close(False)

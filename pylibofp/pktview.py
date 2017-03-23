@@ -7,14 +7,19 @@ PAYLOAD = 'payload'
 #pylint: skip-file
 # The presence of the _alias_property function causes pylint to crash(?).
 
+
 def _alias_property(name):
     """Construct property that aliases specified attribute."""
+
     def _fget(self):
         return self.__dict__[name]
+
     def _fset(self, value):
         self.__dict__[name] = value
+
     def _fdel(self):
         del self.__dict__[name]
+
     return property(fget=_fget, fset=_fset, fdel=_fdel)
 
 
@@ -88,7 +93,14 @@ def _iter_items(obj):
 
 def _convert_legacy_field(key, ofctl):
     """Convert ofctl legacy field names."""
-    legacy_fields = dict(dl_type='eth_type', dl_src='eth_src', dl_dst='eth_dst', dl_vlan='vlan_vid', nw_src='ipv4_src', nw_dst='ipv4_dst', nw_proto='ip_proto')
+    legacy_fields = dict(
+        dl_type='eth_type',
+        dl_src='eth_src',
+        dl_dst='eth_dst',
+        dl_vlan='vlan_vid',
+        nw_src='ipv4_src',
+        nw_dst='ipv4_dst',
+        nw_proto='ip_proto')
     return legacy_fields.get(key, key)
 
 

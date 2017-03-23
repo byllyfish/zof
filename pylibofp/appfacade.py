@@ -1,5 +1,3 @@
-
-
 class AppFacade(object):
     """Facade that provides access to API functions.
 
@@ -109,7 +107,6 @@ class AppFacade(object):
         result = await self.rpc_call(
             'OFP.CONNECT', endpoint=endpoint, options=options)
         return result.conn_id
-
 
     def all_apps(self):
         return list(self._app.parent.apps)

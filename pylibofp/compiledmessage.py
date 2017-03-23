@@ -5,9 +5,7 @@ import logging
 from .objectview import ObjectView, to_json
 from .pktview import pktview_to_list
 
-
 LOGGER = logging.getLogger('pylibofp')
-
 
 _TEMPLATE = """\
 method: OFP.SEND
@@ -135,12 +133,12 @@ class CompiledObject(object):
         if not 'conn_id' in self._obj and kwds['conn_id'] is not None:
             self._obj['conn_id'] = kwds['conn_id']
 
-        if self._obj['datapath_id'] is None and self._obj.get('conn_id') is None:
+        if self._obj['datapath_id'] is None and self._obj.get(
+                'conn_id') is None:
             raise ValueError('Must specify either datapath_id or conn_id.')
 
         # TODO(bfish): Handle conn_id.
         return to_json(dict(method='OFP.SEND', params=self._obj))
-
 
     def _convert_pkt(self):
         """Convert high level API `pkt` to low level API."""
@@ -152,9 +150,3 @@ class CompiledObject(object):
             msg['_pkt_decode'] = pktview_to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
-
-
-
-
-
-

@@ -59,8 +59,6 @@ REQ_FLOWS = ofp_compile('''
       match: []
 ''')
 
-
-
 DEVICES = OrderedDict()
 
 
@@ -166,6 +164,7 @@ async def poll_portstats(event):
 def channel_up(event):
     DEVICES[event.datapath_id] = Device(event)
     # grab ports here.
+
 
 @OFP.message('channel_down')
 def channel_down(event):
@@ -297,8 +296,11 @@ async def portmod(event):
 async def flows(event):
     for dpid in DEVICES:
         result = await REQ_FLOWS.request(datapath_id=dpid)
-        for flow in sorted(result.msg, key=lambda x: (x.table_id, -x.priority)):
-            print('%s: table %d pri %d %r\n    %r' % (dpid, flow.table_id, flow.priority, flow.match, flow.instructions))
+        for flow in sorted(
+                result.msg, key=lambda x: (x.table_id, -x.priority)):
+            print('%s: table %d pri %d %r\n    %r' %
+                  (dpid, flow.table_id, flow.priority, flow.match,
+                   flow.instructions))
 
 
 if __name__ == '__main__':

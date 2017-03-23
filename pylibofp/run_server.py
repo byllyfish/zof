@@ -2,15 +2,17 @@ import signal
 import asyncio
 import functools
 
-
 DEFAULT_SIGNALS = ('SIGINT', 'SIGHUP', 'SIGTERM')
 
 
-def _default_signal_handler(signame):
+def _default_signal_handler(_signame):
     asyncio.get_event_loop().stop()
 
 
-def run_server(*, signals=DEFAULT_SIGNALS, signal_handler=_default_signal_handler, pending_timeout=5.0):
+def run_server(*,
+               signals=DEFAULT_SIGNALS,
+               signal_handler=_default_signal_handler,
+               pending_timeout=5.0):
     """Run asyncio event loop for server.
 
     This function handles the boilerplate for running an async server:
@@ -34,7 +36,9 @@ def run_server(*, signals=DEFAULT_SIGNALS, signal_handler=_default_signal_handle
     # Install signal handler function(s).
     if signal_handler:
         for signame in signals:
-            loop.add_signal_handler(getattr(signal, signame), functools.partial(signal_handler, signame))
+            loop.add_signal_handler(
+                getattr(signal, signame),
+                functools.partial(signal_handler, signame))
 
     try:
         # Run loop until stopped with `loop.stop()`.
@@ -69,7 +73,9 @@ def _run_pending(loop, pending_timeout):
     try:
         pending = asyncio.Task.all_tasks()
         if pending:
-            loop.run_until_complete(asyncio.wait(pending, timeout=pending_timeout))
+            loop.run_until_complete(
+                asyncio.wait(
+                    pending, timeout=pending_timeout))
         return False
     except RuntimeError as ex:
         # `run_until_complete` throws an exception if new async tasks are

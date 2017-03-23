@@ -4,9 +4,8 @@ import logging
 import inspect
 import os
 import signal
-from collections import defaultdict
-from pylibofp.handler import make_handler
-import pylibofp.exception as _exc
+from . import exception as _exc
+from .handler import make_handler
 from .event import make_event
 
 
@@ -29,7 +28,12 @@ class ControllerApp(object):
     """
     _curr_app_id = 0
 
-    def __init__(self, parent, *, name, ofversion=None, kill_on_exception=False):
+    def __init__(self,
+                 parent,
+                 *,
+                 name,
+                 ofversion=None,
+                 kill_on_exception=False):
         self.name = name
         self.precedence = 100
         self.ofversion = ofversion
@@ -59,10 +63,12 @@ class ControllerApp(object):
 
     def handle_exception(self, event, handler_type):
         """Handle exception."""
-        self.logger.exception(
-            'Exception caught while handling "%s": %r', handler_type, event)
+        self.logger.exception('Exception caught while handling "%s": %r',
+                              handler_type, event)
         if self.kill_on_exception:
-            self.logger.critical('Terminate controller; kill_on_exception set for app "%s"', self.name)
+            self.logger.critical(
+                'Terminate controller; kill_on_exception set for app "%s"',
+                self.name)
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
 

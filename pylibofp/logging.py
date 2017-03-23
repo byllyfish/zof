@@ -20,7 +20,7 @@ class TailBufferedHandler(logging.Handler):
         """Log the specified log record."""
         try:
             self._tail.append(self.format(record))
-        except Exception: # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             self.handleError(record)
 
     def close(self):
@@ -40,18 +40,18 @@ class TailBufferedHandler(logging.Handler):
 class PatchedConsoleHandler(logging.Handler):
     """Logging handler that writes to stdout EVEN when stdout is patched.
 
-    The normal StreamHandler grabs a reference to `sys.stdout` once at 
-    initialization time. This class always logs to the current sys.stdout 
+    The normal StreamHandler grabs a reference to `sys.stdout` once at
+    initialization time. This class always logs to the current sys.stdout
     which may be patched at runtime by prompt_toolkit.
     """
 
     def emit(self, record):
         try:
             self.write(self.format(record))
-        except Exception: # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             self.handleError(record)
 
-    def write(self, line):
+    def write(self, line):  #pylint: disable=no-self-use
         stream = sys.stdout
         stream.write(line)
         stream.write('\n')

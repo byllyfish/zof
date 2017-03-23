@@ -78,7 +78,6 @@ class BaseHandler(object):
             return False
         return True
 
-
     def help(self):
         """Return help text.
         """
@@ -142,6 +141,9 @@ class CommandHandler(BaseHandler):
             return self.callback(event)
         else:
             return self.callback(event)
+
+    def match(self, event):
+        raise NotImplementedError("CommandHandler does not support match()")
 
     def verify(self):
         return True
