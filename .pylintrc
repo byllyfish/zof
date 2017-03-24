@@ -1,49 +1,25 @@
 [MESSAGES CONTROL]
 
-# [C0111] missing-docstring
-disable=C0111
+disable=missing-docstring
+# yapf produces bad-continuation's on overlong `with` statements.
+#disable=bad-continuation,line-too-long
 
-[BASIC]
+good-names=i,j,k,m,s,ex,_,app
 
-# Regular expression matching correct function names
-#function-rgx=[a-z_][A-Za-z0-9_]{1,30}$
-
-# Regular expression matching correct attribute names
-#attr-rgx=[a-z_][A-Za-z0-9_]{1,30}$
-
-# Regular expression matching correct method names
-#method-rgx=[a-z_][A-Za-z0-9_]{1,30}$
-
-# Regular expression matching correct variable names
-#variable-rgx=[a-z_][A-Za-z0-9_]{1,30}$
-
-variable-rgx=[a-z_]{1,30}$
-
-# Regular expression matching correct argument names
-#argument-rgx=[a-z_][A-Za-z0-9_]{1,30}$
-
-argument-rgx=[a-z_]{1,30}$
-
-[VARIABLES]
-
-# List of additional names supposed to be defined in builtins.
-#additional-builtins=OFP
-
-[CLASSES]
-
-# List of member names excluded from the protected access warning.
-#exclude-protected=_write,_next_xid,_post_event
-#_asdict,_fields,_replace,_source,_make
-
-
-[DESIGN]
-
-# Maximum number of attributes for a class
+min-public-methods=0
 max-attributes=15
 
-# Minimum number of public methods for a class
-min-public-methods=0
+#spelling-dict=en_US
 
-[TYPECHECK]
 
-ignored-classes=ObjectView,Event,PktView
+
+# docparams messages.
+accept-no-param-doc=no
+accept-no-raise-doc=no
+accept-no-return-doc=no
+accept-no-yields-doc=no
+
+
+[MASTER]
+
+#load-plugins=pylint.extensions.docparams
