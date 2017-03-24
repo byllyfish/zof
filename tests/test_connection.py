@@ -1,8 +1,8 @@
 import asyncio
 import time
 from unittest import skipIf
-from .asynctestcase import AsyncTestCase
 from pylibofp.connection import Connection
+from asynctestcase import AsyncTestCase
 
 # Max message size is 1MB.
 MSG_LIMIT = 2**20

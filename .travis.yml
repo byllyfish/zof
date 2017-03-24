@@ -5,9 +5,15 @@ python:
 
 install:
 #  - pip3 install codecov pyyaml
-  - pip3 install pyyaml
+  - pip install pyyaml
 script:
-  - python3 -m unittest discover
+  # Run unit tests.
+  - python -m unittest discover
+  # Create source package.
+  - python setup.py sdist
+  # Run unit tests from source package.
+  - cd dist ; tar xvfz pylibofp-*.tar.gz ; cd pylibofp-* ; python setup.py test
+
 #  - python3 -m doctest README.adoc
 #  - coverage run --source pylibofp -m test
 #after_success:

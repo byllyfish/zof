@@ -25,10 +25,11 @@ with open(version_path, encoding='utf-8') as f:
     version = version_regex.search(f.read()).group(1)
 
 # Running `python setup.py test` should run unit tests (see `test_suite`).
-def all_tests():
+def _my_tests():
     import unittest
     test_loader = unittest.TestLoader()
-    return test_loader.discover('test')
+    test_suite = test_loader.discover('tests')
+    return test_suite
 
 
 setup(
@@ -63,5 +64,5 @@ setup(
     ],
 
     zip_safe=True,
-    test_suite="setup.all_tests"
+    test_suite="setup._my_tests"
 )

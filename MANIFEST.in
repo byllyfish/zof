@@ -1,0 +1,1 @@
+include README.adoc COPYING long_description.rst docs/cookbook/*.adoc test/*.adoc.yml

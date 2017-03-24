@@ -4,7 +4,7 @@ import os
 import difflib
 from glob import glob
 from pylibofp.connection import Connection
-from .asynctestcase import AsyncTestCase
+from asynctestcase import AsyncTestCase
 
 _UPDATE_GOLDEN = False
 
