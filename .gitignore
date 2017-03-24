@@ -6,3 +6,4 @@ venv/
 docs/tutorial/
 docs/reference/
 demos/
+*.egg-info/
