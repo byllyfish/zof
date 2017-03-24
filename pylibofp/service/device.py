@@ -147,7 +147,7 @@ class Port(object):
 
 # TODO(bfish): remove stat polling
 #@OFP.event('start')
-async def poll_portstats(event):
+async def poll_portstats(_event):
     while True:
         for device in DEVICES.values():
             if device.ports:
@@ -255,7 +255,7 @@ async def _fetch_desc():
 
 
 @OFP.command('device')
-def device_list(event):
+def device_list(_event):
     """List all devices.
 
     ls [-lap] <dpid>
@@ -269,7 +269,7 @@ def device_list(event):
 
 
 @OFP.command('port')
-def port_list(event):
+def port_list(_event):
     yield 'PORT   NAME        MAC   CONFIG   STATE  TX PKTS BYTES  RX PKTS BYTES'
     for device in DEVICES.values():
         for port in device.ports.values():
@@ -293,7 +293,7 @@ async def portmod(event):
 
 
 @OFP.command('flows')
-async def flows(event):
+async def flows(_event):
     for dpid in DEVICES:
         result = await REQ_FLOWS.request(datapath_id=dpid)
         for flow in sorted(
