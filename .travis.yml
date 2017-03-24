@@ -3,9 +3,9 @@ python:
   - "3.5.2"
 # - "nightly"
 
-install:
+#install:
 #  - pip3 install codecov pyyaml
-  - pip install pyyaml
+#  - pip install pyyaml
 script:
   # Run unit tests.
   - python -m unittest discover

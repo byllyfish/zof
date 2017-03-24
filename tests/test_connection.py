@@ -2,7 +2,12 @@ import asyncio
 import time
 from unittest import skipIf
 from pylibofp.connection import Connection
-from asynctestcase import AsyncTestCase
+
+if __package__:
+    from .asynctestcase import AsyncTestCase
+else:
+    # For `setup.py test` to work; it loads tests differently.
+    from asynctestcase import AsyncTestCase
 
 # Max message size is 1MB.
 MSG_LIMIT = 2**20
