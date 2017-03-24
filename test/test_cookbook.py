@@ -14,7 +14,7 @@ else:
 _UPDATE_GOLDEN = False
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-COOKBOOK_DIR = os.path.join(HERE, '../docs/cookbook')
+COOKBOOK_DIR = os.path.join(HERE, '../doc/cookbook')
 
 RECIPE = re.compile(r'(?ms)\n\[source,yaml\]\n----\n(.*?\n)----\n')
 

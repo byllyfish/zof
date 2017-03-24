@@ -28,7 +28,7 @@ with open(version_path, encoding='utf-8') as f:
 def _my_tests():
     import unittest
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('tests')
+    test_suite = test_loader.discover('test')
     return test_suite
 
 
