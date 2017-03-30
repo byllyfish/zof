@@ -17,16 +17,19 @@ Requirements
 - oftr command line tool
 
 
-Install
--------
+Install - Linux
+---------------
 
 ::
 
-    # Install /usr/bin/oftr and man pages.
+    # Install /usr/bin/oftr dependency.
     sudo add-apt-repository ppa:byllyfish/oftr
     sudo apt-get update
     sudo apt-get install oftr
 
+    # Create virtual environment and install pylibofp.
+    python3.5 -m venv myenv
+    source myenv/bin/activate
     pip install pylibofp
 
 
