@@ -28,6 +28,7 @@ class CompiledMessage(object):
         assert isinstance(msg, str)
         self._parent = parent
         self._template = None
+        self._template_args = None
         self._compile(msg)
 
     def send(self, **kwds):
@@ -60,7 +61,8 @@ class CompiledMessage(object):
         msg = textwrap.dedent(msg).strip()
         # Add indent of 2 spaces.
         msg = msg.replace('\n', '\n  ')
-        self._template = string.Template(_TEMPLATE % msg)
+        self._template = MyTemplate(_TEMPLATE % msg)
+        self._template_args = self._template.args()
 
     def _complete(self, kwds, task_locals):
         """Substitute keywords into OFP.SEND template.
@@ -86,7 +88,23 @@ class CompiledMessage(object):
             elif val is None:
                 kwds[key] = 'null'
 
-        return self._template.substitute(kwds)
+        try:
+            self._check(kwds)
+            return self._template.substitute(kwds)
+        except KeyError as ex:
+            error = 'Missing ${%s} argument for %r' % (ex.args[0], self)
+        raise LookupError(error)
+
+    def _check(self, kwds):
+        """Check kwds against known template vars."""
+        for key in kwds:
+            if key not in self._template_args:
+                raise ValueError('Unknown keyword argument "%s"' % key)
+
+    def __repr__(self):
+        """Return string represenation of template."""
+        template = self._template.template.replace('\n', '\n  ')
+        return 'CompiledMessage ---\n  %s' % template
 
 
 class CompiledObject(object):
@@ -150,3 +168,15 @@ class CompiledObject(object):
             msg['_pkt_decode'] = pktview_to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
+
+
+
+class MyTemplate(string.Template):
+    def args(self):
+        """Return set of template arguments."""
+        result = set()
+        for mo in self.pattern.finditer(self.template):
+            named = mo.group('named') or mo.group('braced')
+            if named:
+                result.add(named)
+        return result

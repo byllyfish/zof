@@ -69,3 +69,46 @@ params:
         actual = cmsg._complete(dict(xid=1, conn_id=13, type_='ECHO_REQUEST', msg=msg), task_locals)
         self.assertEqual(expected, actual)
 
+    def test_repr(self):
+        msg = '''
+        type: ECHO_REQUEST
+        msg:
+          data: DEADBEEF
+        '''
+        cmsg = CompiledMessage(None, msg)
+
+        expected = '''CompiledMessage ---
+  method: OFP.SEND
+  params:
+    xid: $xid
+    datapath_id: $datapath_id
+    conn_id: $conn_id
+    type: ECHO_REQUEST
+    msg:
+      data: DEADBEEF'''
+
+        self.assertEqual(expected, repr(cmsg))
+
+    def test_missing_argument(self):
+        msg = '''
+        type: ECHO_REQUEST
+        msg:
+          data: DEADBEEF
+        '''
+        cmsg = CompiledMessage(None, msg)
+
+        with self.assertRaises(LookupError):
+          cmsg._complete(dict(), dict())
+        
+    def test_unknown_argument(self):
+        msg = '''
+        type: ECHO_REQUEST
+        msg:
+          data: DEADBEEF
+        '''
+        cmsg = CompiledMessage(None, msg)
+        task_locals = dict(datapath_id = 'dpid_1', conn_id=7)
+
+        with self.assertRaisesRegex(ValueError, 'Unknown keyword argument "x"'):
+          cmsg._complete(dict(x=5), task_locals)
+
