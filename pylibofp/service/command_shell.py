@@ -11,7 +11,7 @@ from prompt_toolkit import AbortAction
 
 from .. import ofp_app, ofp_run
 from ..event import make_event
-from ..logging import find_log_handler, TailBufferedHandler, PatchedConsoleHandler
+from ..logging import TailBufferedHandler, PatchedConsoleHandler
 
 
 example_style = style_from_dict({
@@ -21,6 +21,11 @@ example_style = style_from_dict({
 
 ofp = ofp_app('service.command_shell')
 ofp.foreground_task = None
+ofp.command_prompt = '> '
+
+
+_tail_handler = TailBufferedHandler.install()
+_console_handler = PatchedConsoleHandler.install()
 
 # def command(cmd, *, help):
 #     def _wrap(func):
@@ -39,7 +44,7 @@ async def command_shell(_event):
     while True:
         try:
             command = await prompt_async(
-                'ofp_app> ',
+                ofp.command_prompt,
                 history=history,
                 completer=completer,
                 style=example_style,
@@ -152,20 +157,18 @@ def task_cmd(_event):
 @ofp.command('log')
 async def log_cmd(_event):
     # Print out lines from tail buffer.
-    tail_handler = find_log_handler(TailBufferedHandler)
-    console_handler = find_log_handler(PatchedConsoleHandler)
-    for line in tail_handler.lines():
-        console_handler.write(line)
+    for line in _tail_handler.lines():
+        _console_handler.write(line)
     # Temporarily change console log handler's level to use the root log level.
-    console_level = console_handler.level
-    console_handler.setLevel('NOTSET')
+    console_level = _console_handler.level
+    _console_handler.setLevel('NOTSET')
     try:
         # Wait for cancellation.
         while True:
             await asyncio.sleep(60)
     finally:
         # Change console log handler's level back.
-        console_handler.setLevel(console_level)
+        _console_handler.setLevel(console_level)
 
 
 @ofp.command('net')

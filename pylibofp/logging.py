@@ -5,6 +5,10 @@ import warnings
 import sys
 
 
+default_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+logger_name = __package__
+
+
 class TailBufferedHandler(logging.Handler):
     """Logging handler that records the last N log records."""
 
@@ -31,10 +35,11 @@ class TailBufferedHandler(logging.Handler):
     @staticmethod
     def install():
         """Install tail logging handler."""
-        root_logger = logging.getLogger()
         handler = TailBufferedHandler()
-        handler.setFormatter(root_logger.handlers[0].formatter)
+        handler.setFormatter(default_formatter)
+        root_logger = logging.getLogger()
         root_logger.addHandler(handler)
+        return handler
 
 
 class PatchedConsoleHandler(logging.Handler):
@@ -59,69 +64,49 @@ class PatchedConsoleHandler(logging.Handler):
     @staticmethod
     def install():
         """Install stdout logging handler."""
-        root_logger = logging.getLogger()
         handler = PatchedConsoleHandler()
-        handler.setFormatter(root_logger.handlers[0].formatter)
+        handler.setFormatter(default_formatter)
         handler.setLevel('WARNING')
+        root_logger = logging.getLogger()
         root_logger.addHandler(handler)
+        return handler
 
 
-def init_logging(loglevel):
+def init_logging(loglevel, logfile):
     """Set up logging.
 
-    This routine also enables asyncio debug mode if `loglevel` is 'debug'.
+    This routine enables asyncio debug mode if `loglevel` is 'debug'.
     """
     if loglevel.lower() == 'debug':
         os.environ['PYTHONASYNCIODEBUG'] = '1'
 
-    # Set up basic logging from config.
-    logging.config.dictConfig(_logging_config(loglevel))
-
-    # Create two more output handlers at runtime.
-    PatchedConsoleHandler.install()
-    TailBufferedHandler.install()
+    _make_default_loggers(loglevel, logfile)
 
     logging.captureWarnings(True)
     warnings.simplefilter('always')
 
 
-def find_log_handler(class_):
-    """Find log handler by class.
-    """
+def _make_default_loggers(loglevel, logfile):
+    """Prepare the default loggers."""
+
     root_logger = logging.getLogger()
-    return next(h for h in root_logger.handlers if isinstance(h, class_))
+
+    if logfile:
+        default_handler = _make_logfile_handler(logfile)
+        default_handler.setFormatter(default_formatter)
+        root_logger.addHandler(default_handler)
+
+    ofp_logger = logging.getLogger(logger_name)
+    ofp_logger.setLevel(loglevel.upper())
+
+    asyncio_logger = logging.getLogger('asyncio')
+    asyncio_logger.setLevel('WARNING')
 
 
-def _logging_config(loglevel):
-    """Construct dictionary to configure logging via `dictConfig`.
-    """
-    return {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'complete': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-            }
-        },
-        'handlers': {
-            'logfile': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'complete',
-                'filename': 'ofp_app.log',
-                'maxBytes': 2**20,
-                'backupCount': 20,
-                'encoding': 'utf8'
-            }
-        },
-        'loggers': {
-            'pylibofp': {
-                'level': loglevel.upper()
-            },
-            'asyncio': {
-                'level': 'WARNING'  # avoid polling msgs at 'INFO' level
-            }
-        },
-        'root': {
-            'handlers': ['logfile']
-        }
-    }
+def _make_logfile_handler(logfile):
+    """Return log file handler."""
+    if logfile.lower() == 'ext://stderr':
+        return logging.StreamHandler(sys.stderr)
+
+    return logging.handlers.RotatingFileHandler(logfile, maxBytes=2**20, backupCount=10, encoding='utf8')
+

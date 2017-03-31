@@ -32,8 +32,9 @@ def ofp_run(*,
             listen_endpoints=_LISTEN_ENDPOINTS,
             oftr_args=None,
             loglevel='info',
+            logfile=None,
             security=None,
-            command_shell=True):
+            command_prompt='ofp_app> '):
     """Run event loop for ofp_app's.
 
     Args:
@@ -42,19 +43,23 @@ def ofp_run(*,
         oftr_args (Optional[List[str]]): Command line arguments to oftr.
         loglevel (Optional[str]): Default log level (info). If None, logging is
             left unconfigured.
+        logfile (Optional[str]): Log file.
         security (Optional[Dict[str, str]]): Dictionary with security settings
             for oftr connections:
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.
-        command_shell (bool): If true, load the built-in command_shell app.
+        command_prompt (Optional[str]): Show interactive command prompt.
     """
-    if command_shell:
-        # pylint: disable=cyclic-import
-        import pylibofp.service.command_shell as _
+    if command_prompt:
+        from pylibofp.service import command_shell
+        command_shell.ofp.command_prompt = command_prompt
+    elif not logfile:
+        # If there's no command shell or logfile, send log to stderr.
+        logfile = 'ext://stderr'
 
     if loglevel:
-        init_logging(loglevel)
+        init_logging(loglevel, logfile)
 
     controller = Controller.singleton()
     controller.run_loop(

@@ -26,8 +26,20 @@ def _alias_property(name):
 class PktView(ObjectView):
     """Concrete class that represents a packet's header fields and payload."""
 
+    PKT_TYPES = {
+        0x0806: 'ARP',
+        0x0800: 'IPV4',
+        0x86dd: 'IPV6',
+        0x88cc: 'LLDP'
+    }
+
     def __init__(self):
         super().__init__({})
+
+    @property
+    def pkt_type(self):
+        """Human-readable description of packet type."""
+        return PktView.PKT_TYPES.get(self.eth_type, hex(self.eth_type))
 
     hoplimit = _alias_property('nx_ip_ttl')
 
