@@ -2,7 +2,7 @@ from pylibofp import ofp_compile
 
 
 delete_flows = ofp_compile('''
-  # Delete flows.
+  # Delete flows in table 0.
   type: FLOW_MOD
   msg:
     command: DELETE
@@ -16,7 +16,7 @@ barrier = ofp_compile('''
 
 
 table_miss_flow = ofp_compile('''
-  # Add permanent table miss flow entry.
+  # Add permanent table miss flow entry to table 0
   type: FLOW_MOD
   msg:
     command: ADD
@@ -60,10 +60,23 @@ learn_mac_flow = ofp_compile('''
 packet_out = ofp_compile('''
   type: PACKET_OUT
   msg:
-    in_port: $in_port
     actions: 
       - action: OUTPUT
         port_no: $out_port
         max_len: MAX
     data: $data
 ''')
+
+
+packet_flood = ofp_compile('''
+  type: PACKET_OUT
+  msg:
+    in_port: $in_port
+    actions: 
+      - action: OUTPUT
+        port_no: ALL
+        max_len: MAX
+    data: $data
+''')
+
+

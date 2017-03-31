@@ -8,21 +8,13 @@ from pylibofp import ofp_app
 from pylibofp.pktview import pktview_from_list
 from . import ofmsg
 
-COOKIE = 0x1BF0C0031E
 
 app = ofp_app('layer2')
 
 # The forwarding table is a dictionary that maps:
-#   (eth_dst, vlan_vid) -> (out_port, time)
-forwarding_table = {}
+#   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }
 
-
-def _is_lldp(eth_type):
-    return eth_type == 0x88cc
-
-
-def _is_unicast(eth_src):
-    return eth_src[1] in '02468ace'
+app.forwarding_table = {}
 
 
 @app.message('channel_up')
@@ -30,18 +22,18 @@ def channel_up(event):
     """Set up datapath when switch connects."""
     app.logger.debug('channel up %r', event)
 
-    ofmsg.delete_flows.send(cookie=COOKIE)
+    ofmsg.delete_flows.send()
     ofmsg.barrier.send()
-    ofmsg.table_miss_flow.send(cookie=COOKIE)
+    ofmsg.table_miss_flow.send()
 
 
 @app.message('channel_down')
 def channel_down(event):
     """Clean up when switch disconnects."""
-    forwarding_table.pop(event.datapath_id, None)
+    app.forwarding_table.pop(event.datapath_id, None)
 
 
-@app.message('packet_in', eth_type=_is_lldp)
+@app.message('packet_in', eth_type=0x88cc)
 def lldp_packet_in(_event):
     """Ignore lldp packets."""
     app.logger.debug('lldp packet ignored')
@@ -59,36 +51,36 @@ def packet_in(event):
         return
 
     in_port = msg.in_port
-    eth_src = msg.pkt.eth_src
-    eth_dst = msg.pkt.eth_dst
-    vlan_vid = msg.pkt('vlan_vid', default=0)
+    pkt = msg.pkt
+    vlan_vid = pkt('vlan_vid', default=0)
 
-    if not _is_unicast(eth_src):
-        out_port = 'ALL'
-    else:
-        # Retrieve fwd_table for this datapath. Update fwd_table with 
-        # ethernet source address. Lookup output port for destination address.
-        # If not found, set output port to 'ALL'.
-        fwd_table = forwarding_table.setdefault(event.datapath_id, {})
-        if (eth_src, vlan_vid) not in fwd_table:
-            app.logger.info('Learn %s vlan %s on port %s', eth_src, vlan_vid, in_port)
-            fwd_table[(eth_src, vlan_vid)] = (in_port, event.time)
-        out_port, _ = fwd_table.get((eth_dst, vlan_vid), ('ALL', None))
+    # Retrieve fwd_table for this datapath. 
+    fwd_table = app.forwarding_table.setdefault(event.datapath_id, {})
+
+    # Update fwd_table based on eth_src and in_port.
+    if (pkt.eth_src, vlan_vid) not in fwd_table:
+        app.logger.info('%s Learn %s vlan %s on port %s', event.datapath_id, pkt.eth_src, vlan_vid, in_port)
+        fwd_table[(pkt.eth_src, vlan_vid)] = (in_port, event.time)
+
+    # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
+    out_port, _ = fwd_table.get((pkt.eth_dst, vlan_vid), ('ALL', None))
 
     if out_port != 'ALL':
-        app.logger.info('Forward %s vlan %s to port %s', eth_dst, vlan_vid, out_port)
+        app.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id, pkt.eth_dst, vlan_vid, out_port)
         ofmsg.learn_mac_flow.send(
             in_port=in_port,
             vlan_vid=vlan_vid,
-            eth_dst=eth_dst,
-            out_port=out_port,
-            cookie=COOKIE)
+            eth_dst=pkt.eth_dst,
+            out_port=out_port)
+        ofmsg.packet_out.send(out_port=out_port, data=msg.data)
 
-    # Send packet back out the correct port.
-    ofmsg.packet_out.send(in_port=in_port, out_port=out_port, data=msg.data)
+    else:
+        # Send packet back out all ports (except the one it came in).
+        app.logger.info('%s Flood %s packet to %s vlan %s', event.datapath_id, pkt.pkt_type, pkt.eth_dst, vlan_vid)
+        ofmsg.packet_flood.send(in_port=in_port, data=msg.data)
 
 
-@app.message('flow_removed', cookie=COOKIE)
+@app.message('flow_removed')
 def flow_removed(event):
     """Handle flow removed message."""
     match = pktview_from_list(event.msg.match)
@@ -96,19 +88,14 @@ def flow_removed(event):
     vlan_vid = match.vlan_vid
     reason = event.msg.reason
 
-    app.logger.info('Remove %s vlan %s (%s)', eth_dst, vlan_vid, reason)
+    app.logger.info('%s Remove %s vlan %s (%s)', event.datapath_id, eth_dst, vlan_vid, reason)
 
-    fwd_table = forwarding_table.get(event.datapath_id)
+    fwd_table = app.forwarding_table.get(event.datapath_id)
     if fwd_table:
         fwd_table.pop((eth_dst, vlan_vid), None)
 
 
-#@app.message('port_status')
-#def port_status(event):
-#    pass
-
-
 @app.message('all')
 def other_message(event):
-    """Log unhandled messages."""
-    app.logger.warning('Unhandled message: %r', event)
+    """Log ignored messages."""
+    app.logger.debug('Ignored message: %r', event)
