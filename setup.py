@@ -12,7 +12,7 @@ from os import path
 import re
 
 here = path.abspath(path.dirname(__file__))
-description_path = path.join(here, 'long_description.rst')
+description_path = path.join(here, 'README.rst')
 version_path = path.join(here, 'pylibofp', '__init__.py')
 
 # Read long_description.rst.

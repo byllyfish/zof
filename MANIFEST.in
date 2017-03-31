@@ -1,1 +1,1 @@
-include README.adoc COPYING long_description.rst doc/cookbook/*.adoc test/*.py test/*.adoc.yml
+include README.rst LICENSE.txt CHANGELOG.rst doc/cookbook/*.adoc test/*.py test/*.adoc.yml
