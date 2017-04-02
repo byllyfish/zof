@@ -1,7 +1,9 @@
 """Layer2 Demo App
 
-- Implements forwarding for a vlan-aware layer 2 switch.
+- Implements reactive forwarding for a vlan-aware layer 2 switch.
 - Ignores LLDP packets.
+- Does not support loops.
+
 """
 
 from pylibofp import ofp_app
@@ -23,6 +25,7 @@ def channel_up(event):
     app.logger.debug('channel up %r', event)
 
     ofmsg.delete_flows.send()
+    app.logger.info('%s Remove all flows', event.datapath_id)
     ofmsg.barrier.send()
     ofmsg.table_miss_flow.send()
 
@@ -68,7 +71,6 @@ def packet_in(event):
     if out_port != 'ALL':
         app.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id, pkt.eth_dst, vlan_vid, out_port)
         ofmsg.learn_mac_flow.send(
-            in_port=in_port,
             vlan_vid=vlan_vid,
             eth_dst=pkt.eth_dst,
             out_port=out_port)

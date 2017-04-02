@@ -36,14 +36,12 @@ learn_mac_flow = ofp_compile('''
   msg:
     table_id: 0
     command: ADD
-    idle_timeout: 30
-    hard_timeout: 0
+    idle_timeout: 60
+    hard_timeout: 120
     priority: 10
     buffer_id: NO_BUFFER
     flags: [ SEND_FLOW_REM ]
     match:
-      - field: IN_PORT
-        value: $in_port
       - field: ETH_DST
         value: $eth_dst
       - field: VLAN_VID

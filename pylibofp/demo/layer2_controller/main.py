@@ -12,7 +12,6 @@ def main():
     parser.add_argument('--logfile', default=None, help='log file')
 
     args = parser.parse_args()
-    if args.shell:
-        command_prompt = 'l2_demo> '
+    command_prompt = 'l2_demo> ' if args.shell else None
 
     ofp_run(listen_endpoints=args.listen, command_prompt=command_prompt, loglevel=args.loglevel, logfile=args.logfile)
