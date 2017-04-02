@@ -1,7 +1,7 @@
 import argparse
 
 from pylibofp import ofp_run
-from . import layer2
+from . import l2_demo
 
 
 def main():

@@ -11,7 +11,7 @@ from pylibofp.pktview import pktview_from_list
 from . import ofmsg
 
 
-app = ofp_app('layer2')
+app = ofp_app('l2_demo')
 
 # The forwarding table is a dictionary that maps:
 #   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }
