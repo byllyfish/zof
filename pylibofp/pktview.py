@@ -5,10 +5,10 @@ from .objectview import ObjectView
 PAYLOAD = 'payload'
 
 #pylint: skip-file
-# The presence of the _alias_property function causes pylint to crash(?).
+# The presence of the pktview_alias function causes pylint to crash(?).
 
 
-def _alias_property(name):
+def pktview_alias(name):
     """Construct property that aliases specified attribute."""
 
     def _fget(self):
@@ -24,7 +24,11 @@ def _alias_property(name):
 
 
 class PktView(ObjectView):
-    """Concrete class that represents a packet's header fields and payload."""
+    """Concrete class that represents a packet's header fields and payload.
+
+    Use `make_pktview()` to construct a PktView object. The framework client may
+    use a custom PktView subclass to add extra features.
+    """
 
     PKT_TYPES = {
         0x0806: 'ARP',
@@ -42,8 +46,8 @@ class PktView(ObjectView):
         'ICMPV6': 'icmpv6_type'
     }
 
-    def __init__(self, **kwds):
-        super().__init__(kwds)
+    #def __init__(self, **kwds):
+    #    super().__init__(kwds)
 
     @property
     def pkt_type(self):
@@ -62,9 +66,14 @@ class PktView(ObjectView):
 
     # Alias some packet fields.
 
-    ip_ttl = _alias_property('nx_ip_ttl')
-    hoplimit = _alias_property('nx_ip_ttl')
-    ipv6_nd_res = _alias_property('x_ipv6_nd_res')
+    ip_ttl = pktview_alias('nx_ip_ttl')
+    hoplimit = pktview_alias('nx_ip_ttl')
+    ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
+
+
+def make_pktview(**kwds):
+    """Construct a new PktView object."""
+    return PktView(kwds)
 
 
 def pktview_from_list(fields):
@@ -75,7 +84,7 @@ def pktview_from_list(fields):
     if not isinstance(fields, (list, tuple)):
         raise ValueError('Expected list or tuple')
 
-    pkt = PktView()
+    pkt = make_pktview()
     for field in fields:
         key = field['field'].lower()
         if key == PAYLOAD:
@@ -100,7 +109,7 @@ def pktview_from_ofctl(ofctl):
     if not isinstance(ofctl, dict):
         raise ValueError('Expected a dict')
 
-    pkt = PktView()
+    pkt = make_pktview()
     for key, value in ofctl.items():
         key = _convert_legacy_field(key, ofctl)
         pkt[key] = value

@@ -1,11 +1,11 @@
 import unittest
-from pylibofp.pktview import PktView, pktview_from_list, pktview_to_list
+from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list
 
 
 class PktViewTestCase(unittest.TestCase):
 
     def test_init(self):
-        pkt = PktView(a = 1, b = 2)
+        pkt = make_pktview(a = 1, b = 2)
         self.assertEqual(pkt.a, 1)
         self.assertEqual(pkt.b, 2)
 
@@ -34,7 +34,7 @@ class PktViewTestCase(unittest.TestCase):
 
 
     def test_aliases(self):
-        pkt = PktView()
+        pkt = make_pktview()
         pkt.hoplimit = 5
         self.assertEqual(pkt.nx_ip_ttl, 5)
         pkt.nx_ip_ttl = 10
@@ -43,7 +43,7 @@ class PktViewTestCase(unittest.TestCase):
         self.assertFalse('nx_ip_ttl' in pkt)
 
     def test_get_protocol(self):
-        pkt = PktView(ipv4_src='1.2.3.4', eth_type=0x0800)
+        pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
         self.assertEqual(pkt.get_protocol('IPV4'), pkt)
         self.assertFalse(pkt.get_protocol('IPV6'))
         self.assertFalse(pkt.get_protocol('ARP'))
