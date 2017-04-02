@@ -4,6 +4,11 @@ from pylibofp.pktview import PktView, pktview_from_list, pktview_to_list
 
 class PktViewTestCase(unittest.TestCase):
 
+    def test_init(self):
+        pkt = PktView(a = 1, b = 2)
+        self.assertEqual(pkt.a, 1)
+        self.assertEqual(pkt.b, 2)
+
     def test_basic(self):
         data = [
             dict(field='A', value='a'),
@@ -36,6 +41,13 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(pkt.hoplimit, 10)
         del pkt.hoplimit
         self.assertFalse('nx_ip_ttl' in pkt)
+
+    def test_get_protocol(self):
+        pkt = PktView(ipv4_src='1.2.3.4', eth_type=0x0800)
+        self.assertEqual(pkt.get_protocol('IPV4'), pkt)
+        self.assertFalse(pkt.get_protocol('IPV6'))
+        self.assertFalse(pkt.get_protocol('ARP'))
+        self.assertEqual(pkt.get_protocol('ethernet'), pkt)
 
 
 def _by_field(item):

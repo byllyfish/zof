@@ -33,15 +33,38 @@ class PktView(ObjectView):
         0x88cc: 'LLDP'
     }
 
-    def __init__(self):
-        super().__init__({})
+    PROTO_FIELD = {
+        'ETHERNET': 'eth_type',
+        'ARP': 'arp_op',
+        'IPV4': 'ipv4_src',
+        'IPV6': 'ipv6_src',
+        'ICMPV4': 'icmpv4_type',
+        'ICMPV6': 'icmpv6_type'
+    }
+
+    def __init__(self, **kwds):
+        super().__init__(kwds)
 
     @property
     def pkt_type(self):
-        """Human-readable description of packet type."""
+        """Human-readable description of packet type. (read-only)"""
         return PktView.PKT_TYPES.get(self.eth_type, hex(self.eth_type))
 
+    def get_protocol(self, protocol):
+        """Check if pkt is of specified type and return `self`.
+        
+        Return None if pkt does not match specified protocol name. This API is 
+        intended to be similar to RYU's. The implementation is not intended to
+        exhaustively check every field; the oftr tool is reponsible for 
+        populating all necessary protocol fields.
+        """
+        return self if PktView.PROTO_FIELD[protocol.upper()] in self else None
+
+    # Alias some packet fields.
+
+    ip_ttl = _alias_property('nx_ip_ttl')
     hoplimit = _alias_property('nx_ip_ttl')
+    ipv6_nd_res = _alias_property('x_ipv6_nd_res')
 
 
 def pktview_from_list(fields):
