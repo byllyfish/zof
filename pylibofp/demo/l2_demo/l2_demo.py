@@ -22,10 +22,10 @@ app.forwarding_table = {}
 @app.message('channel_up')
 def channel_up(event):
     """Set up datapath when switch connects."""
-    app.logger.debug('channel up %r', event)
+    app.logger.info('%s Connected', event.datapath_id)
+    app.logger.info('%s Remove all flows', event.datapath_id)
 
     ofmsg.delete_flows.send()
-    app.logger.info('%s Remove all flows', event.datapath_id)
     ofmsg.barrier.send()
     ofmsg.table_miss_flow.send()
 
@@ -33,6 +33,7 @@ def channel_up(event):
 @app.message('channel_down')
 def channel_down(event):
     """Clean up when switch disconnects."""
+    app.logger.info('%s Disconnected', event.datapath_id)
     app.forwarding_table.pop(event.datapath_id, None)
 
 

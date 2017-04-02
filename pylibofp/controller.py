@@ -351,8 +351,8 @@ class Controller(object):
         else:
             scope_key = 'Channel %s' % params.conn_id
 
-        LOGGER.info('%s %s [conn_id=%s, version=%s]', scope_key, params.type,
-                    params.conn_id, params.version)
+        LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]', 
+                     scope_key, params.type, params.conn_id, params.version)
 
         if params.type == 'CHANNEL_DOWN':
             self._cancel_tasks(scope_key)
