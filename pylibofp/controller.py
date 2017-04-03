@@ -351,7 +351,7 @@ class Controller(object):
         else:
             scope_key = 'Channel %s' % params.conn_id
 
-        LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]', 
+        LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]',
                      scope_key, params.type, params.conn_id, params.version)
 
         if params.type == 'CHANNEL_DOWN':

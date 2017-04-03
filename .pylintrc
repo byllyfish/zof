@@ -5,6 +5,7 @@ disable=missing-docstring
 #disable=bad-continuation,line-too-long
 
 good-names=i,j,k,m,s,ex,_,app
+const-rgx=(([A-Za-z_][A-Za-z0-9_]*)|(__.*__))$
 
 min-public-methods=0
 max-attributes=15

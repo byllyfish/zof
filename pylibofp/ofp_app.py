@@ -52,6 +52,7 @@ def ofp_run(*,
         command_prompt (Optional[str]): Show interactive command prompt.
     """
     if command_prompt:
+        # pylint: disable=cyclic-import
         from pylibofp.service import command_shell
         command_shell.ofp.command_prompt = command_prompt
     elif not logfile:

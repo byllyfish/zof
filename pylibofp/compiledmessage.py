@@ -175,8 +175,8 @@ class MyTemplate(string.Template):
     def args(self):
         """Return set of template arguments."""
         result = set()
-        for mo in self.pattern.finditer(self.template):
-            named = mo.group('named') or mo.group('braced')
+        for m in self.pattern.finditer(self.template): #pylint: disable=no-member
+            named = m.group('named') or m.group('braced')
             if named:
                 result.add(named)
         return result

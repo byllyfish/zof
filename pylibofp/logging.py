@@ -109,4 +109,3 @@ def _make_logfile_handler(logfile):
         return logging.StreamHandler(sys.stderr)
 
     return logging.handlers.RotatingFileHandler(logfile, maxBytes=2**20, backupCount=10, encoding='utf8')
-
