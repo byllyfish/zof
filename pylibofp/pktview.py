@@ -12,13 +12,19 @@ def pktview_alias(name):
     """Construct property that aliases specified attribute."""
 
     def _fget(self):
-        return self.__dict__[name]
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            raise AttributeError('PktView object has no attribute "%s"' % name) from None
 
     def _fset(self, value):
         self.__dict__[name] = value
 
     def _fdel(self):
-        del self.__dict__[name]
+        try:
+            del self.__dict__[name]
+        except KeyError:
+            raise AttributeError('PktView object has no attribute "%s"' % name) from None
 
     return property(fget=_fget, fset=_fset, fdel=_fdel)
 
@@ -46,9 +52,6 @@ class PktView(ObjectView):
         'ICMPV6': 'icmpv6_type'
     }
 
-    #def __init__(self, **kwds):
-    #    super().__init__(kwds)
-
     @property
     def pkt_type(self):
         """Human-readable description of packet type. (read-only)"""
@@ -65,9 +68,8 @@ class PktView(ObjectView):
         return self if PktView.PROTO_FIELD[protocol.upper()] in self else None
 
     # Alias some packet fields.
-
     ip_ttl = pktview_alias('nx_ip_ttl')
-    hoplimit = pktview_alias('nx_ip_ttl')
+    hop_limit = pktview_alias('nx_ip_ttl')
     ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
 
 

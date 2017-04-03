@@ -33,14 +33,32 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(fields, [dict(field='A', value='a'), dict(field='B', value=2), dict(field='C', value='ddd')])
 
 
-    def test_aliases(self):
+    def test_alias_attr(self):
         pkt = make_pktview()
-        pkt.hoplimit = 5
+        pkt.hop_limit = 5
         self.assertEqual(pkt.nx_ip_ttl, 5)
+        self.assertEqual(pkt['nx_ip_ttl'], 5)
+        self.assertEqual(pkt['hop_limit'], 5)
+
         pkt.nx_ip_ttl = 10
-        self.assertEqual(pkt.hoplimit, 10)
-        del pkt.hoplimit
+        self.assertEqual(pkt.hop_limit, 10)
+        self.assertTrue('hop_limit' in pkt)
+        del pkt.hop_limit
         self.assertFalse('nx_ip_ttl' in pkt)
+
+    def test_alias_subscript(self):
+        pkt = make_pktview()
+        pkt['hop_limit'] = 6
+        self.assertEqual(pkt['hop_limit'], 6)
+        self.assertEqual(pkt.hop_limit, 6)
+        self.assertEqual(pkt.nx_ip_ttl, 6)
+        self.assertTrue('hop_limit' in pkt)
+        self.assertTrue('nx_ip_ttl' in pkt)
+        del pkt['hop_limit']
+        self.assertFalse('hop_limit' in pkt)
+        self.assertFalse('nx_ip_ttl' in pkt)
+        with self.assertRaisesRegex(KeyError, 'hop_limit'):
+            del pkt['hop_limit']
 
     def test_get_protocol(self):
         pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)

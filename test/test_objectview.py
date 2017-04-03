@@ -55,7 +55,9 @@ class ObjectViewTestCase(unittest.TestCase):
         self.assertTrue('a' in self.obj)
         self.assertTrue('b' in self.obj)
         self.assertTrue('c' not in self.obj)
-        self.assertFalse(1 in self.obj)
+        self.assertFalse('zz' in self.obj)
+        with self.assertRaisesRegex(TypeError, 'attribute name must be string'):
+            self.assertFalse(1 in self.obj)
 
     def test_len(self):
         self.assertEqual(len(self.obj), 3)
@@ -94,6 +96,10 @@ class ObjectViewTestCase(unittest.TestCase):
         del self.obj.aa
         with self.assertRaisesRegex(AttributeError, 'aa'):
             print(self.obj.aa)
+        with self.assertRaisesRegex(AttributeError, 'bb'):
+            del self.obj.bb
+        with self.assertRaisesRegex(KeyError, 'dd'):
+            del self.obj['dd']
 
     def test_callable(self):
         self.assertEqual(self.obj('a'), 1)

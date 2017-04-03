@@ -26,6 +26,9 @@ class ObjectView(object):
 
     This class does not define any non-dunder methods to avoid conflict
     with attribute names.
+
+    This implementation uses getattr, setattr, and delattr instead of __dict__
+    where possible, so subclasses can define alias properties (see PktView).
     """
 
     def __init__(self, d):
@@ -33,7 +36,7 @@ class ObjectView(object):
 
     def __contains__(self, key):
         """Make sure that `in` and `not in` still work: `if key in obj:`"""
-        return key in self.__dict__
+        return hasattr(self, key)
 
     def __len__(self):
         """Make sure len(obj) works."""
@@ -45,15 +48,21 @@ class ObjectView(object):
 
     def __getitem__(self, key):
         """Allow read access using dictionary syntax `obj[key]`."""
-        return self.__dict__[key]
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key) from None
 
     def __setitem__(self, key, value):
         """Allow write access using dictionary syntax `obj[key] = value`."""
-        self.__dict__[key] = value
+        setattr(self, key, value)
 
     def __delitem__(self, key):
         """Allow properties to be deleted using dictionary syntax `del obj[key]`."""
-        del self.__dict__[key]
+        try:
+            delattr(self, key)
+        except AttributeError:
+            raise KeyError(key) from None
 
     def __call__(self, key, *, default=None):
         """Allow read access using callable syntax `obj(key)`.
@@ -61,8 +70,8 @@ class ObjectView(object):
         Returns a default (None) if the key is not present.
         """
         try:
-            return self.__dict__[key]
-        except KeyError:
+            return getattr(self, key)
+        except AttributeError:
             return default
 
     def __eq__(self, obj):
