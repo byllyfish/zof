@@ -8,12 +8,15 @@ PAYLOAD = 'payload'
 # The presence of the pktview_alias function causes pylint to crash(?).
 
 
-def pktview_alias(name):
-    """Construct property that aliases specified attribute."""
+def pktview_alias(name, converter=(lambda x: x)):
+    """Construct property that aliases specified attribute.
+
+    converter function should be idempotent.
+    """
 
     def _fget(self):
         try:
-            return self.__dict__[name]
+            return converter(self.__dict__[name])
         except KeyError:
             raise AttributeError('PktView object has no attribute "%s"' % name) from None
 

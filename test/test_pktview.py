@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list
+from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias
 
 
 class PktViewTestCase(unittest.TestCase):
@@ -66,6 +66,33 @@ class PktViewTestCase(unittest.TestCase):
         self.assertFalse(pkt.get_protocol('IPV6'))
         self.assertFalse(pkt.get_protocol('ARP'))
         self.assertEqual(pkt.get_protocol('ethernet'), pkt)
+
+    def test_pktview_alias_identity(self):
+        # Test that identity alias doesn't recurse forever.
+        class SubPktView(PktView):
+            ip = pktview_alias('ip')
+
+        pkt = SubPktView({})
+        pkt.ip = '1.2.3.4'
+        self.assertEqual(pkt.ip, '1.2.3.4')
+        self.assertTrue('ip' in pkt)
+        del pkt.ip
+        self.assertFalse('ip' in pkt)
+
+    def test_pktview_alias_converter(self):
+        import ipaddress
+
+        class SubPktView(PktView):
+            ip = pktview_alias('ip', ipaddress.ip_address)
+
+        pkt = SubPktView({})
+        pkt.ip = '1.2.3.4'
+        self.assertIsInstance(pkt.ip, ipaddress.IPv4Address)
+        self.assertEqual(pkt.ip, ipaddress.ip_address('1.2.3.4'))
+        self.assertTrue('ip' in pkt)
+        del pkt.ip
+        self.assertFalse('ip' in pkt)
+
 
 
 def _by_field(item):
