@@ -1,9 +1,16 @@
 PYLIBOFP: OpenFlow App Framework
 ================================
 
-Pylibofp is a Python framework for creating OpenFlow controllers, agents, and other tools.
+Pylibofp is a Python framework for creating asyncio-based OpenFlow applications that control 
+the network. Pylibofp uses a separate *oftr* process to terminate OpenFlow connections and 
+translate OpenFlow messages to JSON.
 
-.. (TODO) architecture image of app with framework, oftr, switches
+.. figure:: doc/image/ofp_app_architecture.png
+
+    Architecture: The oftr process translates OpenFlow to JSON.
+
+There is no built-in OpenFlow API. You construct OpenFlow messages via YAML strings or Python dictionaries. 
+Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constants such as 'NO_BUFFER' appear as strings.
 
 An OpenFlow application may be composed of multiple "app modules".  The framework includes built-in "system modules" that you can build upon.
 
@@ -38,7 +45,7 @@ Demos
 
 To run the controller demo::
 
-    python -m pylibofp.demo.layer2_controller --help
+    python -m pylibofp.demo.l2_demo --help
 
 
 .. (TODO) To run the agent simulator demo::
