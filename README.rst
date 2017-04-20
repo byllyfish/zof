@@ -6,7 +6,9 @@ the network using the OpenFlow protocol. Pylibofp uses a separate *oftr* process
 terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
 .. figure:: doc/image/ofp_app_architecture.png
-
+    :align: center
+    :alt: Architecture diagram
+    
     Architecture: The oftr process translates OpenFlow to JSON.
 
 There is no built-in OpenFlow API. You construct OpenFlow messages via YAML strings or Python dictionaries. 
