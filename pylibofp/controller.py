@@ -251,8 +251,8 @@ class Controller(object):
                     self._handle_channel(event.params)
             else:
                 LOGGER.warning('Unhandled event: %r', event)
-        except _exc.BreakException:
-            LOGGER.debug('_dispatch_event: BreakException caught')
+        except _exc.StopPropagationException:
+            LOGGER.debug('_dispatch_event: StopPropagationException caught')
 
     def write(self, event, xid=None):
         """Write an event to the output stream.

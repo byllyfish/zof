@@ -6,17 +6,14 @@
 #       |     +-- pylibofp.RPCException
 #       |     +-- pylibofp.ErrorException
 #       |     +-- pylibofp.DeliveryException
-#       |     +-- pylibofp.ChannelException
 #       +-- pylibofp.ControlFlowException
-#             +-- pylibofp.FallThroughException
-#             +-- pylibofp.BreakException
+#             +-- pylibofp.StopPropagationException
+#             +-- pylibofp.CommandException
 #             +-- pylibofp.ExitException
 
 
 class ControllerException(Exception):
-    """
-    Base class for exceptions thrown by Controller class.
-    """
+    """Base class for exceptions thrown by Controller class."""
 
     def __init__(self, xid):
         super().__init__()
@@ -25,9 +22,7 @@ class ControllerException(Exception):
 
 
 class TimeoutException(ControllerException):
-    """
-    Controller exception that indicates an RPC or OpenFlow request has timed out.
-    """
+    """Exception that indicates an RPC or OpenFlow request has timed out."""
 
     def __init__(self, xid):
         super().__init__(xid)
@@ -37,9 +32,7 @@ class TimeoutException(ControllerException):
 
 
 class RPCException(ControllerException):
-    """
-    Controller exception that indicates an error response to an RPC request.
-    """
+    """Exception that indicates an error response to an RPC request."""
 
     def __init__(self, event):
         super().__init__(event.id)
@@ -51,10 +44,7 @@ class RPCException(ControllerException):
 
 
 class ErrorException(ControllerException):
-    """
-    Controller exception that indicates an OpenFlow error response tied to an
-    OpenFlow request.
-    """
+    """Exception that indicates an OpenFlow error reply."""
 
     def __init__(self, event):
         super().__init__(event.xid)
@@ -65,9 +55,7 @@ class ErrorException(ControllerException):
 
 
 class DeliveryException(ControllerException):
-    """
-    Controller exception that indicates a message couldn't be delivered.
-    """
+    """Exception that indicates an OpenFlow message couldn't be delivered."""
 
     def __init__(self, event):
         super().__init__(event.xid)
@@ -83,28 +71,33 @@ class ControlFlowException(Exception):
     """
 
 
-class FallThroughException(ControlFlowException):
-    """
-    Exception class used by an app to "fall through" a handler.
-    """
-
-    def __str__(self):
-        return '[FallThroughException]'
-
-
-class BreakException(ControlFlowException):
-    """
-    Exception class used by an app to prevent handlers in other apps from executing.
+class StopPropagationException(ControlFlowException):
+    """Exception class used by an app to prevent handlers in other apps from 
+    executing.
     """
 
     def __str__(self):
-        return '[BreakException]'
+        return '[StopPropagationException]'
+
+
+class CommandException(ControlFlowException):
+    """Exception class used by app commands to exit.
+
+    This exception is caught by the command_shell service.
+    """
+
+    def __init__(self, *, status, message=None):
+        super().__init__()
+        self.status = status
+        self.message = message
+
+    def __str__(self):
+        return '[CommandException status=%s, message=%s]' % (self.status, self.message)
 
 
 class ExitException(ControlFlowException):
-    """
-    Internal exception class used to exit the controller (similar to `StopIteration`)
-    """
+    """Internal exception class used to stop the controller."""
 
     def __str__(self):
         return '[ExitException]'
+

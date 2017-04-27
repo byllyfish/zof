@@ -2,6 +2,7 @@ import unittest
 from pylibofp.handler import make_handler
 
 
+NO_HELP = 'No help available'
 
 
 class HandlerTestCase(unittest.TestCase):
@@ -18,8 +19,8 @@ class HandlerTestCase(unittest.TestCase):
         self.assertTrue(h.verify())
         self.assertEqual('message', h.type)
         self.assertEqual('ECHO_REQUEST', h.subtype)
-        self.assertEqual(None, h.help_brief())
-        self.assertEqual(None, h.help())
+        self.assertEqual(NO_HELP, h.help_brief())
+        self.assertEqual(NO_HELP, h.help())
 
     def test_async_func(self):
         h = make_handler(async_func, 'message', 'FEATURES_REQUEST')
@@ -34,8 +35,8 @@ class HandlerTestCase(unittest.TestCase):
         self.assertFalse(h.verify())
         self.assertEqual('message', h.type)
         self.assertEqual('FEATURES_REQUEST', h.subtype)        
-        self.assertEqual(None, h.help_brief())
-        self.assertEqual(None, h.help())    
+        self.assertEqual(NO_HELP, h.help_brief())
+        self.assertEqual(NO_HELP, h.help())    
 
 
 def func(event):

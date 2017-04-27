@@ -83,7 +83,7 @@ class BaseHandler(object):
         """
         text = self.callback.__doc__
         if not text:
-            return None
+            return 'No help available'
         return inspect.cleandoc(text)
 
     def help_brief(self):
@@ -91,7 +91,7 @@ class BaseHandler(object):
         """
         text = self.callback.__doc__
         if not text:
-            return None
+            return 'No help available'
         return text.strip().split('\n', 1)[0]
 
 

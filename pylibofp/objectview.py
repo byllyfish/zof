@@ -2,6 +2,7 @@
 
 import json
 import io
+import argparse
 from ipaddress import IPv4Address, IPv6Address
 
 
@@ -113,6 +114,8 @@ def _json_serialize(obj):
         return 'file:%s' % obj.name
     if isinstance(obj, (IPv4Address, IPv6Address)):
         return str(obj)
+    if isinstance(obj, argparse.Namespace):
+        return vars(obj)
     try:
         return obj.__getstate__()
     except AttributeError:

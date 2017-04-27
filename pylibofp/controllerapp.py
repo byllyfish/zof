@@ -53,11 +53,11 @@ class ControllerApp(object):
         try:
             for handler in self.handlers.get(handler_type, []):
                 if handler.match(event):
-                    try:
-                        handler(event, self)
-                        break
-                    except _exc.FallThroughException:
-                        self.logger.debug('_handle: FallThroughException')
+                    handler(event, self)
+                    break
+        except _exc.StopPropagationException:
+            # Pass this exception up to controller.
+            raise
         except Exception:  # pylint: disable=broad-except
             self.handle_exception(event, handler_type)
 

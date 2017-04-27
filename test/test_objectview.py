@@ -1,5 +1,6 @@
 import unittest
 import ipaddress
+import argparse
 from types import FunctionType
 from pylibofp.objectview import ObjectView, to_json
 
@@ -139,3 +140,8 @@ class ObjectViewTestCase(unittest.TestCase):
         s = to_json(o)
         self.assertEqual(s, '{"a":["10.1.2.3","2001::1"]}')
 
+    def test_argparse_namespace(self):
+        ns = argparse.Namespace(b = 3)
+        o = ObjectView(dict(a=ns))
+        s = to_json(o)
+        self.assertEqual(s, '{"a":{"b":3}}')

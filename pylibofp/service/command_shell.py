@@ -12,6 +12,7 @@ from prompt_toolkit import AbortAction
 from .. import ofp_app, ofp_run
 from ..event import make_event
 from ..logging import TailBufferedHandler, PatchedConsoleHandler
+from ..exception import CommandException
 
 
 example_style = style_from_dict({
@@ -26,12 +27,6 @@ ofp.command_prompt = '> '
 
 _tail_handler = TailBufferedHandler.install()
 _console_handler = PatchedConsoleHandler.install()
-
-# def command(cmd, *, help):
-#     def _wrap(func):
-#         options = dict(help=help)
-#         ofp.subscribe(func, 'command', cmd, options)
-#     return _wrap
 
 
 @ofp.event('start')
@@ -70,11 +65,10 @@ async def run_command(command):
     cmd = shlex.split(command)
     handler = find_command_handler(cmd[0])
     if not handler:
-        print('Unknown command "%s"' % cmd[0])
+        print('%s: command not found' % cmd[0])
     else:
         try:
-            event = make_event(event='COMMAND', command=cmd[0], args=cmd[1:])
-            result = handler(event, ofp)
+            result = exec_command(cmd, handler)
             # Result of executing a handler may be:
             #  None:  handler already printed output.
             #  Iterable: we are responsible for printing output.
@@ -86,10 +80,26 @@ async def run_command(command):
             else:
                 for line in result:
                     print(line)
+        except CommandException as ex:
+            # Stay silent for commands that exit with status 0.
+            if ex.status != 0:
+                ofp.logger.exception(ex)
         except asyncio.CancelledError:
             ofp.logger.debug('CancelledError')
         except Exception as ex:  # pylint: disable=broad-except
             ofp.logger.exception(ex)
+
+
+
+def exec_command(cmd, handler):
+    parser = handler.options.get('argparser')
+    if parser:
+        assert isinstance(parser, ofp.command.ArgumentParser)
+        # Make sure `prog` is set to correct command name.
+        parser.prog = cmd[0]
+        cmd = parser.parse_args(cmd[1:])
+    event = make_event(event='COMMAND', args=cmd)
+    return handler(event, ofp)
 
 
 def find_command_handler(cmd):
@@ -106,39 +116,64 @@ def all_command_handlers():
             result += app.handlers['command']
     return result
 
+#===============================================================================
+# C O M M A N D S 
+#===============================================================================
 
-@ofp.command('help')
-def help_cmd(_event):
-    for handler in all_command_handlers():
-        yield '%-12s - %s' % (handler.subtype.lower(), handler.help_brief())
+def _help_args():
+    parser = ofp.command.ArgumentParser()
+    parser.add_argument('command', nargs='?', help='name of command')
+    return parser
 
 
-@ofp.command('ps')
-def ps_cmd(_event):
-    yield 'ID PREC NAME                          MSG  EVT TASK/DONE   SND  REQ'
-    all_tasks = ofp.controller.tasks()
+@ofp.command('help', argparser=_help_args())
+def help_cmd(event):
+    """List all commands or show help for a specific command."""
+    cmd_name = event.args.command
+    if cmd_name:
+        yield _show_help(cmd_name)
+    else:
+        for handler in all_command_handlers():
+            yield '%-12s - %s' % (handler.subtype.lower(), handler.help_brief())
 
-    for app in ofp.controller.apps:
-        msgs = '-'
-        if 'message' in app.handlers:
-            msgs = sum(h.count for h in app.handlers['message'])
 
-        evts = '-'
-        if 'event' in app.handlers:
-            evts = sum(h.count for h in app.handlers['event'])
+def _show_help(cmd_name):
+    handler = find_command_handler(cmd_name)
+    if not handler:
+        return '%s: command not found' % cmd_name
+    parser = handler.options.get('argparser')
+    if parser:
+        parser.prog = cmd_name
+        return parser.format_help()
+    else:
+        return handler.help()
 
-        tasks = 0
-        for task in all_tasks:
-            if task.ofp_task_app == app:
-                tasks += 1
 
-        done = app.counters['done']
-        send = app.counters['send']
-        req = app.counters['request']
+def _ls_args():
+    parser = ofp.command.ArgumentParser()
+    parser.add_argument('-l', action='store_true', help='list in long format')
+    return parser
 
-        yield '%2d %4d %-28s %4s %4s %4s/%-4s  %4s %4s' % (
-            app.id, app.precedence, app.name, msgs, evts, tasks, done, send,
-            req)
+
+@ofp.command('ls', argparser=_ls_args())
+def ls_cmd(event):
+    """(TODO in device service) List datapaths, ports, or flows."""
+    print(event)
+    pass
+
+def _ps_args():
+    parser = ofp.command.ArgumentParser()
+    parser.add_argument('-a', help='')
+    return parser
+
+
+@ofp.command('ps', argparser=_ps_args())
+def ps_cmd(event):
+    """List all running apps/tasks."""
+    print(event)
+    yield 'PREC NAME'
+    for app in ofp.all_apps():
+        yield '%4d %s' % (app.precedence, app.name)
 
 
 @ofp.command('task')
@@ -186,6 +221,7 @@ async def close_cmd(event):
 
 @ofp.command('exit')
 def exit_cmd(_event):
+    """Exit command shell."""
     ofp.post_event('EXIT')
 
 
