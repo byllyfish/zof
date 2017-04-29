@@ -122,7 +122,6 @@ class AppFacade(object):
     #    self._app.post_event(make_event(event=event.upper(), **kwds))
 
 
-
 class _ArgumentParser(argparse.ArgumentParser):
     def exit(self, status=0, message=None):
         raise CommandException(status=0)

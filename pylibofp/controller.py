@@ -36,6 +36,11 @@ class Controller(object):
             Controller._singleton = Controller()
         return Controller._singleton
 
+    @staticmethod
+    def destroy():
+        """Destroy global singleton object."""
+        Controller._singleton = None
+
     def __init__(self):
         self.apps = []
         self._conn = None
@@ -108,7 +113,7 @@ class Controller(object):
             self._set_phase('STOP')
             await self._conn.disconnect()
 
-        except Exception:    # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._run')
             if self._conn:
                 self._conn.close(False)

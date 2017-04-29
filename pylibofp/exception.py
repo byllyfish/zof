@@ -66,13 +66,11 @@ class DeliveryException(ControllerException):
 
 
 class ControlFlowException(Exception):
-    """
-    Base class for control flow exceptions used in pylibofp.
-    """
+    """Base class for control flow exceptions used in pylibofp."""
 
 
 class StopPropagationException(ControlFlowException):
-    """Exception class used by an app to prevent handlers in other apps from 
+    """Exception class used by an app to prevent handlers in other apps from
     executing.
     """
 
@@ -92,7 +90,8 @@ class CommandException(ControlFlowException):
         self.message = message
 
     def __str__(self):
-        return '[CommandException status=%s, message=%s]' % (self.status, self.message)
+        return '[CommandException status=%s, message=%s]' % (self.status,
+                                                             self.message)
 
 
 class ExitException(ControlFlowException):
@@ -100,4 +99,3 @@ class ExitException(ControlFlowException):
 
     def __str__(self):
         return '[ExitException]'
-

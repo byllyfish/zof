@@ -4,8 +4,8 @@ import os
 import warnings
 import sys
 
-
-default_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+default_formatter = logging.Formatter(
+    '%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger_name = __package__
 
 
@@ -108,4 +108,5 @@ def _make_logfile_handler(logfile):
     if logfile.lower() == 'ext://stderr':
         return logging.StreamHandler(sys.stderr)
 
-    return logging.handlers.RotatingFileHandler(logfile, maxBytes=2**20, backupCount=10, encoding='utf8')
+    return logging.handlers.RotatingFileHandler(
+        logfile, maxBytes=2**20, backupCount=10, encoding='utf8')

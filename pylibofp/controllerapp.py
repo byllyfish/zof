@@ -4,6 +4,7 @@ import logging
 import inspect
 import os
 import signal
+from operator import attrgetter
 from .handler import make_handler
 from .event import make_event
 from . import exception as _exc
@@ -33,23 +34,27 @@ class ControllerApp(object):
                  *,
                  name,
                  ofversion=None,
-                 kill_on_exception=False):
+                 kill_on_exception=False,
+                 precedence=1000):
         self.name = name
-        self.precedence = 100
+        self.precedence = precedence
         self.ofversion = ofversion
         self.handlers = {}
         self.kill_on_exception = kill_on_exception
-
-        # Add this app to parent's list of app's.
-        parent.apps.append(self)
-        self.parent = parent  # TODO: need weakref?
+        self.set_controller(parent)
 
         self.logger = logging.getLogger('pylibofp.%s' % self.name)
         self.logger.info('Create app "%s"', self.name)
 
+    def set_controller(self, controller):
+        """Set controller parent."""
+        self.parent = controller
+        # Insert app into controller's list sorted by precedence.
+        controller.apps.append(self)
+        controller.apps.sort(key=attrgetter('precedence'))
+
     def handle_event(self, event, handler_type):
-        """Handle events.
-        """
+        """Handle events."""
         try:
             for handler in self.handlers.get(handler_type, []):
                 if handler.match(event):
@@ -73,14 +78,12 @@ class ControllerApp(object):
             os.kill(os.getpid(), signal.SIGKILL)
 
     def post_event(self, event, **kwds):
-        """Function used to send an internal event to all app modules.
-        """
+        """Function used to send an internal event to all app modules."""
         self.logger.debug('post_event %s', event)
         self.parent.post_event(make_event(event=event.upper(), **kwds))
 
     def rpc_call(self, method, **params):
-        """Function used to send a RPC request and receive a response.
-        """
+        """Function used to send a RPC request and receive a response."""
         self.logger.debug('rpc_call %s', method)
         return self.parent.rpc_call(method, **params)
 
@@ -95,8 +98,7 @@ class ControllerApp(object):
             coroutine, scope_key=scope_key, app=self, task_locals=task_locals)
 
     def subscribe(self, callback, type_, subtype, options):
-        """Function used to subscribe a handler.
-        """
+        """Function used to subscribe a handler."""
         handler = make_handler(callback, type_, subtype, options)
         if not handler.verify():
             self.logger.error('Failed to subscribe %s', handler)
@@ -107,8 +109,7 @@ class ControllerApp(object):
         return handler
 
     def unsubscribe(self, callback):
-        """Function used to unsubscribe a handler.
-        """
+        """Function used to unsubscribe a handler."""
         for key in self.handlers:
             for handler in self.handlers[key]:
                 if handler.callback is callback:

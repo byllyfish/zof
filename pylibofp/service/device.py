@@ -1,6 +1,5 @@
 """
-
-Events:
+Events Produced:
     device_up         device=<Device>
     device_down       device=<Device>
 
@@ -9,9 +8,6 @@ Events:
     port_up
     port_down
     port_modified
-
-Event attributes added:
-    device
 """
 
 import asyncio
@@ -20,24 +16,15 @@ from .. import ofp_app, ofp_run, ofp_compile
 
 OPENFLOW_VERSION_1 = 0
 
-OFP = ofp_app('service.device')  #, precedence=-100)
+app = ofp_app('service.device')  #, precedence=-100)
+app.devices = OrderedDict()
 
-SET_CONFIG = ofp_compile("""
+SET_CONFIG = ofp_compile('''
   type: SET_CONFIG
   msg:
     flags: [FRAG_NORMAL]
     miss_send_len: NO_BUFFER
-""")
-'''
-  ---
-  type: BARRIER_REQUEST
-  ---
-  type: GET_CONFIG_REQUEST
-'''
-
-GET_CONFIG = ofp_compile("""
-  type: GET_CONFIG_REQUEST
-""")
+''')
 
 DESC_REQ = ofp_compile('type: REQUEST.DESC')
 PORT_REQ = ofp_compile('type: REQUEST.PORT_DESC')
@@ -58,8 +45,6 @@ REQ_FLOWS = ofp_compile('''
       cookie_mask: 0
       match: []
 ''')
-
-DEVICES = OrderedDict()
 
 
 class Device(object):
@@ -100,7 +85,7 @@ class Device(object):
 
 class Port(object):
     def __init__(self, port):
-        OFP.logger.info("port %r", port)
+        app.logger.info("port %r", port)
 
         self.port_no = port.port_no
         self.name = port.name
@@ -138,15 +123,15 @@ class Port(object):
 
         return event
 
-    def up(self):
+    def is_up(self):
         return 'LINK_DOWN' not in self.state
 
-    def admin_up(self):
+    def is_admin_up(self):
         return 'PORT_DOWN' not in self.config
 
 
 # TODO(bfish): remove stat polling
-#@OFP.event('start')
+#@app.event('start')
 async def poll_portstats(_event):
     while True:
         for device in DEVICES.values():
@@ -156,31 +141,34 @@ async def poll_portstats(_event):
                 for stat in reply.msg:
                     device.ports[stat.port_no].stats = stat
                     del stat['port_no']
-                    #OFP.logger.info(stat)
+                    #app.logger.info(stat)
         await asyncio.sleep(10.0)
 
 
-@OFP.message('channel_up')
+@app.message('channel_up')
 def channel_up(event):
-    DEVICES[event.datapath_id] = Device(event)
-    # grab ports here.
+    if event.datapath_id in app.devices:
+        app.logger.warning('Device %s already exists: %r', event.datapath_id, app.devices[event.datapath_id])
+    app.devices[event.datapath_id] = Device(event)
 
 
-@OFP.message('channel_down')
+@app.message('channel_down')
 def channel_down(event):
-    device = DEVICES[event.datapath_id]
-    del DEVICES[event.datapath_id]
-    OFP.post_event('device_down', datapath_id=event.datapath_id, device=device)
+    device = app.devices.get(event.datapath_id)
+    if device:
+        del app.devices[event.datapath_id]
+        app.post_event('device_down', datapath_id=event.datapath_id, device=device)
+    else:
+        app.logger.warning('Device %s does not exist!', event.datapath_id)
 
 
-@OFP.message('features_reply')
+@app.message('features_reply')
 async def features_reply(event):
-    """Handle FeaturesReply message.
-    """
-    OFP.logger.debug('features_reply %r', event)
+    """Handle FeaturesReply message."""
+    app.logger.debug('features_reply %r', event)
     #print('get_config', await GET_CONFIG.request(datapath_id=event.datapath_id))
 
-    device = DEVICES[event.datapath_id]
+    device = app.devices[event.datapath_id]
     device.n_buffers = event.msg.n_buffers
     device.ports = OrderedDict((i.port_no, Port(i))
                                for i in await _fetch_ports(event))
@@ -194,18 +182,18 @@ async def features_reply(event):
     device.hw_desc = desc.msg.hw_desc
     device.sw_desc = desc.msg.sw_desc
     device.serial_num = desc.msg.serial_num
-    #OFP.logger.info('desc %r', desc)
+    #app.logger.info('desc %r', desc)
 
-    OFP.post_event('device_up', datapath_id=event.datapath_id, device=device)
+    app.post_event('device_up', datapath_id=event.datapath_id, device=device)
 
 
-@OFP.message('port_status')
+@app.message('port_status')
 def port_status(event):
     """Handle PortStatus message.
     """
-    OFP.logger.debug('port_status %r', event)
+    app.logger.debug('port_status %r', event)
 
-    device = DEVICES[event.datapath_id]
+    device = app.devices[event.datapath_id]
     msg = event.msg
     port_no = msg.port_no
 
@@ -222,17 +210,17 @@ def port_status(event):
     else:
         raise ValueError('Unknown port_status reason: %s', msg.reason)
 
-    OFP.post_event(event, port=port)
+    app.post_event(event, port=port)
 
 
-@OFP.event('port_down')
+@app.event('port_down')
 def port_down(event):
-    OFP.logger.warning('port_down: %s', event)
+    app.logger.warning('port_down: %s', event)
 
 
-@OFP.event('port_up')
+@app.event('port_up')
 def port_up(event):
-    OFP.logger.warning('port_up: %s', event)
+    app.logger.warning('port_up: %s', event)
 
 
 async def _fetch_ports(features_reply):
@@ -246,7 +234,7 @@ async def _fetch_ports(features_reply):
 
 async def _set_config():
     SET_CONFIG.send()
-    #OFP.logger.info('_set_config %r', result)
+    #app.logger.info('_set_config %r', result)
     return await BARRIER.request()
 
 
@@ -254,24 +242,24 @@ async def _fetch_desc():
     return await DESC_REQ.request()
 
 
-@OFP.command('device')
+@app.command('device')
 def device_list(_event):
     """List all devices.
 
     ls [-lap] <dpid>
     """
     yield 'VER  NAME               DPID                   ENDPOINT  PORT BUF  CONN'
-    for device in DEVICES.values():
+    for device in app.devices.values():
         yield '%3d %-20s %s %s  %d %d %d %s' % (
             device.version, device.name, device.datapath_id, device.endpoint,
             len(device.ports), device.n_buffers, device.conn_id,
             device.hw_desc)
 
 
-@OFP.command('port')
+@app.command('port')
 def port_list(_event):
     yield 'PORT   NAME        MAC   CONFIG   STATE  TX PKTS BYTES  RX PKTS BYTES'
-    for device in DEVICES.values():
+    for device in app.devices.values():
         for port in device.ports.values():
             s = port.stats
             if s:
@@ -284,17 +272,17 @@ def port_list(_event):
                                                 port.config, port.state, stats)
 
 
-@OFP.command('portmod')
+@app.command('portmod')
 async def portmod(event):
     dpid = event.args[0]
     portnum = int(event.args[1])
-    device = DEVICES[dpid.lower()]
+    device = app.devices[dpid.lower()]
     await device.port_mod(portnum, port_down=True)
 
 
-@OFP.command('flows')
+@app.command('flows')
 async def flows(_event):
-    for dpid in DEVICES:
+    for dpid in app.devices:
         result = await REQ_FLOWS.request(datapath_id=dpid)
         for flow in sorted(
                 result.msg, key=lambda x: (x.table_id, -x.priority)):

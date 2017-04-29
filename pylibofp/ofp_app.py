@@ -1,4 +1,10 @@
-"""Main ofp_app functions."""
+"""Main ofp_app API.
+
+- ofp_app
+- ofp_run
+- ofp_compile
+
+"""
 
 from .controller import Controller
 from .controllerapp import ControllerApp
@@ -9,12 +15,14 @@ from .compiledmessage import CompiledMessage, CompiledObject
 _LISTEN_ENDPOINTS = (6633, 6653)
 
 
-def ofp_app(name, *, ofversion=None, kill_on_exception=False):
+def ofp_app(name, *, ofversion=None, kill_on_exception=False, precedence=1000):
     """Construct a new app.
 
     Args:
         name (str): Name of the app.
         ofversion (Optional[int]): Supported OpenFlow versions.
+        kill_on_exception (Optiona[bool]): Abort if app raises exception.
+        precedence (Optional[int]): Precedence for event dispatch
 
     Returns:
         AppFacade: API object for app.
@@ -24,7 +32,8 @@ def ofp_app(name, *, ofversion=None, kill_on_exception=False):
         controller,
         name=name,
         ofversion=ofversion,
-        kill_on_exception=kill_on_exception)
+        kill_on_exception=kill_on_exception,
+        precedence=precedence)
     return AppFacade(app)
 
 
@@ -54,7 +63,7 @@ def ofp_run(*,
     if command_prompt:
         # pylint: disable=cyclic-import
         from pylibofp.service import command_shell
-        command_shell.ofp.command_prompt = command_prompt
+        command_shell.app.command_prompt = command_prompt
     elif not logfile:
         # If there's no command shell or logfile, send log to stderr.
         logfile = 'ext://stderr'
@@ -70,8 +79,7 @@ def ofp_run(*,
 
 
 def ofp_compile(msg):
-    """Compile an OpenFlow message template.
-    """
+    """Compile an OpenFlow message template."""
     controller = Controller.singleton()
     if isinstance(msg, str):
         return CompiledMessage(controller, msg)

@@ -170,12 +170,12 @@ class CompiledObject(object):
             self._obj['msg'] = msg
 
 
-
 class MyTemplate(string.Template):
     def args(self):
         """Return set of template arguments."""
         result = set()
-        for m in self.pattern.finditer(self.template): #pylint: disable=no-member
+        #pylint: disable=no-member
+        for m in self.pattern.finditer(self.template):
             named = m.group('named') or m.group('braced')
             if named:
                 result.add(named)

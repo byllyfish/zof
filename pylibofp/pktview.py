@@ -18,7 +18,8 @@ def pktview_alias(name, converter=(lambda x: x)):
         try:
             return converter(self.__dict__[name])
         except KeyError:
-            raise AttributeError('PktView object has no attribute "%s"' % name) from None
+            raise AttributeError('PktView object has no attribute "%s"' %
+                                 name) from None
 
     def _fset(self, value):
         self.__dict__[name] = value
@@ -27,7 +28,8 @@ def pktview_alias(name, converter=(lambda x: x)):
         try:
             del self.__dict__[name]
         except KeyError:
-            raise AttributeError('PktView object has no attribute "%s"' % name) from None
+            raise AttributeError('PktView object has no attribute "%s"' %
+                                 name) from None
 
     return property(fget=_fget, fset=_fset, fdel=_fdel)
 
@@ -39,12 +41,7 @@ class PktView(ObjectView):
     use a custom PktView subclass to add extra features.
     """
 
-    PKT_TYPES = {
-        0x0806: 'ARP',
-        0x0800: 'IPV4',
-        0x86dd: 'IPV6',
-        0x88cc: 'LLDP'
-    }
+    PKT_TYPES = {0x0806: 'ARP', 0x0800: 'IPV4', 0x86dd: 'IPV6', 0x88cc: 'LLDP'}
 
     PROTO_FIELD = {
         'ETHERNET': 'eth_type',
