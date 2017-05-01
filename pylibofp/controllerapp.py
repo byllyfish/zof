@@ -6,7 +6,7 @@ import os
 import signal
 from operator import attrgetter
 from .handler import make_handler
-from .event import make_event
+from .event import make_event, Event
 from . import exception as _exc
 
 
@@ -40,6 +40,7 @@ class ControllerApp(object):
         self.precedence = precedence
         self.ofversion = ofversion
         self.handlers = {}
+        self.filter = {}
         self.kill_on_exception = kill_on_exception
         self.set_controller(parent)
 
@@ -56,6 +57,9 @@ class ControllerApp(object):
     def handle_event(self, event, handler_type):
         """Handle events."""
         try:
+            filter_func = self.filter.get(handler_type)
+            if filter_func and not filter_func(event):
+                return
             for handler in self.handlers.get(handler_type, []):
                 if handler.match(event):
                     handler(event, self)
@@ -78,9 +82,18 @@ class ControllerApp(object):
             os.kill(os.getpid(), signal.SIGKILL)
 
     def post_event(self, event, **kwds):
-        """Function used to send an internal event to all app modules."""
-        self.logger.debug('post_event %s', event)
-        self.parent.post_event(make_event(event=event.upper(), **kwds))
+        """Function used to send an internal event to all app modules.
+
+        Args:
+            event (str | Event): event type or event object
+            kwds (dict): keyword arguments for make_event
+        """
+        if isinstance(event, str):
+            event = make_event(event=event.upper(), **kwds)
+        elif not isinstance(event, Event) or len(kwds) > 0:
+            raise ValueError('Invalid arguments to post_event')
+        self.logger.debug('post_event %r', event)
+        self.parent.post_event(event)
 
     def rpc_call(self, method, **params):
         """Function used to send a RPC request and receive a response."""
@@ -92,10 +105,9 @@ class ControllerApp(object):
         scope.
         """
         assert inspect.isawaitable(coroutine)
-        scope_key = datapath_id if datapath_id else conn_id
         task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
         return self.parent.ensure_future(
-            coroutine, scope_key=scope_key, app=self, task_locals=task_locals)
+            coroutine, app=self, task_locals=task_locals)
 
     def subscribe(self, callback, type_, subtype, options):
         """Function used to subscribe a handler."""
@@ -116,3 +128,8 @@ class ControllerApp(object):
                     self.logger.debug('Unsubscribe %s', handler)
                     self.handlers[key].remove(handler)
                     return
+
+    def set_filter(self, type_, func):
+        """Set app event filter function."""
+        assert inspect.isfunction(func) or inspect.ismethod(func)
+        self.filter[type_] = func

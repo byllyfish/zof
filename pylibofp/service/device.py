@@ -16,38 +16,26 @@ from .. import ofp_app, ofp_run, ofp_compile
 
 OPENFLOW_VERSION_1 = 0
 
-app = ofp_app('service.device')  #, precedence=-100)
+app = ofp_app('service.device', precedence=500)
 app.devices = OrderedDict()
 
-SET_CONFIG = ofp_compile('''
+set_config = ofp_compile('''
   type: SET_CONFIG
   msg:
     flags: [FRAG_NORMAL]
     miss_send_len: NO_BUFFER
 ''')
 
-DESC_REQ = ofp_compile('type: REQUEST.DESC')
-PORT_REQ = ofp_compile('type: REQUEST.PORT_DESC')
-PORT_STATS = ofp_compile("""
-    type: REQUEST.PORT_STATS
-    msg:
-      port_no: ANY
-""")
-BARRIER = ofp_compile('type: BARRIER_REQUEST')
+desc = ofp_compile('type: REQUEST.DESC')
 
-REQ_FLOWS = ofp_compile('''
-    type: REQUEST.FLOW
-    msg:
-      table_id: ALL
-      out_port: ANY
-      out_group: ANY
-      cookie: 0
-      cookie_mask: 0
-      match: []
-''')
+portdesc = ofp_compile('type: REQUEST.PORT_DESC')
+
+barrier = ofp_compile('type: BARRIER_REQUEST')
 
 
 class Device(object):
+    """Concrete class to represent a switch.
+    """
     def __init__(self, event):
         self.datapath_id = event.datapath_id
         self.conn_id = event.conn_id
@@ -60,11 +48,12 @@ class Device(object):
         self.hw_desc = ''
         self.sw_desc = ''
         self.serial_num = ''
-        self.name = '<Unknown %d>' % event.conn_id
+        self.name = '<%s>' % event.datapath_id
 
     def __getstate__(self):
         return self.__dict__
 
+"""
     async def port_mod(self, port_no, *, port_down=False):
         port = self.ports[port_no]
         port_down = 'PORT_DOWN' if port_down else ''
@@ -81,33 +70,35 @@ class Device(object):
             port_no=port_no,
             hw_addr=port.hw_addr,
             port_down=port_down)
+"""
 
 
 class Port(object):
-    def __init__(self, port):
-        app.logger.info("port %r", port)
+    """Concrete class to represent a switch port.
+    """
 
-        self.port_no = port.port_no
-        self.name = port.name
-        self.hw_addr = port.hw_addr
-        self.config = port.config
-        self.state = port.state
-        self.ethernet = port.ethernet
-        self.stats = None
+    def __init__(self, port_msg):
+        app.logger.debug('port %d', port_msg.port_no)
+        self.port_no = port_msg.port_no
+        self.name = port_msg.name
+        self.hw_addr = port_msg.hw_addr
+        self.config = port_msg.config
+        self.state = port_msg.state
+        self.ethernet = port_msg.ethernet
 
     def __getstate__(self):
         return self.__dict__
 
-    def update(self, port):
+    def update(self, port_msg):
         """Update port data.
 
-        Return 'port_*' event type.
+        Return event object
         """
-        assert self.port_no == port.port_no
+        assert self.port_no == port_msg.port_no
 
-        self.name = port.name
-        self.hw_addr = port.hw_addr
-        self.ethernet = port.ethernet
+        self.name = port_msg.name
+        self.hw_addr = port_msg.hw_addr
+        self.ethernet = port_msg.ethernet
 
         event = ''
         was_down = ('LINK_DOWN' in self.state)
@@ -118,10 +109,11 @@ class Port(object):
             if port.config != self.config or port.state != self.state:
                 event = 'port_changed'
 
-        self.state = port.state
-        self.config = port.config
+        self.state = port_msg.state
+        self.config = port_msg.config
 
-        return event
+        return make_event(event, port=self)
+
 
     def is_up(self):
         return 'LINK_DOWN' not in self.state
@@ -147,6 +139,7 @@ async def poll_portstats(_event):
 
 @app.message('channel_up')
 def channel_up(event):
+    app.logger.debug('channel_up: conn_id=%d', event.conn_id)
     if event.datapath_id in app.devices:
         app.logger.warning('Device %s already exists: %r', event.datapath_id, app.devices[event.datapath_id])
     app.devices[event.datapath_id] = Device(event)
@@ -154,17 +147,24 @@ def channel_up(event):
 
 @app.message('channel_down')
 def channel_down(event):
+    app.logger.debug('channel_down: conn_id=%d', event.conn_id)
     device = app.devices.get(event.datapath_id)
-    if device:
-        del app.devices[event.datapath_id]
-        app.post_event('device_down', datapath_id=event.datapath_id, device=device)
-    else:
-        app.logger.warning('Device %s does not exist!', event.datapath_id)
+    if not device:
+        app.logger.warning('Device %s does not exist! conn_id=%d', event.datapath_id, event.conn_id)
+        return
+
+    del app.devices[event.datapath_id]
+    app.post_event('device_down', datapath_id=event.datapath_id, device=device)     
 
 
 @app.message('features_reply')
 async def features_reply(event):
     """Handle FeaturesReply message."""
+    device = app.devices.get(event.datapath_id)
+    if not device:
+        app.logger.warning('Device %s does not exist! conn_id=%d', event.datapath_id, event.conn_id)
+        return        
+
     app.logger.debug('features_reply %r', event)
     #print('get_config', await GET_CONFIG.request(datapath_id=event.datapath_id))
 
@@ -173,15 +173,15 @@ async def features_reply(event):
     device.ports = OrderedDict((i.port_no, Port(i))
                                for i in await _fetch_ports(event))
 
-    if device.n_buffers > 0:
-        await _set_config()
+    #if device.n_buffers > 0:
+    #    await _set_config()
 
-    desc = await _fetch_desc()
-    device.dp_desc = desc.msg.dp_desc
-    device.mfr_desc = desc.msg.mfr_desc
-    device.hw_desc = desc.msg.hw_desc
-    device.sw_desc = desc.msg.sw_desc
-    device.serial_num = desc.msg.serial_num
+    d = await desc.request()
+    device.dp_desc = d.msg.dp_desc
+    device.mfr_desc = d.msg.mfr_desc
+    device.hw_desc = d.msg.hw_desc
+    device.sw_desc = d.msg.sw_desc
+    device.serial_num = d.msg.serial_num
     #app.logger.info('desc %r', desc)
 
     app.post_event('device_up', datapath_id=event.datapath_id, device=device)
@@ -198,19 +198,15 @@ def port_status(event):
     port_no = msg.port_no
 
     if msg.reason == 'ADD':
-        port = device.ports[port_no] = Port(msg)
-        event = 'port_added'
-    elif msg.reason == 'MODIFY':
-        port = device.ports[port_no]
-        event = port.update(msg)
-    elif msg.reason == 'DELETE':
-        port = device.ports[port_no]
-        del device.ports[port_no]
-        event = 'port_deleted'
-    else:
-        raise ValueError('Unknown port_status reason: %s', msg.reason)
+        device.ports[port_no] = Port(port_no)
+    
+    port = device.ports[port_no]
+    change_event = port.update(event)
 
-    app.post_event(event, port=port)
+    if change_event.event == 'PORT_DELETED':
+        del device.ports[port_no]
+
+    app.post_event(change_event)
 
 
 @app.event('port_down')
@@ -224,11 +220,10 @@ def port_up(event):
 
 
 async def _fetch_ports(features_reply):
-
     if features_reply.version == OPENFLOW_VERSION_1:
         return features_reply.msg.ports
     else:
-        result = await PORT_REQ.request()
+        result = await portdesc.request()
         return result.msg
 
 
@@ -239,7 +234,7 @@ async def _set_config():
 
 
 async def _fetch_desc():
-    return await DESC_REQ.request()
+    return await desc.request()
 
 
 @app.command('device')

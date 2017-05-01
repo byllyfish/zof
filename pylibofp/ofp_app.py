@@ -6,10 +6,15 @@
 
 """
 
+import os
+from .logging import init_logging
+
+if os.environ.get('OFP_APP_DEBUG'):
+    init_logging('debug', 'ext://stderr')
+
 from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
-from .logging import init_logging
 from .compiledmessage import CompiledMessage, CompiledObject
 
 _LISTEN_ENDPOINTS = (6633, 6653)

@@ -60,6 +60,9 @@ class BaseHandler(object):
         datapath_id = event('datapath_id')
         conn_id = event('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
+            # When an event is dispatched asynchronously, set the event's 
+            # 'async_dispatch' attribute to True.
+            event.async_dispatch = True
             return app.ensure_future(
                 self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
@@ -70,8 +73,8 @@ class BaseHandler(object):
             return self.callback(event)
 
     def __repr__(self):
-        return '%s[%s] %s@%s' % (self.type, self.subtype,
-                                 self.callback.__name__, id(self.callback))
+        return '%s[%s] %s %r' % (self.type, self.subtype,
+                                 self.callback.__name__, self.options)
 
     def verify(self):
         if not _verify_callback(self.callback, 1):
@@ -79,16 +82,14 @@ class BaseHandler(object):
         return True
 
     def help(self):
-        """Return help text.
-        """
+        """Return help text."""
         text = self.callback.__doc__
         if not text:
             return 'No help available'
         return inspect.cleandoc(text)
 
     def help_brief(self):
-        """Return summary line from help text.
-        """
+        """Return summary line from help text."""
         text = self.callback.__doc__
         if not text:
             return 'No help available'
@@ -150,9 +151,8 @@ class CommandHandler(BaseHandler):
 
 
 def _verify_callback(callback, param_count):
-    """Make sure callback  has the expected number of positional parameters.
-    """
-    if not inspect.isfunction(callback):
+    """Make sure callback  has the expected number of positional parameters."""
+    if not inspect.isfunction(callback) and not inspect.ismethod(callback):
         LOGGER.error('Callback is not a function: %s', callback)
         return False
     sig = inspect.signature(callback)
@@ -164,10 +164,9 @@ def _verify_callback(callback, param_count):
 
 
 def _match_message_event(key, value, event):
-    """
-    Return true if `key` and `value` exist within the given message event.
-    If the `msg` is a list, check all elements in the list for the given key.
-    """
+    """Return true if `key` and `value` exist within the given message event."""
+    if key == 'datapath_id' and value is None:
+        return True
     val = str(value).upper()
     if key in event.msg:
         return str(event.msg[key]).upper() == val

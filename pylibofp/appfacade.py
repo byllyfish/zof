@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 from .exception import CommandException
 
 
@@ -64,6 +65,7 @@ class AppFacade(object):
         self.ensure_future = app.ensure_future
         self.subscribe = app.subscribe
         self.unsubscribe = app.subscribe
+        self.set_filter = app.set_filter
         self.post_event = app.post_event
         self.rpc_call = app.rpc_call
 
@@ -108,11 +110,11 @@ class AppFacade(object):
 
     # RPC Functions
 
-    async def connect(self, endpoint, options):
+    async def connect(self, endpoint, *, options=(), versions=()):
         """Make an outgoing OpenFlow connection.
         """
         result = await self.rpc_call(
-            'OFP.CONNECT', endpoint=endpoint, options=options)
+            'OFP.CONNECT', endpoint=endpoint, options=options, versions=versions)
         return result.conn_id
 
     def all_apps(self):
@@ -124,7 +126,9 @@ class AppFacade(object):
 
 class _ArgumentParser(argparse.ArgumentParser):
     def exit(self, status=0, message=None):
-        raise CommandException(status=0)
+        if asyncio.Task.current_task():
+            raise CommandException(status=0)
+        super().exit(status, message)
 
 
 AppFacade.command.ArgumentParser = _ArgumentParser

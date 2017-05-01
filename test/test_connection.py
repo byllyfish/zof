@@ -53,7 +53,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":7,"method":"OFP.SEND","params":{"version":4,"type":"FEATURES_REQUEST"}}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":7,"error":{"code":-65000,"message":"YAML:1:39: error: unable to locate connection; no datapath_id or conn_id')
+        self.assertPrefix(result, b'{"id":7,"error":{"code":-65000,"message":"YAML:1:39: error: unable to locate connection; no conn_id or datapath_id')
 
     async def test_rpc_send_no_id_datapath(self):
         msg = b'{"method":"OFP.SEND","params":{"version":4,"type":"FEATURES_REQUEST","xid":12}}'

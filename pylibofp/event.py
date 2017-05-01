@@ -2,11 +2,13 @@ import json
 from .objectview import ObjectView, to_json
 from .pktview import pktview_from_list
 
+# N.B. An event may have an optional 'async_dispatch' attribute. This is set if
+# an async event handler is called, or the event is passed as the result of a
+# future to an async task.
+
 
 class Event(ObjectView):
-    """Concrete class that represents an Event.
-    """
-
+    """Concrete class that represents an Event."""
     def __init__(self, d):
         super().__init__(d)
         try:

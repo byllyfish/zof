@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import re
+import sys
 import functools
 from collections import defaultdict
 from .event import load_event, dump_event, make_event, Event
@@ -54,8 +55,7 @@ class Controller(object):
 
     def run_loop(self, *, listen_endpoints=None, oftr_args=None,
                  security=None):
-        """Main entry point for running a controller.
-        """
+        """Main entry point for running a controller."""
         try:
             asyncio.ensure_future(
                 self._run(
@@ -90,9 +90,7 @@ class Controller(object):
                    listen_endpoints=None,
                    oftr_args=None,
                    security=None):
-        """Async task for running the controller.
-        """
-
+        """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
             self._conn = Connection(oftr_args=oftr_args)
@@ -123,23 +121,25 @@ class Controller(object):
             LOGGER.debug("Controller._run exited")
 
     async def _event_loop(self):
-        """Run the event loop to handle events.
-        """
+        """Run the event loop to handle events."""
         try:
             LOGGER.debug('_event_loop entered')
             while True:
                 event = await self._event_queue.get()
                 self._dispatch_event(event)
-
+                if event('async_dispatch'):
+                    await asyncio.sleep(0)
         except _exc.ExitException:
             self._conn.close(True)
             asyncio.get_event_loop().stop()
+        except Exception:
+            LOGGER.exception('Exception in Controller._event_loop')
+            sys.exit(1)
         finally:
             LOGGER.debug('_event_loop exited')
 
     async def _read_loop(self):
-        """Read messages from the driver and push them onto the event queue.
-        """
+        """Read messages from the driver and push them onto the event queue."""
         LOGGER.debug('_read_loop entered')
         running = True
         while running:
@@ -150,7 +150,6 @@ class Controller(object):
                 LOGGER.debug('_read_loop: posting EXIT event')
                 self.post_event(make_event(event='EXIT'))
                 running = False
-
         LOGGER.debug('_read_loop exited')
 
     async def _start(self, *, listen_endpoints, security):
@@ -158,7 +157,6 @@ class Controller(object):
 
         This method runs concurrently with `run()`.
         """
-
         try:
             await self._get_description()
             if security:
@@ -192,8 +190,7 @@ class Controller(object):
             raise
 
     async def _configure_tls(self, security):
-        """Set up a TLS identity for connections to use.
-        """
+        """Set up a TLS identity for connections to use."""
         try:
             result = await self.rpc_call(
                 'OFP.ADD_IDENTITY',
@@ -231,16 +228,17 @@ class Controller(object):
             raise
 
     def post_event(self, event):
-        """Post an event to our event queue.
-        """
+        """Post an event to our event queue."""
         assert isinstance(event, Event)
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
-        """Dispatch an event we receive from oftr.
+        """Dispatch an event we receive from the queue.
+
+        If the event is dispatched to an async task, the event's async_dispatch'
+        attribute will be set to True.
         """
         LOGGER.debug('_dispatch_event %r', event)
-
         try:
             if 'event' in event:
                 self._handle_internal_event(event)
@@ -249,11 +247,11 @@ class Controller(object):
             elif event.method == 'OFP.MESSAGE':
                 type_ = event.params.type
                 if not type_.startswith('CHANNEL_'):
-                    self._handle_message(event.params)
+                    self._handle_message(event)
                 elif type_ == 'CHANNEL_ALERT':
-                    self._handle_alert(event.params)
+                    self._handle_alert(event)
                 else:
-                    self._handle_channel(event.params)
+                    self._handle_channel(event)
             else:
                 LOGGER.warning('Unhandled event: %r', event)
         except _exc.StopPropagationException:
@@ -265,7 +263,6 @@ class Controller(object):
         If `xid` is specified, return a `_ReplyFuture` to await the response.
         Otherwise, return None.
         """
-
         self._conn.write(dump_event(event))
         if xid is None:
             return
@@ -289,13 +286,17 @@ class Controller(object):
     def _handle_xid(self, event, xid, except_class=None):
         """Lookup future associated with given xid and give it the event.
 
-        Return False if no matching xid is found.
-        """
+        If we find the future, but it has been cancelled, we still return True.
 
+        Return False if no matching xid/future is found.
+        """
         if xid not in self._reqs:
             return False
 
         fut, _ = self._reqs[xid]
+        if fut.cancelled():
+            return True
+
         if except_class:
             fut.set_exception(except_class(event))
         else:
@@ -308,8 +309,7 @@ class Controller(object):
         return True
 
     def _handle_internal_event(self, event):
-        """Called when an internal event is received.
-        """
+        """Called when an internal event is received."""
         # Immediately begin shutting down if there is an 'EXIT' event.
         if event.event == 'EXIT':
             raise _exc.ExitException()
@@ -321,41 +321,45 @@ class Controller(object):
             raise _exc.ExitException()
 
     def _handle_rpc_reply(self, event):
-        """Called when a RPC reply is received.
-        """
+        """Called when a RPC reply is received."""
         if 'result' in event:
             result = event.result
             except_class = None
         else:
             result = event
             except_class = _exc.RPCException
-        if not self._handle_xid(result, event.id, except_class):
+        known_xid = self._handle_xid(result, event.id, except_class)
+        if known_xid:
+            event.async_dispatch = True
+        else:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
-    def _handle_message(self, params):
-        """Called when a `OFP.MESSAGE` is received.
-        """
+    def _handle_message(self, event):
+        """Called when a `OFP.MESSAGE` is received."""
+        params = event.params
         if params.type == 'ERROR':
             except_class = _exc.ErrorException
         else:
             except_class = None
+        # If the message does not have a datapath_id, don't attempt to handle
+        # replies based on xid.
+        known_xid = False
+        if 'datapath_id' in params:
+            known_xid = self._handle_xid(params, params.xid, except_class)
 
-        if not self._handle_xid(params, params.xid, except_class):
+        if known_xid:
+            event.async_dispatch = True
+        else:
             for app in self.apps:
                 app.handle_event(params, 'message')
             # Log all OpenFlow error messages not associated with requests.
             if params.type == 'ERROR':
                 LOGGER.error('ERROR: %s', params)
 
-    def _handle_channel(self, params):
-        """Called when a `OFP.MESSAGE` is received with type 'CHANNEL_*'.
-        """
-        dpid = params('datapath_id')
-        if dpid:
-            scope_key = 'Datapath %s' % dpid
-        else:
-            scope_key = 'Channel %s' % params.conn_id
-
+    def _handle_channel(self, event):
+        """Called when `OFP.MESSAGE` is received with type 'CHANNEL_*'."""
+        params = event.params
+        scope_key = _make_scope_key(params.conn_id)
         LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]',
                      scope_key, params.type, params.conn_id, params.version)
 
@@ -365,12 +369,13 @@ class Controller(object):
         for app in self.apps:
             app.handle_event(params, 'message')
 
-    def _handle_alert(self, params):
-        """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'.
-        """
+    def _handle_alert(self, event):
+        """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'."""
         # First check if this alert was sent in response to something we said.
+        params = event.params
         if params.xid and self._handle_xid(params, params.xid,
                                            _exc.DeliveryException):
+            event.async_dispatch = True
             return
         # Otherwise, we need to report it.
         data = params.data.hex()
@@ -386,8 +391,7 @@ class Controller(object):
             app.handle_event(params, 'message')
 
     async def _idle_task(self):
-        """Task to check for requests that have timed out.
-        """
+        """Task to check for requests that have timed out."""
         while True:
             await asyncio.sleep(_IDLE_INTERVAL)
             now = _timestamp()
@@ -395,7 +399,8 @@ class Controller(object):
                          for (xid, (fut, expiration)) in self._reqs.items()
                          if expiration <= now]
             for xid, fut in timed_out:
-                fut.set_exception(_exc.TimeoutException(xid))
+                if not fut.cancelled():
+                    fut.set_exception(_exc.TimeoutException(xid))
                 del self._reqs[xid]
 
     def _set_phase(self, phase):
@@ -423,7 +428,7 @@ class Controller(object):
         self._xid += 1
         return self._xid
 
-    def ensure_future(self, coroutine, *, scope_key=None, app, task_locals):
+    def ensure_future(self, coroutine, *, app, task_locals):
         """Run an async coroutine, within the scope of a specific scope_key.
 
         This function automatically captures exceptions from the coroutine. It
@@ -444,7 +449,10 @@ class Controller(object):
                 app.handle_exception(None, scope_key)
 
         task = asyncio.ensure_future(_capture_exception(coroutine))
-        if not scope_key:
+        conn_id = task_locals.get('conn_id')
+        if conn_id:
+            scope_key = _make_scope_key(conn_id)
+        else:
             scope_key = self._phase
         self._tasks[scope_key].append(task)
         task.ofp_task_app = app
@@ -463,25 +471,28 @@ class Controller(object):
 
         If scope_key is 'START' or 'STOP', cancel all tasks.
         """
-        LOGGER.debug('_cancel_tasks: scope_key=%s', scope_key)
+        LOGGER.debug('_cancel_tasks: scope_key=%s, tasks=%r', scope_key, self._tasks)
         if scope_key == 'START' or scope_key == 'STOP':
             for task_list in self._tasks.values():
                 for task in task_list:
                     task.cancel()
         if scope_key in self._tasks:
             for task in self._tasks[scope_key]:
+                LOGGER.debug('_cancel_task: %r', task)
                 task.cancel()
 
     def _task_callback(self, task, scope_key):
         """Called when a scoped task is done.
         """
         LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
-        self._tasks[scope_key].remove(task)
+        tasks = self._tasks[scope_key]
+        tasks.remove(task)
+        if not tasks:
+            del self._tasks[scope_key]
 
 
 def _timestamp():
-    """Return a monotonic timestamp in seconds.
-    """
+    """Return a monotonic timestamp in seconds."""
     return asyncio.get_event_loop().time()
 
 
@@ -523,6 +534,9 @@ class _ReplyFuture:
         if self._results:
             LOGGER.warning('Multiple unread replies xid=%d: %s', self._xid,
                            self._results)
+
+    def cancelled(self):
+        return self._future and self._future.cancelled()
 
     def done(self):
         return not self._results and self._done
@@ -582,11 +596,14 @@ _COROUTINE_REGEX = re.compile(
 
 
 def _coro_name(coroutine):
-    """
-    Return short string describing the coroutine, e.g. "init() some_file:34".
+    """Return short string describing the coroutine, e.g. "init() some_file:34".
     """
     result = repr(coroutine)
     m = _COROUTINE_REGEX.match(result)
     if m:
         result = '%s %s' % m.group(1, 2)
     return result
+
+def _make_scope_key(conn_id):
+    return 'conn_id=%d' % conn_id
+

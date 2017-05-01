@@ -7,6 +7,7 @@ import sys
 default_formatter = logging.Formatter(
     '%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger_name = __package__
+_logging_inited = False
 
 
 class TailBufferedHandler(logging.Handler):
@@ -77,6 +78,11 @@ def init_logging(loglevel, logfile):
 
     This routine enables asyncio debug mode if `loglevel` is 'debug'.
     """
+    global _logging_inited
+    if _logging_inited:
+        return
+    _logging_inited = True
+
     if loglevel.lower() == 'debug':
         os.environ['PYTHONASYNCIODEBUG'] = '1'
 
