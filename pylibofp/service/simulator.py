@@ -15,10 +15,12 @@ class Simulator(object):
         self.conn_id = await self.app.connect('127.0.0.1:6653', versions=[1])
         self.app.logger.debug('start %d', self.conn_id)
         self.app.set_filter('message', lambda evt: evt.conn_id == self.conn_id)
-        self.app.subscribe(self.features_request, 'message', 'FEATURES_REQUEST', {'datapath_id': None})
-        self.app.subscribe(self.request_desc, 'message', 'REQUEST.DESC', {'datapath_id': None})
-        self.app.subscribe(self.request_portdesc, 'message', 'REQUEST.PORT_DESC', {'datapath_id': None})
-
+        self.app.subscribe(self.features_request, 'message',
+                           'FEATURES_REQUEST', {'datapath_id': None})
+        self.app.subscribe(self.request_desc, 'message', 'REQUEST.DESC',
+                           {'datapath_id': None})
+        self.app.subscribe(self.request_portdesc, 'message',
+                           'REQUEST.PORT_DESC', {'datapath_id': None})
 
     def features_request(self, event):
         self.app.logger.debug('features_request entered %r', event)
@@ -39,10 +41,9 @@ class Simulator(object):
         msg = {
             'type': 'REPLY.PORT_DESC',
             'xid': event.xid,
-            'msg': [ self._portdesc(i) for i in range(1, 5) ]
+            'msg': [self._portdesc(i) for i in range(1, 5)]
         }
         ofp_compile(msg).send()
-
 
     def request_desc(self, event):
         self.app.logger.debug('desc_request entered')
@@ -50,7 +51,7 @@ class Simulator(object):
             'type': 'REPLY.DESC',
             'xid': event.xid,
             'msg': {
-                'hw_desc':'hw_desc',
+                'hw_desc': 'hw_desc',
                 'mfr_desc': 'mfr_desc',
                 'sw_desc': 'sw_desc',
                 'serial_num': '',
@@ -76,8 +77,11 @@ class Simulator(object):
             }
         }
 
+
 if __name__ == '__main__':
     import pylibofp.service.device
     for i in range(2):
         sim = Simulator('ff:ff:00:00:00:00:00:01')
-    ofp_run(command_prompt=None, oftr_args=['--loglevel=debug', '--logfile=oftr.log'])
+    ofp_run(
+        command_prompt=None,
+        oftr_args=['--loglevel=debug', '--logfile=oftr.log'])

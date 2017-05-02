@@ -60,7 +60,7 @@ class BaseHandler(object):
         datapath_id = event('datapath_id')
         conn_id = event('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
-            # When an event is dispatched asynchronously, set the event's 
+            # When an event is dispatched asynchronously, set the event's
             # 'async_dispatch' attribute to True.
             event.async_dispatch = True
             return app.ensure_future(
@@ -68,8 +68,7 @@ class BaseHandler(object):
         else:
             task = asyncio.Task.current_task()
             task.ofp_task_locals = ObjectView(
-                dict(
-                    datapath_id=datapath_id, conn_id=conn_id))
+                {'datapath_id':datapath_id, 'conn_id':conn_id})
             return self.callback(event)
 
     def __repr__(self):

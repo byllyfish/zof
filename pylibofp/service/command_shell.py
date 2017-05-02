@@ -15,11 +15,9 @@ from ..event import make_event
 from ..logging import TailBufferedHandler, PatchedConsoleHandler
 from ..exception import CommandException
 
-
 app = ofp_app('service.command_shell')
 app.foreground_task = None
 app.command_prompt = '> '
-
 
 _tail_handler = TailBufferedHandler.install()
 _console_handler = PatchedConsoleHandler.install()
@@ -90,7 +88,6 @@ async def run_command(command):
             app.logger.exception(ex)
 
 
-
 def exec_command(cmd, handler):
     parser = handler.options.get('argparser')
     if parser:
@@ -138,7 +135,8 @@ def help_cmd(event):
         yield _show_help(cmd_name)
     else:
         for handler in all_command_handlers():
-            yield '%-12s - %s' % (handler.subtype.lower(), handler.help_brief())
+            yield '%-12s - %s' % (handler.subtype.lower(),
+                                  handler.help_brief())
 
 
 def _show_help(cmd_name):
@@ -155,7 +153,8 @@ def _show_help(cmd_name):
 
 def _ls_args():
     parser = app.command.ArgumentParser()
-    parser.add_argument('-l', '--long', action='store_true', help='list in long format')
+    parser.add_argument(
+        '-l', '--long', action='store_true', help='list in long format')
     return parser
 
 
@@ -173,7 +172,8 @@ def _ps_args():
       NAME  app name
     '''
     parser = app.command.ArgumentParser(description=desc)
-    parser.add_argument('-a', '--all', action='store_true', help='show all tasks')
+    parser.add_argument(
+        '-a', '--all', action='store_true', help='show all tasks')
     return parser
 
 

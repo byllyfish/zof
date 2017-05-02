@@ -57,7 +57,7 @@ class PatchedConsoleHandler(logging.Handler):
         except Exception:  # pylint: disable=broad-except
             self.handleError(record)
 
-    def write(self, line):  #pylint: disable=no-self-use
+    def write(self, line):  # pylint: disable=no-self-use
         stream = sys.stdout
         stream.write(line)
         stream.write('\n')
@@ -78,7 +78,7 @@ def init_logging(loglevel, logfile):
 
     This routine enables asyncio debug mode if `loglevel` is 'debug'.
     """
-    global _logging_inited
+    global _logging_inited  # pylint: disable=global-statement
     if _logging_inited:
         return
     _logging_inited = True

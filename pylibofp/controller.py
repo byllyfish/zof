@@ -128,11 +128,12 @@ class Controller(object):
                 event = await self._event_queue.get()
                 self._dispatch_event(event)
                 if event('async_dispatch'):
+                    LOGGER.debug('Yielding for async_dispatch...')
                     await asyncio.sleep(0)
         except _exc.ExitException:
             self._conn.close(True)
             asyncio.get_event_loop().stop()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._event_loop')
             sys.exit(1)
         finally:
@@ -206,8 +207,7 @@ class Controller(object):
             raise
 
     async def _listen_on_endpoints(self, listen_endpoints):
-        """Listen on a list of endpoints.
-        """
+        """Listen on a list of endpoints."""
         ofversion = None  # TODO: replace self._config.ofversion
         options = ['FEATURES_REQ']
         if not ofversion:
@@ -275,9 +275,7 @@ class Controller(object):
         return fut
 
     def rpc_call(self, method, **params):
-        """Send a RPC request and return a future for the reply.
-        """
-
+        """Send a RPC request and return a future for the reply."""
         LOGGER.debug('rpc_call %s', method)
         xid = self.next_xid()
         event = dict(id=xid, method=method, params=params)
@@ -438,7 +436,7 @@ class Controller(object):
         @functools.wraps(coroutine)
         async def _capture_exception(coroutine):
             try:
-                app.logger.debug('ensure_future: %s', _coro_name(coroutine))
+                app.logger.debug('ensure_future: %s %r', _coro_name(coroutine))
                 await coroutine
                 app.logger.debug('ensure_future done: %s',
                                  _coro_name(coroutine))
@@ -606,4 +604,3 @@ def _coro_name(coroutine):
 
 def _make_scope_key(conn_id):
     return 'conn_id=%d' % conn_id
-

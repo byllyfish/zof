@@ -36,6 +36,7 @@ barrier = ofp_compile('type: BARRIER_REQUEST')
 class Device(object):
     """Concrete class to represent a switch.
     """
+
     def __init__(self, event):
         self.datapath_id = event.datapath_id
         self.conn_id = event.conn_id
@@ -52,6 +53,7 @@ class Device(object):
 
     def __getstate__(self):
         return self.__dict__
+
 
 """
     async def port_mod(self, port_no, *, port_down=False):
@@ -114,7 +116,6 @@ class Port(object):
 
         return make_event(event, port=self)
 
-
     def is_up(self):
         return 'LINK_DOWN' not in self.state
 
@@ -141,7 +142,8 @@ async def poll_portstats(_event):
 def channel_up(event):
     app.logger.debug('channel_up: conn_id=%d', event.conn_id)
     if event.datapath_id in app.devices:
-        app.logger.warning('Device %s already exists: %r', event.datapath_id, app.devices[event.datapath_id])
+        app.logger.warning('Device %s already exists: %r', event.datapath_id,
+                           app.devices[event.datapath_id])
     app.devices[event.datapath_id] = Device(event)
 
 
@@ -150,11 +152,12 @@ def channel_down(event):
     app.logger.debug('channel_down: conn_id=%d', event.conn_id)
     device = app.devices.get(event.datapath_id)
     if not device:
-        app.logger.warning('Device %s does not exist! conn_id=%d', event.datapath_id, event.conn_id)
+        app.logger.warning('Device %s does not exist! conn_id=%d',
+                           event.datapath_id, event.conn_id)
         return
 
     del app.devices[event.datapath_id]
-    app.post_event('device_down', datapath_id=event.datapath_id, device=device)     
+    app.post_event('device_down', datapath_id=event.datapath_id, device=device)
 
 
 @app.message('features_reply')
@@ -162,8 +165,9 @@ async def features_reply(event):
     """Handle FeaturesReply message."""
     device = app.devices.get(event.datapath_id)
     if not device:
-        app.logger.warning('Device %s does not exist! conn_id=%d', event.datapath_id, event.conn_id)
-        return        
+        app.logger.warning('Device %s does not exist! conn_id=%d',
+                           event.datapath_id, event.conn_id)
+        return
 
     app.logger.debug('features_reply %r', event)
     #print('get_config', await GET_CONFIG.request(datapath_id=event.datapath_id))
@@ -199,7 +203,7 @@ def port_status(event):
 
     if msg.reason == 'ADD':
         device.ports[port_no] = Port(port_no)
-    
+
     port = device.ports[port_no]
     change_event = port.update(event)
 
@@ -219,9 +223,9 @@ def port_up(event):
     app.logger.warning('port_up: %s', event)
 
 
-async def _fetch_ports(features_reply):
-    if features_reply.version == OPENFLOW_VERSION_1:
-        return features_reply.msg.ports
+async def _fetch_ports(reply):
+    if reply.version == OPENFLOW_VERSION_1:
+        return reply.msg.ports
     else:
         result = await portdesc.request()
         return result.msg
