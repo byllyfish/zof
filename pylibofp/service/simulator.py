@@ -80,8 +80,9 @@ class Simulator(object):
 
 if __name__ == '__main__':
     import pylibofp.service.device
-    for i in range(2):
+    for i in range(1000):
         sim = Simulator('ff:ff:00:00:00:00:00:01')
     ofp_run(
-        command_prompt=None,
-        oftr_args=['--loglevel=debug', '--logfile=oftr.log'])
+        command_prompt=None
+        #oftr_args=['--trace=rpc', '--loglevel=debug', '--logfile=oftr.log']
+    )

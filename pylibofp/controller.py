@@ -82,7 +82,7 @@ class Controller(object):
         Usually, signals indicate that the program should exit. An app can
         prevent shutdown by setting the event's `exit` value to False.
         """
-        LOGGER.info('Signal Received: %s', signame)
+        LOGGER.info('Signal Received: %s (qsize=%d)', signame, self._event_queue.qsize())
         self.post_event(make_event(event='SIGNAL', signal=signame, exit=True))
 
     async def _run(self,
@@ -127,9 +127,9 @@ class Controller(object):
             while True:
                 event = await self._event_queue.get()
                 self._dispatch_event(event)
-                if event('async_dispatch'):
-                    LOGGER.debug('Yielding for async_dispatch...')
-                    await asyncio.sleep(0)
+                # If the event was dispatched to an async task, give it time 
+                # now to run so it can get started.
+                await asyncio.sleep(0)
         except _exc.ExitException:
             self._conn.close(True)
             asyncio.get_event_loop().stop()
@@ -233,11 +233,7 @@ class Controller(object):
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
-        """Dispatch an event we receive from the queue.
-
-        If the event is dispatched to an async task, the event's async_dispatch'
-        attribute will be set to True.
-        """
+        """Dispatch an event we receive from the queue."""
         LOGGER.debug('_dispatch_event %r', event)
         try:
             if 'event' in event:
@@ -327,9 +323,7 @@ class Controller(object):
             result = event
             except_class = _exc.RPCException
         known_xid = self._handle_xid(result, event.id, except_class)
-        if known_xid:
-            event.async_dispatch = True
-        else:
+        if not known_xid:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
     def _handle_message(self, event):
@@ -345,9 +339,7 @@ class Controller(object):
         if 'datapath_id' in params:
             known_xid = self._handle_xid(params, params.xid, except_class)
 
-        if known_xid:
-            event.async_dispatch = True
-        else:
+        if not known_xid:
             for app in self.apps:
                 app.handle_event(params, 'message')
             # Log all OpenFlow error messages not associated with requests.
@@ -373,7 +365,6 @@ class Controller(object):
         params = event.params
         if params.xid and self._handle_xid(params, params.xid,
                                            _exc.DeliveryException):
-            event.async_dispatch = True
             return
         # Otherwise, we need to report it.
         data = params.data.hex()

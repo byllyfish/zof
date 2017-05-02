@@ -55,7 +55,7 @@ class ControllerApp(object):
         controller.apps.sort(key=attrgetter('precedence'))
 
     def handle_event(self, event, handler_type):
-        """Handle events."""
+        """Handle event."""
         try:
             filter_func = self.filter.get(handler_type)
             if filter_func and not filter_func(event):

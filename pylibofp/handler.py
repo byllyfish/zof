@@ -50,35 +50,29 @@ class BaseHandler(object):
         self.type = type_
         self.subtype = subtype.upper()
         self.options = options
-        self.count = 0
 
     def match(self, event):
         raise NotImplementedError("Please implement this method")
 
     def __call__(self, event, app):
-        self.count += 1
+        """Invoke handler and ignore the return value."""
         datapath_id = event('datapath_id')
         conn_id = event('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
-            # When an event is dispatched asynchronously, set the event's
-            # 'async_dispatch' attribute to True.
-            event.async_dispatch = True
-            return app.ensure_future(
+            app.ensure_future(
                 self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
             task = asyncio.Task.current_task()
             task.ofp_task_locals = ObjectView(
                 {'datapath_id':datapath_id, 'conn_id':conn_id})
-            return self.callback(event)
+            self.callback(event)
 
     def __repr__(self):
         return '%s[%s] %s %r' % (self.type, self.subtype,
                                  self.callback.__name__, self.options)
 
     def verify(self):
-        if not _verify_callback(self.callback, 1):
-            return False
-        return True
+        return _verify_callback(self.callback, 1)
 
     def help(self):
         """Return help text."""
@@ -129,18 +123,16 @@ class EventHandler(BaseHandler):
         return event['event'] == self.subtype or self.subtype == _ALL_SUBTYPE
 
     def verify(self):
-        if not _verify_callback(self.callback, 1):
-            return False
-        return True
+        return _verify_callback(self.callback, 1)
 
 
 class CommandHandler(BaseHandler):
     def __call__(self, event, app):
-        self.count += 1
-        if asyncio.iscoroutinefunction(self.callback):
-            return self.callback(event)
-        else:
-            return self.callback(event)
+        """Return value of invoking command callback.
+
+        The result may be an awaitable object.
+        """
+        return self.callback(event)
 
     def match(self, event):
         raise NotImplementedError("CommandHandler does not support match()")
