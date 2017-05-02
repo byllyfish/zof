@@ -436,7 +436,7 @@ class Controller(object):
         @functools.wraps(coroutine)
         async def _capture_exception(coroutine):
             try:
-                app.logger.debug('ensure_future: %s %r', _coro_name(coroutine))
+                app.logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
                 app.logger.debug('ensure_future done: %s',
                                  _coro_name(coroutine))
