@@ -267,7 +267,7 @@ class Controller(object):
         assert xid > 0
         fut = _ReplyFuture(xid)
         expiration = _timestamp() + _XID_TIMEOUT
-        self._reqs[xid] = (fut, expiration)
+        self._reqs[xid] = (fut, expiration, _XID_TIMEOUT)
         return fut
 
     def rpc_call(self, method, **params):
@@ -287,7 +287,7 @@ class Controller(object):
         if xid not in self._reqs:
             return False
 
-        fut, _ = self._reqs[xid]
+        fut = self._reqs[xid][0]
         if fut.cancelled():
             return True
 
@@ -384,12 +384,12 @@ class Controller(object):
         while True:
             await asyncio.sleep(_IDLE_INTERVAL)
             now = _timestamp()
-            timed_out = [(xid, fut)
-                         for (xid, (fut, expiration)) in self._reqs.items()
+            timed_out = [(xid, fut, timeout)
+                         for (xid, (fut, expiration, timeout)) in self._reqs.items()
                          if expiration <= now]
-            for xid, fut in timed_out:
+            for xid, fut, timeout in timed_out:
                 if not fut.cancelled():
-                    fut.set_exception(_exc.TimeoutException(xid))
+                    fut.set_exception(_exc.TimeoutException(xid, timeout))
                 del self._reqs[xid]
 
     def _set_phase(self, phase):

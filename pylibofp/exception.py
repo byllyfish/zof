@@ -24,11 +24,12 @@ class ControllerException(Exception):
 class TimeoutException(ControllerException):
     """Exception that indicates an RPC or OpenFlow request has timed out."""
 
-    def __init__(self, xid):
+    def __init__(self, xid, timeout):
         super().__init__(xid)
+        self.timeout = timeout
 
     def __str__(self):
-        return '[TimeoutException xid=%s]' % self.xid
+        return '[TimeoutException xid=%s timeout=%s]' % (self.xid, self.timeout)
 
 
 class RPCException(ControllerException):
