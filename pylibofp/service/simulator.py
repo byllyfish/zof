@@ -2,28 +2,17 @@ from pylibofp import ofp_app, ofp_run, ofp_compile
 
 
 class Simulator(object):
-    simcount = 0
 
     def __init__(self, datapath_id):
         self.datapath_id = datapath_id
-        self.conn_id = None
-        Simulator.simcount += 1
-        self.app = ofp_app('simulator_%d' % Simulator.simcount)
-        self.app.subscribe(self.start, 'event', 'start', {})
+        app.sims.append(self)
 
     async def start(self, event):
-        self.conn_id = await self.app.connect('127.0.0.1:6653', versions=[1])
-        self.app.logger.debug('start %d', self.conn_id)
-        self.app.set_filter('message', lambda evt: evt.conn_id == self.conn_id)
-        self.app.subscribe(self.features_request, 'message',
-                           'FEATURES_REQUEST', {'datapath_id': None})
-        self.app.subscribe(self.request_desc, 'message', 'REQUEST.DESC',
-                           {'datapath_id': None})
-        self.app.subscribe(self.request_portdesc, 'message',
-                           'REQUEST.PORT_DESC', {'datapath_id': None})
+        conn_id = await app.connect('127.0.0.1:6653', versions=[1])
+        app.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
-        self.app.logger.debug('features_request entered %r', event)
+        ports = self._portdescs() if event.version < 4 else []
         msg = {
             'type': 'FEATURES_REPLY',
             'xid': event.xid,
@@ -32,21 +21,20 @@ class Simulator(object):
                 'n_buffers': 0,
                 'n_tables': 32,
                 'capabilities': [],
-                'ports': []
+                'ports': ports
             }
         }
-        ofp_compile(msg).send()
+        ofp_compile(msg).send()        
 
     def request_portdesc(self, event):
         msg = {
             'type': 'REPLY.PORT_DESC',
             'xid': event.xid,
-            'msg': [self._portdesc(i) for i in range(1, 5)]
+            'msg': self._portdescs()
         }
         ofp_compile(msg).send()
 
     def request_desc(self, event):
-        self.app.logger.debug('desc_request entered')
         msg = {
             'type': 'REPLY.DESC',
             'xid': event.xid,
@@ -59,6 +47,9 @@ class Simulator(object):
             }
         }
         ofp_compile(msg).send()
+
+    def _portdescs(self):
+        return [self._portdesc(i) for i in range(1, 5)]
 
     def _portdesc(self, port_no):
         return {
@@ -78,11 +69,42 @@ class Simulator(object):
         }
 
 
+app = ofp_app('simulator')
+app.sims = []
+app.conn_to_sim = {}
+
+
+@app.event('start')
+def start(event):
+    for i in range(500):
+        sim = Simulator('ff:ff:00:00:00:00:00:01')
+        app.ensure_future(sim.start(event))
+
+
+@app.message('features_request', datapath_id=None)
+def features_request(event):
+    app.conn_to_sim[event.conn_id].features_request(event)
+
+
+@app.message('request.port_desc', datapath_id=None)
+def request_portdesc(event):
+    app.conn_to_sim[event.conn_id].request_portdesc(event)
+
+
+@app.message('request.desc', datapath_id=None)
+def request_desc(event):
+    app.conn_to_sim[event.conn_id].request_desc(event)
+
+@app.message('channel_down', datapath_id=None)
+def channel_down(event):
+    sim = app.conn_to_sim.pop(event.conn_id, None)
+    if sim:
+        app.sims.remove(sim)
+
+
 if __name__ == '__main__':
     import pylibofp.service.device
-    for i in range(1000):
-        sim = Simulator('ff:ff:00:00:00:00:00:01')
     ofp_run(
-        command_prompt=None
-        #oftr_args=['--trace=rpc', '--loglevel=debug', '--logfile=oftr.log']
+        command_prompt=None,
+        oftr_args=['--loglevel=error', '--logfile=oftr.log']
     )
