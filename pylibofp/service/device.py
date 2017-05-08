@@ -80,7 +80,7 @@ class Port(object):
     """
 
     def __init__(self, port_msg):
-        app.logger.debug('port %d', port_msg.port_no)
+        app.logger.debug('port %s', port_msg.port_no)
         self.port_no = port_msg.port_no
         self.name = port_msg.name
         self.hw_addr = port_msg.hw_addr
