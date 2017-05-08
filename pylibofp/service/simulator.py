@@ -12,7 +12,6 @@ class Simulator(object):
         app.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
-        ports = self._portdescs() if event.version < 4 else []
         msg = {
             'type': 'FEATURES_REPLY',
             'xid': event.xid,
@@ -21,7 +20,7 @@ class Simulator(object):
                 'n_buffers': 0,
                 'n_tables': 32,
                 'capabilities': [],
-                'ports': ports
+                'ports': self._portdescs() if event.version < 4 else []
             }
         }
         ofp_compile(msg).send()        
@@ -77,7 +76,7 @@ app.conn_to_sim = {}
 @app.event('start')
 def start(event):
     for i in range(500):
-        sim = Simulator('ff:ff:00:00:00:00:00:01')
+        sim = Simulator(hex(i+1))  #'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start(event))
 
 
@@ -106,5 +105,5 @@ if __name__ == '__main__':
     import pylibofp.service.device
     ofp_run(
         command_prompt=None,
-        oftr_args=['--loglevel=error', '--logfile=oftr.log']
+        oftr_args=['--loglevel=info', '--logfile=oftr.log']
     )
