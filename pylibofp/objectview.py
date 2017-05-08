@@ -121,3 +121,21 @@ def _json_serialize(obj):
     except AttributeError:
         raise TypeError('Value "%s" of type %s is not JSON serializable' %
                         (repr(obj), type(obj)))
+
+
+def make_objectview(obj):
+    """Return a full ObjectView representation of `obj`.
+    """
+    if isinstance(obj, ObjectView):
+        return obj
+    return _make_objectview(obj)
+
+
+def _make_objectview(obj):
+    assert isinstance(obj, dict)
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = _make_objectview(value)
+        elif isinstance(value, list) and value and isinstance(value[0], dict):
+            obj[key] = [_make_objectview(item) for item in value]
+    return ObjectView(obj)

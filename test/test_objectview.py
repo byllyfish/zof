@@ -2,7 +2,7 @@ import unittest
 import ipaddress
 import argparse
 from types import FunctionType
-from pylibofp.objectview import ObjectView, to_json
+from pylibofp.objectview import ObjectView, to_json, make_objectview
 
 
 def _test_dict():
@@ -145,3 +145,13 @@ class ObjectViewTestCase(unittest.TestCase):
         o = ObjectView(dict(a=ns))
         s = to_json(o)
         self.assertEqual(s, '{"a":{"b":3}}')
+
+    def test_make_objectview(self):
+        d = dict(a = 1, b = 2)
+        o = make_objectview(d)
+        self.assertEqual(o, d)
+
+        d = dict(a = dict(b=5), b = [dict(c=6), dict(c=7)])
+        o = make_objectview(d)
+        self.assertEqual(o.a.b, 5)
+        self.assertEqual(o.b[1].c, 7)
