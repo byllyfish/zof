@@ -72,6 +72,9 @@ class PktView(ObjectView):
     hop_limit = pktview_alias('nx_ip_ttl')
     ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
 
+    def items(self):
+        return self.__dict__.items()
+
 
 def make_pktview(**kwds):
     """Construct a new PktView object."""

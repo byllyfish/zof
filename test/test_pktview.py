@@ -93,6 +93,11 @@ class PktViewTestCase(unittest.TestCase):
         del pkt.ip
         self.assertFalse('ip' in pkt)
 
+    def test_pktview_items(self):
+        pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
+        items = list(pkt.items())
+        items.sort()
+        self.assertEqual(items, [('eth_type', 0x0800), ('ipv4_src', '1.2.3.4')])
 
 
 def _by_field(item):
