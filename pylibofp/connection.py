@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import shutil
+import shlex
 
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
@@ -13,16 +14,21 @@ class Connection(object):
     """Concrete class representing a connection to the `oftr` driver.
 
     Keyword Args:
-        oftr_cmd (str): Subcommand name (defaults to 'jsonrpc')
-        oftr_args (Optional[List[str]]): Command line arguments.
+        oftr_options (Dict[str, str]): Dictionary with options:
+                cmd: Subcommand name (defaults to 'jsonrpc')
+                args: Command line arguments for oftr.
+                prefix: Command line prefix for launching oftr.
     """
 
-    def __init__(self, *, oftr_cmd='jsonrpc', oftr_args=None):
+    def __init__(self, *, oftr_options=None):
+        if oftr_options is None:
+            oftr_options = {}
         self._conn = None
         self._input = None
         self._output = None
-        self._oftr_cmd = oftr_cmd
-        self._oftr_args = oftr_args
+        self._oftr_cmd = oftr_options.get('cmd', 'jsonrpc')
+        self._oftr_args = oftr_options.get('args')
+        self._oftr_prefix = oftr_options.get('prefix')
 
     async def connect(self):
         """Set up connection to the oftr driver.
@@ -33,9 +39,13 @@ class Connection(object):
 
         cmd = [oftr_path, self._oftr_cmd]
         if self._oftr_args:
-            cmd.extend(self._oftr_args)
+            args = shlex.split(self._oftr_args)
+            cmd.extend(args)
+        if self._oftr_prefix:
+            prefix = shlex.split(self._oftr_prefix)
+            cmd[0:0] = prefix
 
-        LOGGER.debug("Launch oftr (%s)", cmd[0])
+        LOGGER.debug("Launch oftr %r", cmd)
 
         try:
             # When we create the subprocess, make it a session leader.

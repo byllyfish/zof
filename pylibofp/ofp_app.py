@@ -4,6 +4,15 @@
 - ofp_run
 - ofp_compile
 
+Environment Variables:
+
+    OFP_APP_DEBUG               If true, activates debug logging mode.
+    OFP_APP_IMPORT_MODULES      Command-separated list of additional modules 
+                                to load.
+    OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
+                                like valgrind or strace.
+    OFP_APP_OFTR_ARGS           Arguments passed to oftr.
+
 """
 
 import os
@@ -12,10 +21,10 @@ from .controller import Controller
 from .controllerapp import ControllerApp
 from .appfacade import AppFacade
 from .compiledmessage import CompiledMessage, CompiledObject
-from .logging import init_logging
+from .logging import init_logging, EXT_STDERR
 
 if os.environ.get('OFP_APP_DEBUG'):
-    init_logging('debug', 'ext://stderr')
+    init_logging('debug')
 
 
 _LISTEN_ENDPOINTS = (6633, 6653)
@@ -45,17 +54,17 @@ def ofp_app(name, *, ofversion=None, kill_on_exception=False, precedence=1000):
 
 def ofp_run(*,
             listen_endpoints=_LISTEN_ENDPOINTS,
-            oftr_args=None,
+            oftr_options=None,
             loglevel='info',
-            logfile=None,
-            security=None,
-            command_prompt='ofp_app> '):
+            logfile=EXT_STDERR,
+            security=None):
     """Run event loop for ofp_app's.
 
     Args:
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
-        oftr_args (Optional[List[str]]): Command line arguments to oftr.
+        oftr_options (Optional[Dict[str, str]]): Dictionary with settings for
+            oftr process.
         loglevel (Optional[str]): Default log level (info). If None, logging is
             left unconfigured.
         logfile (Optional[str]): Log file.
@@ -64,23 +73,27 @@ def ofp_run(*,
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.
-        command_prompt (Optional[str]): Show interactive command prompt.
     """
-    if command_prompt:
-        # pylint: disable=cyclic-import
-        from pylibofp.service import command_shell
-        command_shell.app.command_prompt = command_prompt
-    elif not logfile:
-        # If there's no command shell or logfile, send log to stderr.
-        logfile = 'ext://stderr'
-
     if loglevel:
         init_logging(loglevel, logfile)
+
+    # Allow late specification of python modules to load.
+    import_list = os.environ.get('OFP_APP_IMPORT_MODULES')
+    if import_list:
+        import importlib
+        for module_name in import_list.split(','):
+            importlib.import_module(module_name)
+
+    if not oftr_options:
+        oftr_options = {
+            'args': os.environ.get('OFP_APP_OFTR_ARGS'),
+            'prefix': os.environ.get('OFP_APP_OFTR_PREFIX')
+        }
 
     controller = Controller.singleton()
     controller.run_loop(
         listen_endpoints=listen_endpoints,
-        oftr_args=oftr_args,
+        oftr_options=oftr_options,
         security=security)
 
 

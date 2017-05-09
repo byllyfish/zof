@@ -104,6 +104,5 @@ def channel_down(event):
 if __name__ == '__main__':
     import pylibofp.service.device
     ofp_run(
-        command_prompt=None,
         oftr_args=['--loglevel=info', '--logfile=oftr.log']
     )

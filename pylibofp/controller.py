@@ -53,14 +53,14 @@ class Controller(object):
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
 
-    def run_loop(self, *, listen_endpoints=None, oftr_args=None,
+    def run_loop(self, *, listen_endpoints=None, oftr_options=None,
                  security=None):
         """Main entry point for running a controller."""
         try:
             asyncio.ensure_future(
                 self._run(
                     listen_endpoints=listen_endpoints,
-                    oftr_args=oftr_args,
+                    oftr_options=oftr_options,
                     security=security))
 
             LOGGER.debug('run_server started')
@@ -88,12 +88,12 @@ class Controller(object):
     async def _run(self,
                    *,
                    listen_endpoints=None,
-                   oftr_args=None,
+                   oftr_options=None,
                    security=None):
         """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
-            self._conn = Connection(oftr_args=oftr_args)
+            self._conn = Connection(oftr_options=oftr_options)
             await self._conn.connect()
 
             self._event_queue = asyncio.Queue()
@@ -350,8 +350,8 @@ class Controller(object):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_*'."""
         params = event.params
         scope_key = _make_scope_key(params.conn_id)
-        LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]',
-                     scope_key, params.type, params.conn_id, params.version)
+        # LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]',
+        #             scope_key, params.type, params.conn_id, params.version)
 
         if params.type == 'CHANNEL_DOWN':
             self._cancel_tasks(scope_key)
@@ -427,13 +427,9 @@ class Controller(object):
         @functools.wraps(coroutine)
         async def _capture_exception(coroutine):
             try:
-                app.logger.debug('ensure_future: %s', _coro_name(coroutine))
                 await coroutine
-                app.logger.debug('ensure_future done: %s',
-                                 _coro_name(coroutine))
             except asyncio.CancelledError:
-                app.logger.debug('ensure_future cancelled: %s',
-                                 _coro_name(coroutine))
+                app.logger.debug('ensure_future cancelled: %r', coroutine)
             except Exception:  # pylint: disable=broad-except
                 app.handle_exception(None, scope_key)
 
@@ -473,7 +469,7 @@ class Controller(object):
     def _task_callback(self, task, scope_key):
         """Called when a scoped task is done.
         """
-        LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
+        # LOGGER.debug('_task_callback: %s[%s]', task, scope_key)
         tasks = self._tasks[scope_key]
         tasks.remove(task)
         if not tasks:
@@ -579,19 +575,6 @@ async def _immediate_result(result):
         raise result
     return result
 
-
-_COROUTINE_REGEX = re.compile(
-    r'^<CoroWrapper (\S+)(?: running at | done, defined at )([^,]+),')
-
-
-def _coro_name(coroutine):
-    """Return short string describing the coroutine, e.g. "init() some_file:34".
-    """
-    result = repr(coroutine)
-    m = _COROUTINE_REGEX.match(result)
-    if m:
-        result = '%s %s' % m.group(1, 2)
-    return result
 
 def _make_scope_key(conn_id):
     return 'conn_id=%d' % conn_id
