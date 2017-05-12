@@ -15,6 +15,7 @@ class Simulator(object):
         msg = {
             'type': 'FEATURES_REPLY',
             'xid': event.xid,
+            'flags': ['NO_ALERT'],
             'msg': {
                 'datapath_id': self.datapath_id,
                 'n_buffers': 0,
