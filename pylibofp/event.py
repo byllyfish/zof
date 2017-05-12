@@ -5,6 +5,7 @@ from .pktview import pktview_from_list
 
 class Event(ObjectView):
     """Concrete class that represents an Event."""
+
     def __init__(self, d):
         super().__init__(d)
         try:

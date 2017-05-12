@@ -26,7 +26,8 @@ class Connection(object):
         # Verify that connection options are all strings or None.
         for key, value in oftr_options.items():
             if not value is None and not isinstance(value, str):
-                raise ValueError('Unexpected oftr option: %s=%r' % (key, value))
+                raise ValueError('Unexpected oftr option: %s=%r' %
+                                 (key, value))
         self._conn = None
         self._input = None
         self._output = None

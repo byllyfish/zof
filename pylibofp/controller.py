@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-import re
 import sys
 import functools
 from collections import defaultdict
@@ -53,7 +52,10 @@ class Controller(object):
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
 
-    def run_loop(self, *, listen_endpoints=None, oftr_options=None,
+    def run_loop(self,
+                 *,
+                 listen_endpoints=None,
+                 oftr_options=None,
                  security=None):
         """Main entry point for running a controller."""
         try:
@@ -82,7 +84,8 @@ class Controller(object):
         Usually, signals indicate that the program should exit. An app can
         prevent shutdown by setting the event's `exit` value to False.
         """
-        LOGGER.info('Signal Received: %s (qsize=%d)', signame, self._event_queue.qsize())
+        LOGGER.info('Signal Received: %s (qsize=%d)', signame,
+                    self._event_queue.qsize())
         self.post_event(make_event(event='SIGNAL', signal=signame, exit=True))
 
     async def _run(self,
@@ -127,7 +130,7 @@ class Controller(object):
             while True:
                 event = await self._event_queue.get()
                 self._dispatch_event(event)
-                # If the event was dispatched to an async task, give it time 
+                # If the event was dispatched to an async task, give it time
                 # now to run so it can get started.
                 await asyncio.sleep(0)
         except _exc.ExitException:
@@ -384,9 +387,11 @@ class Controller(object):
         while True:
             await asyncio.sleep(_IDLE_INTERVAL)
             now = _timestamp()
-            timed_out = [(xid, fut, timeout)
-                         for (xid, (fut, expiration, timeout)) in self._reqs.items()
-                         if expiration <= now]
+            timed_out = [
+                (xid, fut, timeout)
+                for (xid, (fut, expiration, timeout)) in self._reqs.items()
+                if expiration <= now
+            ]
             for xid, fut, timeout in timed_out:
                 if not fut.cancelled():
                     fut.set_exception(_exc.TimeoutException(xid, timeout))
@@ -456,7 +461,8 @@ class Controller(object):
 
         If scope_key is 'START' or 'STOP', cancel all tasks.
         """
-        LOGGER.debug('_cancel_tasks: scope_key=%s, tasks=%r', scope_key, self._tasks)
+        LOGGER.debug('_cancel_tasks: scope_key=%s, tasks=%r', scope_key,
+                     self._tasks)
         if scope_key == 'START' or scope_key == 'STOP':
             for task_list in self._tasks.values():
                 for task in task_list:

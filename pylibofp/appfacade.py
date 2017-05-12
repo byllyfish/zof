@@ -114,7 +114,10 @@ class AppFacade(object):
         """Make an outgoing OpenFlow connection.
         """
         result = await self.rpc_call(
-            'OFP.CONNECT', endpoint=endpoint, options=options, versions=versions)
+            'OFP.CONNECT',
+            endpoint=endpoint,
+            options=options,
+            versions=versions)
         return result.conn_id
 
     def all_apps(self):

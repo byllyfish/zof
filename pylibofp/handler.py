@@ -63,8 +63,10 @@ class BaseHandler(object):
                 self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
             task = asyncio.Task.current_task()
-            task.ofp_task_locals = ObjectView(
-                {'datapath_id':datapath_id, 'conn_id':conn_id})
+            task.ofp_task_locals = ObjectView({
+                'datapath_id': datapath_id,
+                'conn_id': conn_id
+            })
             self.callback(event)
 
     def __repr__(self):

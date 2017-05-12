@@ -4,7 +4,6 @@ import os
 import warnings
 import sys
 
-
 EXT_STDERR = 'ext://stderr'
 
 default_formatter = logging.Formatter(
@@ -87,7 +86,7 @@ class PatchedConsoleHandler(logging.Handler):
         return handler
 
 
-def init_logging(loglevel, logfile = EXT_STDERR):
+def init_logging(loglevel, logfile=EXT_STDERR):
     """Set up logging.
 
     This routine enables asyncio debug mode if `loglevel` is 'debug'.

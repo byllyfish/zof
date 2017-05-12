@@ -29,7 +29,8 @@ class TimeoutException(ControllerException):
         self.timeout = timeout
 
     def __str__(self):
-        return '[TimeoutException xid=%s timeout=%s]' % (self.xid, self.timeout)
+        return '[TimeoutException xid=%s timeout=%s]' % (self.xid,
+                                                         self.timeout)
 
 
 class RPCException(ControllerException):

@@ -7,7 +7,7 @@
 Environment Variables:
 
     OFP_APP_DEBUG               If true, activates debug logging mode.
-    OFP_APP_IMPORT_MODULES      Command-separated list of additional modules 
+    OFP_APP_IMPORT_MODULES      Command-separated list of additional modules
                                 to load.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
                                 like valgrind or strace.
@@ -25,7 +25,6 @@ from .logging import init_logging, EXT_STDERR
 
 if os.environ.get('OFP_APP_DEBUG'):
     init_logging('debug')
-
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 
