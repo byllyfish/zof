@@ -2,12 +2,11 @@ from pylibofp import ofp_app, ofp_run, ofp_compile
 
 
 class Simulator(object):
-
     def __init__(self, datapath_id):
         self.datapath_id = datapath_id
         app.sims.append(self)
 
-    async def start(self, event):
+    async def start(self):
         conn_id = await app.connect('127.0.0.1:6653', versions=[1])
         app.conn_to_sim[conn_id] = self
 
@@ -24,7 +23,7 @@ class Simulator(object):
                 'ports': self._portdescs() if event.version < 4 else []
             }
         }
-        ofp_compile(msg).send()        
+        ofp_compile(msg).send()
 
     def request_portdesc(self, event):
         msg = {
@@ -34,7 +33,7 @@ class Simulator(object):
         }
         ofp_compile(msg).send()
 
-    def request_desc(self, event):
+    def request_desc(self, event):  # pylint: disable=no-self-use
         msg = {
             'type': 'REPLY.DESC',
             'xid': event.xid,
@@ -51,7 +50,7 @@ class Simulator(object):
     def _portdescs(self):
         return [self._portdesc(i) for i in range(1, 5)]
 
-    def _portdesc(self, port_no):
+    def _portdesc(self, port_no):  # pylint: disable=no-self-use
         return {
             'port_no': port_no,
             'hw_addr': '00:00:00:00:00:FF',
@@ -75,10 +74,10 @@ app.conn_to_sim = {}
 
 
 @app.event('start')
-def start(event):
+def start(_):
     for i in range(500):
-        sim = Simulator(hex(i+1))  #'ff:ff:00:00:00:00:00:01')
-        app.ensure_future(sim.start(event))
+        sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
+        app.ensure_future(sim.start())
 
 
 @app.message('features_request', datapath_id=None)
@@ -95,6 +94,7 @@ def request_portdesc(event):
 def request_desc(event):
     app.conn_to_sim[event.conn_id].request_desc(event)
 
+
 @app.message('channel_down', datapath_id=None)
 def channel_down(event):
     sim = app.conn_to_sim.pop(event.conn_id, None)
@@ -103,7 +103,5 @@ def channel_down(event):
 
 
 if __name__ == '__main__':
-    import pylibofp.service.device
-    ofp_run(
-        oftr_args=['--loglevel=info', '--logfile=oftr.log']
-    )
+    oftr_options = {'args': '--loglevel=info --logfile=oftr.log'}
+    ofp_run(oftr_options=oftr_options)
