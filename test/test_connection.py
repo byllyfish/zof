@@ -194,6 +194,15 @@ class ConnectionTestCase(AsyncTestCase):
         self.assertRegex(result, b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","conn_id":0,"datapath_id":"","xid":133,')
         await self._still_alive()
 
+    async def test_ofp_send_invalid_no_alert(self):
+        # If we write an invalid OFP.SEND message for a non-existant datapath
+        # with 'NO_ALERT' specified, we should not get a response back.
+        msg = b'{"method":"OFP.SEND","params":{"datapath_id":"0x01","type":"FEATURES_REQUEST","xid":134,"flags":["NO_ALERT"]}}'
+        self.conn.write(msg)
+        with self.assertRaises(asyncio.TimeoutError):
+            result = await asyncio.wait_for(self.conn.readline(), 1.0)
+            self.assertIsNone(result)
+
     # The following tests are taken from http://www.jsonrpc.org/specification
     
     async def test_rpc_call_of_nonexistant_method(self):
