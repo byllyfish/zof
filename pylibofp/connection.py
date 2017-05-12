@@ -23,6 +23,10 @@ class Connection(object):
     def __init__(self, *, oftr_options=None):
         if oftr_options is None:
             oftr_options = {}
+        # Verify that connection options are all strings or None.
+        for key, value in oftr_options.items():
+            if not value is None and not isinstance(value, str):
+                raise ValueError('Unexpected oftr option: %s=%r' % (key, value))
         self._conn = None
         self._input = None
         self._output = None

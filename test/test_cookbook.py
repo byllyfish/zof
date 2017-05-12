@@ -19,7 +19,7 @@ COOKBOOK_DIR = os.path.join(HERE, '../doc/cookbook')
 RECIPE = re.compile(r'(?ms)\n\[source,yaml\]\n----\n(.*?\n)----\n')
 
 # Pass these args when launching oftr.
-OFTR_ARGS = ['--roundtrip', '-ofversion=4']
+OFTR_ARGS = '--roundtrip --ofversion=4'
 
 
 class CookbookTestCase(AsyncTestCase):
@@ -29,7 +29,8 @@ class CookbookTestCase(AsyncTestCase):
     """
 
     async def setUp(self):
-        self.conn = Connection(oftr_cmd='encode', oftr_args=OFTR_ARGS)
+        oftr_options = {'cmd': 'encode', 'args': OFTR_ARGS}
+        self.conn = Connection(oftr_options=oftr_options)
         await self.conn.connect()
 
     async def tearDown(self):

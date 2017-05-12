@@ -16,13 +16,14 @@ MSG_LIMIT = 2**20
 SKIP_BIG_MESSAGES = False
 
 # Pass these args when launching oftr.
-OFTR_ARGS = [] #['--trace=rpc,msg', '--loglevel=debug']
+OFTR_ARGS = '' # '--trace=rpc,msg --loglevel=debug'
 
 
 class ConnectionTestCase(AsyncTestCase):
 
     async def setUp(self):
-        self.conn = Connection(oftr_args=OFTR_ARGS)
+        oftr_options = {'args': OFTR_ARGS }
+        self.conn = Connection(oftr_options=oftr_options)
         await self.conn.connect()
 
     async def tearDown(self):
