@@ -77,7 +77,7 @@ class ControllerApp(object):
         if self.kill_on_exception:
             self.logger.critical(
                 'Terminate controller; kill_on_exception set for app "%s"',
-                self.name)
+                self.name, exc_info=True)
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
 
