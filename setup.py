@@ -34,7 +34,7 @@ def _my_tests():
 
 setup(
     name='pylibofp',
-    packages=['pylibofp'],
+    packages=['pylibofp', 'pylibofp.service', 'pylibofp.demo'],
     version=version,
     license='MIT',
 
