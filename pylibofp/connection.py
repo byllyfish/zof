@@ -37,10 +37,10 @@ class Connection(object):
         self._input = None
         self._output = None
 
-        oftr_path = oftr_options.get('path')
-        oftr_subcmd = oftr_options.get('subcmd', 'jsonrpc')
-        oftr_args = oftr_options.get('args', '')
-        oftr_prefix = oftr_options.get('prefix', '')
+        oftr_path = oftr_options.get('path') or ''
+        oftr_subcmd = oftr_options.get('subcmd') or 'jsonrpc'
+        oftr_args = oftr_options.get('args') or ''
+        oftr_prefix = oftr_options.get('prefix') or ''
 
         # The default path is to the local executable.
         if not oftr_path:

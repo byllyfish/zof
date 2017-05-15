@@ -8,45 +8,18 @@ class AppFacade(object):
 
     This object will be returned by `ofp_app` function.
 
-    Module Example::
+    Example:
 
         from ofp_app import ofp_app, ofp_run
 
-        ofp = ofp_app(loglevel='info')
+        app = ofp_app('appname')
 
-        @ofp.message('packet_in')
+        @app.message('packet_in')
         def packet_in(event):
             print(event)
 
         if __name__ == '__main__':
             ofp_run()
-
-    Closure Example::
-
-        from ofp_app import ofp_app, ofp_run
-
-        def make_app(name):
-            ofp = ofp_app(name=name)
-
-            @ofp.message('packet_in')
-            def packet_in(event):
-                print('%s: %s' % (ofp.name, event))
-
-        if __name__ == '__main__':
-            for name in ['app1', 'app2']:
-                make_app(name)
-            ofp_run()
-
-    Class Example::
-
-        class App(object):
-            def __init__(self, name):
-                self.ofp = ofp_app(name=name)
-                # We can't use `message` decorator.
-                self.ofp.subscribe(self.packet_in, 'message', 'packet_in')
-
-            def packet_in(self, event):
-                print(event)
 
     Args:
         app (ControllerApp): Internal app object.
@@ -65,7 +38,6 @@ class AppFacade(object):
         self.ensure_future = app.ensure_future
         self.subscribe = app.subscribe
         self.unsubscribe = app.subscribe
-        self.set_filter = app.set_filter
         self.post_event = app.post_event
         self.rpc_call = app.rpc_call
 

@@ -16,7 +16,6 @@ class ControllerApp(object):
     Attributes:
         name (str): App name.
         precedence (int): App precedence.
-        ofversion (...): Supported OpenFlow versions.
         kill_on_exception (bool): Terminate immediately if app raises exception.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
@@ -24,8 +23,8 @@ class ControllerApp(object):
     Args:
         parent (Controller): Parent controller object.
         name (str): App name.
-        ofversion (Optional[str]): Supports OpenFlow versions.
         kill_on_exception (bool): Terminate immediately if app raises exception.
+        precedence (int): App precedence.
     """
     _curr_app_id = 0
 
@@ -33,14 +32,11 @@ class ControllerApp(object):
                  parent,
                  *,
                  name,
-                 ofversion=None,
                  kill_on_exception=False,
                  precedence=1000):
         self.name = name
         self.precedence = precedence
-        self.ofversion = ofversion
         self.handlers = {}
-        self.filter = {}
         self.kill_on_exception = kill_on_exception
         self.set_controller(parent)
 
@@ -57,9 +53,6 @@ class ControllerApp(object):
     def handle_event(self, event, handler_type):
         """Handle event."""
         try:
-            filter_func = self.filter.get(handler_type)
-            if filter_func and not filter_func(event):
-                return
             for handler in self.handlers.get(handler_type, []):
                 if handler.match(event):
                     handler(event, self)
@@ -128,8 +121,3 @@ class ControllerApp(object):
                     self.logger.debug('Unsubscribe %s', handler)
                     self.handlers[key].remove(handler)
                     return
-
-    def set_filter(self, type_, func):
-        """Set app event filter function."""
-        assert inspect.isfunction(func) or inspect.ismethod(func)
-        self.filter[type_] = func

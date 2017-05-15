@@ -7,8 +7,8 @@
 Environment Variables:
 
     OFP_APP_DEBUG               If true, activates debug logging mode.
-    OFP_APP_IMPORT_MODULES      Command-separated list of additional modules
-                                to load.
+    OFP_APP_IMPORT_MODULES      Command-separated list of additional python
+                                modules to import before running.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
                                 like valgrind or strace.
     OFP_APP_OFTR_PATH           Path to oftr version to use.
@@ -30,12 +30,11 @@ if os.environ.get('OFP_APP_DEBUG'):
 _LISTEN_ENDPOINTS = (6633, 6653)
 
 
-def ofp_app(name, *, ofversion=None, kill_on_exception=False, precedence=1000):
+def ofp_app(name, *, kill_on_exception=False, precedence=1000):
     """Construct a new app.
 
     Args:
         name (str): Name of the app.
-        ofversion (Optional[int]): Supported OpenFlow versions.
         kill_on_exception (Optiona[bool]): Abort if app raises exception.
         precedence (Optional[int]): Precedence for event dispatch
 
@@ -46,7 +45,6 @@ def ofp_app(name, *, ofversion=None, kill_on_exception=False, precedence=1000):
     app = ControllerApp(
         controller,
         name=name,
-        ofversion=ofversion,
         kill_on_exception=kill_on_exception,
         precedence=precedence)
     return AppFacade(app)
@@ -54,6 +52,7 @@ def ofp_app(name, *, ofversion=None, kill_on_exception=False, precedence=1000):
 
 def ofp_run(*,
             listen_endpoints=_LISTEN_ENDPOINTS,
+            listen_versions=None,
             oftr_options=None,
             loglevel='info',
             logfile=EXT_STDERR,
@@ -63,8 +62,14 @@ def ofp_run(*,
     Args:
         listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
             If None or empty, don't listen by default.
+        listen_versions (Optional[List[int]]): Acceptible OpenFlow protocol 
+            versions. If None or empty, accept all versions.
         oftr_options (Optional[Dict[str, str]]): Dictionary with settings for
-            oftr process.
+            launching oftr process.
+                - "path": Path to oftr executable (default=`which oftr`)
+                - "args": Command line arguments to oftr (default='')
+                - "prefix": Prefix before command line (default='')
+                - "subcmd": oftr sub-command (default='jsonrpc')
         loglevel (Optional[str]): Default log level (info). If None, logging is
             left unconfigured.
         logfile (Optional[str]): Log file.
@@ -92,6 +97,7 @@ def ofp_run(*,
     controller = Controller.singleton()
     controller.run_loop(
         listen_endpoints=listen_endpoints,
+        listen_versions=listen_versions,
         oftr_options=oftr_options,
         security=security)
 

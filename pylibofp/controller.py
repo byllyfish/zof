@@ -24,7 +24,7 @@ class Controller(object):
     """Concrete class that supports multiple app modules.
 
     Attributes:
-        apps (List[ControllerApp]): List of apps.
+        apps (List[ControllerApp]): List of apps ordered by precedence.
     """
 
     _singleton = None
@@ -47,7 +47,7 @@ class Controller(object):
         self._xid = _MIN_XID
         self._reqs = {}
         self._event_queue = None
-        self._ofp_versions = []
+        self._supported_versions = []
         self._tls_id = 0
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
@@ -55,6 +55,7 @@ class Controller(object):
     def run_loop(self,
                  *,
                  listen_endpoints=None,
+                 listen_versions=None,
                  oftr_options=None,
                  security=None):
         """Main entry point for running a controller."""
@@ -62,6 +63,7 @@ class Controller(object):
             asyncio.ensure_future(
                 self._run(
                     listen_endpoints=listen_endpoints,
+                    listen_versions=listen_versions,
                     oftr_options=oftr_options,
                     security=security))
 
@@ -91,6 +93,7 @@ class Controller(object):
     async def _run(self,
                    *,
                    listen_endpoints=None,
+                   listen_versions=None,
                    oftr_options=None,
                    security=None):
         """Async task for running the controller."""
@@ -104,7 +107,9 @@ class Controller(object):
 
             asyncio.ensure_future(
                 self._start(
-                    listen_endpoints=listen_endpoints, security=security))
+                    listen_endpoints=listen_endpoints, 
+                    listen_versions=listen_versions, 
+                    security=security))
             asyncio.ensure_future(self._event_loop())
             idle = asyncio.ensure_future(self._idle_task())
 
@@ -156,7 +161,7 @@ class Controller(object):
                 running = False
         LOGGER.debug('_read_loop exited')
 
-    async def _start(self, *, listen_endpoints, security):
+    async def _start(self, *, listen_endpoints, listen_versions, security):
         """Configure the oftr driver based on controller arguments.
 
         This method runs concurrently with `run()`.
@@ -166,11 +171,10 @@ class Controller(object):
             if security:
                 await self._configure_tls(security)
             if listen_endpoints:
-                await self._listen_on_endpoints(listen_endpoints)
-
+                await self._listen_on_endpoints(listen_endpoints, listen_versions)
             self._set_phase('START')
-
-        except _exc.ControllerException:
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception('Exception in Controller._start')
             self.post_event(make_event(event='STARTFAIL'))
             self.post_event(make_event(event='EXIT'))
 
@@ -186,7 +190,7 @@ class Controller(object):
                 LOGGER.error('Unsupported API version %s', result.api_version)
                 raise ValueError('Unsupported API version')
 
-            self._ofp_versions = result.versions
+            self._supported_versions = result.versions
             LOGGER.info('Connected to oftr %s', result.sw_desc)
 
         except _exc.ControllerException as ex:
@@ -209,22 +213,20 @@ class Controller(object):
             LOGGER.error('Unable to create TLS identity: %s', ex.message)
             raise
 
-    async def _listen_on_endpoints(self, listen_endpoints):
+    async def _listen_on_endpoints(self, listen_endpoints, listen_versions):
         """Listen on a list of endpoints."""
-        ofversion = None  # TODO: replace self._config.ofversion
         options = ['FEATURES_REQ']
-        if not ofversion:
-            ofversion = self._ofp_versions
+        versions = _prepare_versions(listen_versions, self._supported_versions)
         try:
             for endpt in listen_endpoints:
                 result = await self.rpc_call(
                     'OFP.LISTEN',
                     endpoint=endpt,
-                    versions=ofversion,
+                    versions=versions,
                     tls_id=self._tls_id,
                     options=options)
                 LOGGER.info('Listening on %s [conn_id=%d, versions=%s]', endpt,
-                            result.conn_id, ofversion)
+                            result.conn_id, versions)
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to listen on %s: %s', endpt, ex.message)
@@ -275,9 +277,9 @@ class Controller(object):
 
     def rpc_call(self, method, **params):
         """Send a RPC request and return a future for the reply."""
-        LOGGER.debug('rpc_call %s', method)
         xid = self.next_xid()
         event = dict(id=xid, method=method, params=params)
+        LOGGER.debug('rpc_call %r', event)
         return self.write(event, xid)
 
     def _handle_xid(self, event, xid, except_class=None):
@@ -584,3 +586,15 @@ async def _immediate_result(result):
 
 def _make_scope_key(conn_id):
     return 'conn_id=%d' % conn_id
+
+
+def _prepare_versions(listen_versions, supported_versions):
+    """Return listen versions."""
+    assert len(supported_versions) > 0
+    if not listen_versions:
+        return supported_versions
+    # Check if any desired versions are unsupported.
+    unsupported = set(listen_versions) - set(supported_versions)
+    if len(unsupported) > 0:
+        raise ValueError("Unsupported OpenFlow versions: %r" % unsupported)
+    return listen_versions
