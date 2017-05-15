@@ -29,7 +29,7 @@ class CookbookTestCase(AsyncTestCase):
     """
 
     async def setUp(self):
-        oftr_options = {'cmd': 'encode', 'args': OFTR_ARGS}
+        oftr_options = {'subcmd': 'encode', 'args': OFTR_ARGS}
         self.conn = Connection(oftr_options=oftr_options)
         await self.conn.connect()
 

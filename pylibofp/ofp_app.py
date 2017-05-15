@@ -11,6 +11,7 @@ Environment Variables:
                                 to load.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
                                 like valgrind or strace.
+    OFP_APP_OFTR_PATH           Path to oftr version to use.
     OFP_APP_OFTR_ARGS           Arguments passed to oftr.
 
 """
@@ -79,12 +80,11 @@ def ofp_run(*,
     # Allow late specification of python modules to load.
     import_list = os.environ.get('OFP_APP_IMPORT_MODULES')
     if import_list:
-        import importlib
-        for module_name in import_list.split(','):
-            importlib.import_module(module_name)
+        _import_modules(import_list)
 
     if not oftr_options:
         oftr_options = {
+            'path': os.environ.get('OFP_APP_OFTR_PATH'),
             'args': os.environ.get('OFP_APP_OFTR_ARGS'),
             'prefix': os.environ.get('OFP_APP_OFTR_PREFIX')
         }
@@ -103,3 +103,10 @@ def ofp_compile(msg):
         return CompiledMessage(controller, msg)
     else:
         return CompiledObject(controller, msg)
+
+
+def _import_modules(import_list):
+    import importlib
+    # FIXME(bfish): Handle source files and local modules.
+    for module in import_list.split(','):
+        importlib.import_module(module)

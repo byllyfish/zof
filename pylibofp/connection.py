@@ -15,9 +15,14 @@ class Connection(object):
 
     Keyword Args:
         oftr_options (Dict[str, str]): Dictionary with options:
-                cmd: Subcommand name (defaults to 'jsonrpc')
-                args: Command line arguments for oftr.
-                prefix: Command line prefix for launching oftr.
+                path: Path to oftr executable (default=<local system path>)
+                subcmd: Subcommand name (default='jsonrpc')
+                args: Command line arguments for oftr (default='')
+                prefix: Command line prefix for launching oftr (default='')
+
+    The command to execute oftr are constructed from oftr_options:
+
+        "<prefix> <path> <subcmd> <args>"
     """
 
     def __init__(self, *, oftr_options=None):
@@ -31,33 +36,34 @@ class Connection(object):
         self._conn = None
         self._input = None
         self._output = None
-        self._oftr_cmd = oftr_options.get('cmd', 'jsonrpc')
-        self._oftr_args = oftr_options.get('args')
-        self._oftr_prefix = oftr_options.get('prefix')
+
+        oftr_path = oftr_options.get('path')
+        oftr_subcmd = oftr_options.get('subcmd', 'jsonrpc')
+        oftr_args = oftr_options.get('args', '')
+        oftr_prefix = oftr_options.get('prefix', '')
+
+        # The default path is to the local executable.
+        if not oftr_path:
+            oftr_path = shutil.which('oftr')
+            if not oftr_path:
+                raise RuntimeError('Unable to find oftr executable.')
+
+        # Construct the cmd used to launch oftr subprocess.
+        cmd = '%s %s %s %s' % (oftr_prefix, oftr_path, oftr_subcmd, oftr_args)
+        self._oftr_cmd = shlex.split(cmd)
+        assert len(self._oftr_cmd) > 0
 
     async def connect(self):
         """Set up connection to the oftr driver.
         """
-        oftr_path = shutil.which('oftr')
-        if not oftr_path:
-            raise RuntimeError('Unable to find oftr executable.')
-
-        cmd = [oftr_path, self._oftr_cmd]
-        if self._oftr_args:
-            args = shlex.split(self._oftr_args)
-            cmd.extend(args)
-        if self._oftr_prefix:
-            prefix = shlex.split(self._oftr_prefix)
-            cmd[0:0] = prefix
-
-        LOGGER.debug("Launch oftr %r", cmd)
+        LOGGER.debug("Launch oftr %r", self._oftr_cmd)
 
         try:
             # When we create the subprocess, make it a session leader.
             # We do not want SIGINT signals sent from the terminal to reach
             # the subprocess.
             proc = await asyncio.create_subprocess_exec(
-                *cmd,
+                *self._oftr_cmd,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 limit=_DEFAULT_LIMIT,
@@ -67,7 +73,7 @@ class Connection(object):
             self._output = proc.stdin
 
         except (PermissionError, FileNotFoundError):
-            LOGGER.error('Unable to find exectuable: "%s"', oftr_path)
+            LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)
             raise
 
     async def disconnect(self):
