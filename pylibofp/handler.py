@@ -5,9 +5,8 @@ from .objectview import ObjectView
 
 LOGGER = logging.getLogger('pylibofp.controller')
 
-_ALL_SUBTYPE = 'ALL'
 _MSG_SUBTYPES = {
-    _ALL_SUBTYPE, "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO",
+    "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO",
     "ERROR", "ECHO_REQUEST", "ECHO_REPLY", "EXPERIMENTER", "FEATURES_REQUEST",
     "FEATURES_REPLY", "GET_CONFIG_REQUEST", "GET_CONFIG_REPLY", "SET_CONFIG",
     "PACKET_IN", "FLOW_REMOVED", "PORT_STATUS", "PACKET_OUT", "FLOW_MOD",
@@ -48,7 +47,7 @@ class BaseHandler(object):
     def __init__(self, callback, type_, subtype='', options=None):
         self.callback = callback
         self.type = type_
-        self.subtype = subtype.upper()
+        self.subtype = subtype.upper() if isinstance(subtype, str) else subtype
         self.options = options
 
     def match(self, event):
@@ -94,8 +93,12 @@ class BaseHandler(object):
 class MessageHandler(BaseHandler):
     def match(self, event):
         # Quick check to see if we can return False immediately.
-        if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
+        if callable(self.subtype):
+            return self.subtype(event.type)
+        if self.subtype != event.type:
             return False
+        #if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
+        #    return False
         # Check for events that don't have a datapath_id. For these, the app
         # must explicitly opt in using `datapath_id=None`.
         if 'datapath_id' not in event:
@@ -112,7 +115,11 @@ class MessageHandler(BaseHandler):
     def verify(self):
         if not _verify_callback(self.callback, 1):
             return False
-        if self.subtype not in _MSG_SUBTYPES:
+        if callable(self.subtype):
+            if not _verify_callback(self.subtype, 1):
+                LOGGER.warning('Message handler invalid subtype: %r', self.subtype)
+                return False
+        elif self.subtype not in _MSG_SUBTYPES:
             LOGGER.warning(
                 'Message handler subtype not recognized: %s',
                 self.subtype,
@@ -122,10 +129,19 @@ class MessageHandler(BaseHandler):
 
 class EventHandler(BaseHandler):
     def match(self, event):
-        return event['event'] == self.subtype or self.subtype == _ALL_SUBTYPE
+        if callable(self.subtype):
+            return self.subtype(event['event'])
+        return event['event'] == self.subtype
 
     def verify(self):
-        return _verify_callback(self.callback, 1)
+        if not _verify_callback(self.callback, 1):
+            return False
+        if callable(self.subtype):
+            if not _verify_callback(self.subtype, 1):
+                LOGGER.warning('Event handler invalid subtype: %r', self.subtype)
+                return False
+        return True
+        
 
 
 class CommandHandler(BaseHandler):
@@ -145,8 +161,8 @@ class CommandHandler(BaseHandler):
 
 def _verify_callback(callback, param_count):
     """Make sure callback  has the expected number of positional parameters."""
-    if not inspect.isfunction(callback) and not inspect.ismethod(callback):
-        LOGGER.error('Callback is not a function: %s', callback)
+    if not callable(callback):
+        LOGGER.error('Callback is not a callable function: %s', callback)
         return False
     sig = inspect.signature(callback)
     if len(sig.parameters) != param_count:

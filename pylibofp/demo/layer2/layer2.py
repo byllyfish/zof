@@ -98,7 +98,7 @@ def flow_removed(event):
         fwd_table.pop((eth_dst, vlan_vid), None)
 
 
-@app.message('all')
+@app.message(any)
 def other_message(event):
     """Log ignored messages."""
     app.logger.debug('Ignored message: %r', event)

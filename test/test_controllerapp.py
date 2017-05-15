@@ -14,11 +14,11 @@ class ControllerAppTestCase(unittest.TestCase):
         app = ControllerApp(MockController(), name='mock-app')
         ofp = AppFacade(app)
 
-        @ofp.message('all')
+        @ofp.message(any)
         def _message_default(event):
             pass
 
-        @ofp.event('all')
+        @ofp.event(any)
         def _event_default(event):
             pass
 
@@ -35,9 +35,9 @@ class ControllerAppTestCase(unittest.TestCase):
         event = self.handlers['event'][0]
 
         self.assertEqual('message', message.type)
-        self.assertEqual('ALL', message.subtype)
+        self.assertEqual(any, message.subtype)
         self.assertEqual({}, message.options)
 
         self.assertEqual('event', event.type)
-        self.assertEqual('ALL', event.subtype)
+        self.assertEqual(any, event.subtype)
         self.assertEqual({}, event.options)

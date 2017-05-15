@@ -14,8 +14,8 @@ class AppFacade(object):
 
         app = ofp_app('appname')
 
-        @app.message('packet_in')
-        def packet_in(event):
+        @app.message(any)
+        def any_message(event):
             print(event)
 
         if __name__ == '__main__':

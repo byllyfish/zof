@@ -38,6 +38,18 @@ class HandlerTestCase(unittest.TestCase):
         self.assertEqual(NO_HELP, h.help_brief())
         self.assertEqual(NO_HELP, h.help())    
 
+    def test_any_subtype(self):
+        h = make_handler(func, 'message', any)
+        self.assertTrue(h.verify())
+        self.assertEqual('message', h.type)
+        self.assertEqual(any, h.subtype)        
+        self.assertEqual('Brief line.', h.help_brief())
+        self.assertEqual('Brief line.\n\nThis is a test func.', h.help())
+
+    def test_bad_subtype_function(self):
+        h = make_handler(func, 'message', bad_func)
+        self.assertFalse(h.verify())
+
 
 def func(event):
     """
