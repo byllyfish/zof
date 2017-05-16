@@ -6,8 +6,8 @@ from .objectview import ObjectView
 LOGGER = logging.getLogger('pylibofp.controller')
 
 _MSG_SUBTYPES = {
-    "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO",
-    "ERROR", "ECHO_REQUEST", "ECHO_REPLY", "EXPERIMENTER", "FEATURES_REQUEST",
+    "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO", "ERROR",
+    "ECHO_REQUEST", "ECHO_REPLY", "EXPERIMENTER", "FEATURES_REQUEST",
     "FEATURES_REPLY", "GET_CONFIG_REQUEST", "GET_CONFIG_REPLY", "SET_CONFIG",
     "PACKET_IN", "FLOW_REMOVED", "PORT_STATUS", "PACKET_OUT", "FLOW_MOD",
     "GROUP_MOD", "PORT_MOD", "TABLE_MOD", "REQUEST.DESC", "REQUEST.FLOW",
@@ -117,7 +117,8 @@ class MessageHandler(BaseHandler):
             return False
         if callable(self.subtype):
             if not _verify_callback(self.subtype, 1):
-                LOGGER.warning('Message handler invalid subtype: %r', self.subtype)
+                LOGGER.warning('Message handler invalid subtype: %r',
+                               self.subtype)
                 return False
         elif self.subtype not in _MSG_SUBTYPES:
             LOGGER.warning(
@@ -138,10 +139,10 @@ class EventHandler(BaseHandler):
             return False
         if callable(self.subtype):
             if not _verify_callback(self.subtype, 1):
-                LOGGER.warning('Event handler invalid subtype: %r', self.subtype)
+                LOGGER.warning('Event handler invalid subtype: %r',
+                               self.subtype)
                 return False
         return True
-        
 
 
 class CommandHandler(BaseHandler):

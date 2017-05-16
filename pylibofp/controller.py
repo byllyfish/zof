@@ -107,8 +107,8 @@ class Controller(object):
 
             asyncio.ensure_future(
                 self._start(
-                    listen_endpoints=listen_endpoints, 
-                    listen_versions=listen_versions, 
+                    listen_endpoints=listen_endpoints,
+                    listen_versions=listen_versions,
                     security=security))
             asyncio.ensure_future(self._event_loop())
             idle = asyncio.ensure_future(self._idle_task())
@@ -171,7 +171,8 @@ class Controller(object):
             if security:
                 await self._configure_tls(security)
             if listen_endpoints:
-                await self._listen_on_endpoints(listen_endpoints, listen_versions)
+                await self._listen_on_endpoints(listen_endpoints,
+                                                listen_versions)
             self._set_phase('START')
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._start')

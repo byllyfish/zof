@@ -10,7 +10,6 @@ from pylibofp import ofp_app
 from pylibofp.pktview import pktview_from_list
 from . import ofmsg
 
-
 app = ofp_app('layer2')
 
 # The forwarding table is a dictionary that maps:
@@ -63,23 +62,24 @@ def packet_in(event):
 
     # Update fwd_table based on eth_src and in_port.
     if (pkt.eth_src, vlan_vid) not in fwd_table:
-        app.logger.info('%s Learn %s vlan %s on port %s', event.datapath_id, pkt.eth_src, vlan_vid, in_port)
+        app.logger.info('%s Learn %s vlan %s on port %s', event.datapath_id,
+                        pkt.eth_src, vlan_vid, in_port)
         fwd_table[(pkt.eth_src, vlan_vid)] = (in_port, event.time)
 
     # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
     out_port, _ = fwd_table.get((pkt.eth_dst, vlan_vid), ('ALL', None))
 
     if out_port != 'ALL':
-        app.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id, pkt.eth_dst, vlan_vid, out_port)
+        app.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id,
+                        pkt.eth_dst, vlan_vid, out_port)
         ofmsg.learn_mac_flow.send(
-            vlan_vid=vlan_vid,
-            eth_dst=pkt.eth_dst,
-            out_port=out_port)
+            vlan_vid=vlan_vid, eth_dst=pkt.eth_dst, out_port=out_port)
         ofmsg.packet_out.send(out_port=out_port, data=msg.data)
 
     else:
         # Send packet back out all ports (except the one it came in).
-        app.logger.info('%s Flood %s packet to %s vlan %s', event.datapath_id, pkt.pkt_type, pkt.eth_dst, vlan_vid)
+        app.logger.info('%s Flood %s packet to %s vlan %s', event.datapath_id,
+                        pkt.pkt_type, pkt.eth_dst, vlan_vid)
         ofmsg.packet_flood.send(in_port=in_port, data=msg.data)
 
 
@@ -91,7 +91,8 @@ def flow_removed(event):
     vlan_vid = match.vlan_vid
     reason = event.msg.reason
 
-    app.logger.info('%s Remove %s vlan %s (%s)', event.datapath_id, eth_dst, vlan_vid, reason)
+    app.logger.info('%s Remove %s vlan %s (%s)', event.datapath_id, eth_dst,
+                    vlan_vid, reason)
 
     fwd_table = app.forwarding_table.get(event.datapath_id)
     if fwd_table:

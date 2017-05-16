@@ -1,6 +1,5 @@
 from pylibofp import ofp_compile
 
-
 delete_flows = ofp_compile('''
   # Delete flows in table 0.
   type: FLOW_MOD
@@ -9,11 +8,9 @@ delete_flows = ofp_compile('''
     table_id: 0
 ''')
 
-
 barrier = ofp_compile('''
   type: BARRIER_REQUEST
 ''')
-
 
 table_miss_flow = ofp_compile('''
   # Add permanent table miss flow entry to table 0
@@ -29,7 +26,6 @@ table_miss_flow = ofp_compile('''
             port_no: CONTROLLER
             max_len: NO_BUFFER
 ''')
-
 
 learn_mac_flow = ofp_compile('''
   type: FLOW_MOD
@@ -54,7 +50,6 @@ learn_mac_flow = ofp_compile('''
             max_len: MAX
 ''')
 
-
 packet_out = ofp_compile('''
   type: PACKET_OUT
   msg:
@@ -64,7 +59,6 @@ packet_out = ofp_compile('''
         max_len: MAX
     data: $data
 ''')
-
 
 packet_flood = ofp_compile('''
   type: PACKET_OUT
@@ -76,5 +70,3 @@ packet_flood = ofp_compile('''
         max_len: MAX
     data: $data
 ''')
-
-
