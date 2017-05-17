@@ -67,9 +67,10 @@ def _shutdown_pending(loop, pending_timeout, logger):
         if not _run_pending(loop, pending_timeout, logger):
             break
     if logger:
-        tasks = asyncio.Task.all_tasks()
+        tasks = _running_tasks()
         if tasks:
-            logger.warning('run_server: shutdown completed: %d tasks: %s', len(tasks), _dump_tasks(tasks))
+            logger.warning('run_server: shutdown completed: %d tasks:\n  %s', 
+                           len(tasks), '\n  '.join(repr(t) for t in tasks))
         else:
             logger.debug('run_server: shutdown completed')
 
@@ -98,5 +99,6 @@ def _run_pending(loop, pending_timeout, logger):
         raise
 
 
-def _dump_tasks(tasks):
-    return ', '.join(repr(task) for task in tasks)
+def _running_tasks():
+    tasks = asyncio.Task.all_tasks()
+    return [t for t in tasks if not t._state in ('FINISHED', 'CANCELLED')]
