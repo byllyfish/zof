@@ -6,7 +6,7 @@
 
 Environment Variables:
 
-    OFP_APP_DEBUG               If true, activates debug logging mode.
+    OFP_APP_LOGLEVEL            Default logging mode.
     OFP_APP_IMPORT_MODULES      Command-separated list of additional python
                                 modules to import before running.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
@@ -24,8 +24,8 @@ from .appfacade import AppFacade
 from .compiledmessage import CompiledMessage, CompiledObject
 from .logging import init_logging, EXT_STDERR
 
-if os.environ.get('OFP_APP_DEBUG'):
-    init_logging('debug')
+if os.environ.get('OFP_APP_LOGLEVEL'):
+    init_logging(os.environ.get('OFP_APP_LOGLEVEL'))
 
 _LISTEN_ENDPOINTS = (6633, 6653)
 

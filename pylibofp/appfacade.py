@@ -48,7 +48,7 @@ class AppFacade(object):
         """
 
         def _wrap(func):
-            self.subscribe(func, 'message', subtype, kwds)
+            return self.subscribe(func, 'message', subtype, kwds)
 
         return _wrap
 
@@ -57,7 +57,7 @@ class AppFacade(object):
         """
 
         def _wrap(func):
-            self.subscribe(func, 'event', subtype, kwds)
+            return self.subscribe(func, 'event', subtype, kwds)
 
         return _wrap
 
@@ -66,7 +66,7 @@ class AppFacade(object):
         """
 
         def _wrap(func):
-            self.subscribe(func, 'command', subtype, kwds)
+            return self.subscribe(func, 'command', subtype, kwds)
 
         return _wrap
 

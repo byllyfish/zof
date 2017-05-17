@@ -20,5 +20,3 @@ class TestApi(unittest.TestCase):
 
         # Test that apps are sorted by precedence.
         self.assertEqual(app1.all_apps(), [app2._app, app1._app])
-
-        

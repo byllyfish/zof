@@ -12,7 +12,8 @@ def _default_signal_handler(_signame):
 def run_server(*,
                signals=DEFAULT_SIGNALS,
                signal_handler=_default_signal_handler,
-               pending_timeout=5.0):
+               pending_timeout=5.0,
+               logger=None):
     """Run asyncio event loop for server.
 
     This function handles the boilerplate for running an async server:
@@ -48,24 +49,32 @@ def run_server(*,
         pass
 
     finally:
-        _shutdown_pending(loop, pending_timeout)
+        _shutdown_pending(loop, pending_timeout, logger)
         if hasattr(loop, 'shutdown_asyncgens'):
             loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
 
 
-def _shutdown_pending(loop, pending_timeout):
+def _shutdown_pending(loop, pending_timeout, logger):
     """Give pending tasks a chance to exit cleanly.
 
     Try 3 times to finish our pending tasks. This gives stopping tasks
     a chance to create more async tasks during shutdown.
     """
+    if logger:
+        logger.debug('run_server: shutdown pending')
     for _ in range(3):
-        if not _run_pending(loop, pending_timeout):
+        if not _run_pending(loop, pending_timeout, logger):
             break
+    if logger:
+        tasks = asyncio.Task.all_tasks()
+        if tasks:
+            logger.warning('run_server: shutdown completed: %d tasks: %s', len(tasks), _dump_tasks(tasks))
+        else:
+            logger.debug('run_server: shutdown completed')
 
 
-def _run_pending(loop, pending_timeout):
+def _run_pending(loop, pending_timeout, logger):
     """Run until pending tasks are complete.
 
     Return true if we still have more pending tasks.
@@ -73,9 +82,12 @@ def _run_pending(loop, pending_timeout):
     try:
         pending = asyncio.Task.all_tasks()
         if pending:
+            if logger:
+                logger.debug('run_server: run_pending %r', pending)
             loop.run_until_complete(
                 asyncio.wait(
                     pending, timeout=pending_timeout))
+            return True
         return False
     except RuntimeError as ex:
         # `run_until_complete` throws an exception if new async tasks are
@@ -84,3 +96,7 @@ def _run_pending(loop, pending_timeout):
         if str(ex) == 'Event loop stopped before Future completed.':
             return True
         raise
+
+
+def _dump_tasks(tasks):
+    return ', '.join(repr(task) for task in tasks)

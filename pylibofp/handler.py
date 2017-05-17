@@ -44,6 +44,14 @@ def make_handler(callback, type_, subtype='', options=None):
 
 
 class BaseHandler(object):
+    """A Handler is a wrapper around an event callback.
+
+    Attributes:
+        callback (function): Callback function or coroutine 
+        type (str): "message", "event" or "command"
+        subtype (str | function): Event or message subtype
+        options (Optional[dict]): Handler options.
+    """
     def __init__(self, callback, type_, subtype='', options=None):
         self.callback = callback
         self.type = type_
@@ -62,15 +70,17 @@ class BaseHandler(object):
                 self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
         else:
             task = asyncio.Task.current_task()
-            task.ofp_task_locals = ObjectView({
-                'datapath_id': datapath_id,
-                'conn_id': conn_id
-            })
+            if task:
+                task.ofp_task_locals = ObjectView({
+                    'datapath_id': datapath_id,
+                    'conn_id': conn_id
+                })
             self.callback(event)
 
     def __repr__(self):
+        cb_name = self.callback.__name__ if self.callback else 'NONE'
         return '%s[%s] %s %r' % (self.type, self.subtype,
-                                 self.callback.__name__, self.options)
+                                 cb_name, self.options)
 
     def verify(self):
         return _verify_callback(self.callback, 1)

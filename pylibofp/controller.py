@@ -59,6 +59,9 @@ class Controller(object):
                  oftr_options=None,
                  security=None):
         """Main entry point for running a controller."""
+        if len(self.apps) == 0:
+            LOGGER.warning('No apps are loaded.')
+
         try:
             asyncio.ensure_future(
                 self._run(
@@ -70,7 +73,7 @@ class Controller(object):
             LOGGER.debug('run_server started')
             run_server(
                 signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
-                signal_handler=self._handle_signal)
+                signal_handler=self._handle_signal, logger=LOGGER)
             LOGGER.debug('run_server stopped')
             self._set_phase('POSTSTOP')
 
@@ -409,8 +412,11 @@ class Controller(object):
         if self._phase != 'PRESTART':
             self._cancel_tasks(self._phase)
         self._phase = phase
-        if self._event_queue:
-            self.post_event(make_event(event=phase))
+        event = make_event(event=phase)
+        if phase in ('STOP', 'POSTSTOP'):
+            self._dispatch_event(event)
+        elif self._event_queue:
+            self.post_event(event)
 
     def next_xid(self):
         """Return next xid to use.

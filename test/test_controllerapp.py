@@ -22,14 +22,23 @@ class ControllerAppTestCase(unittest.TestCase):
         def _event_default(event):
             pass
 
+        # For testing "stacking" of decorators.
+        @ofp.message('CHANNEL_DOWN')
+        @ofp.event('START')
+        @ofp.message('CHANNEL_ALERT')
+        @ofp.event('STOP')
+        @ofp.message('CHANNEL_UP')
+        def _multiple(event):
+            pass
+
         self.handlers = app.handlers
 
     def test_handlers(self):
         """Test that all handlers are loaded."""
         
         self.assertEqual(2, len(self.handlers))
-        self.assertEqual(1, len(self.handlers['message']))
-        self.assertEqual(1, len(self.handlers['event']))
+        self.assertEqual(4, len(self.handlers['message']))
+        self.assertEqual(3, len(self.handlers['event']))
         
         message = self.handlers['message'][0]
         event = self.handlers['event'][0]

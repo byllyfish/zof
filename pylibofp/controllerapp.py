@@ -19,7 +19,7 @@ class ControllerApp(object):
         kill_on_exception (bool): Terminate immediately if app raises exception.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
-        handlers (Dict[str,BaseHandler]): App handlers.
+        handlers (Dict[str,List[BaseHandler]]): App handlers.
     Args:
         parent (Controller): Parent controller object.
         name (str): App name.
@@ -112,7 +112,7 @@ class ControllerApp(object):
         handlers = self.handlers.setdefault(handler.type, [])
         handlers.append(handler)
         self.logger.debug('Subscribe %s', handler)
-        return handler
+        return callback
 
     def unsubscribe(self, callback):
         """Function used to unsubscribe a handler."""
@@ -122,3 +122,8 @@ class ControllerApp(object):
                     self.logger.debug('Unsubscribe %s', handler)
                     self.handlers[key].remove(handler)
                     return
+
+    def __repr__(self):
+        evt_count = len(self.handlers.get('event', []))
+        msg_count = len(self.handlers.get('message', []))
+        return '<ControllerApp name="%s" precedence=%d evt=%d msg=%d>' % (self.name, self.precedence, evt_count, msg_count)
