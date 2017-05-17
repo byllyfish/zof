@@ -7,16 +7,15 @@
 Environment Variables:
 
     OFP_APP_LOGLEVEL            Default logging mode.
-    OFP_APP_IMPORT_MODULES      Command-separated list of additional python
-                                modules to import before running.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
                                 like valgrind or strace.
     OFP_APP_OFTR_PATH           Path to oftr version to use.
     OFP_APP_OFTR_ARGS           Arguments passed to oftr.
-
+    OFP_APP_UVLOOP              Set to true to use uvloop.
 """
 
 import os
+import asyncio
 
 from .controller import Controller
 from .controllerapp import ControllerApp
@@ -82,17 +81,16 @@ def ofp_run(*,
     if loglevel:
         init_logging(loglevel, logfile)
 
-    # Allow late specification of python modules to load.
-    import_list = os.environ.get('OFP_APP_IMPORT_MODULES')
-    if import_list:
-        _import_modules(import_list)
-
     if not oftr_options:
         oftr_options = {
             'path': os.environ.get('OFP_APP_OFTR_PATH'),
             'args': os.environ.get('OFP_APP_OFTR_ARGS'),
             'prefix': os.environ.get('OFP_APP_OFTR_PREFIX')
         }
+
+    if os.environ.get('OFP_APP_UVLOOP'):
+        import uvloop
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     controller = Controller.singleton()
     controller.run_loop(
@@ -109,10 +107,3 @@ def ofp_compile(msg):
         return CompiledMessage(controller, msg)
     else:
         return CompiledObject(controller, msg)
-
-
-def _import_modules(import_list):
-    import importlib
-    # FIXME(bfish): Handle source files and local modules.
-    for module in import_list.split(','):
-        importlib.import_module(module)
