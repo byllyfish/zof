@@ -8,11 +8,19 @@ python:
 #  - pip3 install codecov pyyaml
 #  - pip install pyyaml
 script:
+  - pip list
   # Run unit tests.
   - python -m unittest discover
+  # Run coverage.
+  - |
+    if [ "$TRAVIS_PYTHON_VERSION" = "3.5.2" ]; then 
+      pip install codecov
+      coverage run --source pylibofp -m unittest test/*.py
+      codecov
+    fi
   # Create source package.
   - python setup.py sdist
-  # Run unit tests from source package.
+  # Run unit tests again from source package.
   - cd dist ; tar xvfz pylibofp-*.tar.gz ; cd pylibofp-* ; python setup.py test
 
 #  - python3 -m doctest README.adoc

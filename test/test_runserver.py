@@ -44,7 +44,7 @@ class RunServerTestCase(unittest.TestCase):
 
         async def _task():
             while True:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.25)
                 asyncio.get_event_loop().stop()
 
         task = asyncio.ensure_future(_task())
