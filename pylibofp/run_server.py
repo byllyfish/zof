@@ -42,6 +42,8 @@ def run_server(*,
                 functools.partial(signal_handler, signame))
 
     try:
+        if logger:
+            logger.debug('run_server started: %r', asyncio.Task.all_tasks(loop))
         # Run loop until stopped with `loop.stop()`.
         loop.run_forever()
 
@@ -51,8 +53,12 @@ def run_server(*,
     finally:
         _shutdown_pending(loop, pending_timeout, logger)
         if hasattr(loop, 'shutdown_asyncgens'):
+            if logger:
+                logger.debug('run_server shutdown_asyncgens')
             loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
+        if logger:
+            logger.debug('run_server stopped')
 
 
 def _shutdown_pending(loop, pending_timeout, logger):
@@ -67,7 +73,7 @@ def _shutdown_pending(loop, pending_timeout, logger):
         if not _run_pending(loop, pending_timeout, logger):
             break
     if logger:
-        tasks = _running_tasks()
+        tasks = _running_tasks(loop)
         if tasks:
             logger.warning('run_server: shutdown completed: %d tasks:\n  %s', 
                            len(tasks), '\n  '.join(repr(t) for t in tasks))
@@ -81,7 +87,7 @@ def _run_pending(loop, pending_timeout, logger):
     Return true if we still have more pending tasks.
     """
     try:
-        pending = asyncio.Task.all_tasks()
+        pending = asyncio.Task.all_tasks(loop)
         if pending:
             if logger:
                 logger.debug('run_server: run_pending %r', pending)
@@ -89,7 +95,6 @@ def _run_pending(loop, pending_timeout, logger):
                 asyncio.wait(
                     pending, timeout=pending_timeout))
             return True
-        return False
     except RuntimeError as ex:
         # `run_until_complete` throws an exception if new async tasks are
         # started by the pending tasks *and* they are still running when the
@@ -97,8 +102,9 @@ def _run_pending(loop, pending_timeout, logger):
         if str(ex) == 'Event loop stopped before Future completed.':
             return True
         raise
+    return False
 
 
-def _running_tasks():
-    tasks = asyncio.Task.all_tasks()
+def _running_tasks(loop):
+    tasks = asyncio.Task.all_tasks(loop)
     return [t for t in tasks if not t._state in ('FINISHED', 'CANCELLED')]

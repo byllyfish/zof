@@ -69,12 +69,9 @@ class Controller(object):
                     listen_versions=listen_versions,
                     oftr_options=oftr_options,
                     security=security))
-
-            LOGGER.debug('run_server started')
             run_server(
                 signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
                 signal_handler=self._handle_signal, logger=LOGGER)
-            LOGGER.debug('run_server stopped')
             self._set_phase('POSTSTOP')
 
         except Exception as ex:  # pylint: disable=broad-except

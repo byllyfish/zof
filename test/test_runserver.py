@@ -44,25 +44,24 @@ class RunServerTestCase(unittest.TestCase):
 
         async def _task():
             while True:
-                await asyncio.sleep(0.25)
+                await asyncio.sleep(0.1)
                 asyncio.get_event_loop().stop()
 
         task = asyncio.ensure_future(_task())
         run_server(pending_timeout=0.001)
-        self.assertFinalTaskCount(1)
+        self.assertTrue(loop.is_closed())
 
-        tasks = asyncio.Task.all_tasks()
+        tasks = asyncio.Task.all_tasks(loop)
         self.assertEqual({task}, tasks)
         with self.assertRaisesRegex(RuntimeError, 'Event loop is closed'):
             # This call may cause a 'Task was destroyed but it is pending!'
             # message. This is okay, but let's try to disable the log message.
             task._log_destroy_pending = False
             task.cancel()
-        
 
     def assertFinalTaskCount(self, n):
         """Verify that event loop is closed and there are `n` tasks pending.
         """
-        self.assertTrue(asyncio.get_event_loop().is_closed())
-        self.assertEqual(n, len(asyncio.Task.all_tasks()))
-
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.is_closed())
+        self.assertEqual(n, len(asyncio.Task.all_tasks(loop)))
