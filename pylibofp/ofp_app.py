@@ -26,7 +26,7 @@ from .logging import init_logging, EXT_STDERR
 if os.environ.get('OFP_APP_LOGLEVEL'):
     init_logging(os.environ.get('OFP_APP_LOGLEVEL'))
 
-_LISTEN_ENDPOINTS = (6633, 6653)
+_LISTEN_ENDPOINTS = [6653]
 
 
 def ofp_app(name, *, kill_on_exception=False, precedence=1000):
@@ -50,17 +50,18 @@ def ofp_app(name, *, kill_on_exception=False, precedence=1000):
 
 
 def ofp_run(*,
-            listen_endpoints=_LISTEN_ENDPOINTS,
+            listen_endpoints='default',
             listen_versions=None,
             oftr_options=None,
-            loglevel='info',
-            logfile=EXT_STDERR,
-            security=None):
-    """Run event loop for ofp_app's.
+            loglevel=None,
+            logfile=None,
+            security=None,
+            args=None):
+    """Run event loop for ofp_app.
 
     Args:
-        listen_endpoints (Optional[List[str]]): Default endpoints to listen on.
-            If None or empty, don't listen by default.
+        listen_endpoints (Optional[List[str]]): Endpoints to listen on.
+            If None, don't listen. If "default", listen on default port.
         listen_versions (Optional[List[int]]): Acceptible OpenFlow protocol 
             versions. If None or empty, accept all versions.
         oftr_options (Optional[Dict[str, str]]): Dictionary with settings for
@@ -69,15 +70,28 @@ def ofp_run(*,
                 - "args": Command line arguments to oftr (default='')
                 - "prefix": Prefix before command line (default='')
                 - "subcmd": oftr sub-command (default='jsonrpc')
-        loglevel (Optional[str]): Default log level (info). If None, logging is
+        loglevel (Optional[str]): Log level (info). If None, logging is
             left unconfigured.
-        logfile (Optional[str]): Log file.
+        logfile (Optional[str]): Log file.  Defaults to stderr.
         security (Optional[Dict[str, str]]): Dictionary with security settings
             for oftr connections:
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.
+        args (Optional[argparse.Namespace]): Arguments from `ofp_default_args`
+            ArgumentParser.
     """
+    if listen_endpoints is None:
+        listen_endpoints = _arg(args, 'listen_endpoints')
+    elif listen_endpoints == 'default':
+        listen_endpoints = _arg(args, 'listen_endpoints', _LISTEN_ENDPOINTS)
+
+    if loglevel is None:
+        loglevel = _arg(args, 'loglevel', 'info')
+
+    if logfile is None:
+        logfile = _arg(args, 'logfile', EXT_STDERR)
+
     if loglevel:
         init_logging(loglevel, logfile)
 
@@ -107,3 +121,9 @@ def ofp_compile(msg):
         return CompiledMessage(controller, msg)
     else:
         return CompiledObject(controller, msg)
+
+
+def _arg(args, key, default=None):
+    if args is None:
+        return default
+    return getattr(args, key, None) or default
