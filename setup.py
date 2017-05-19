@@ -24,13 +24,6 @@ with open(version_path, encoding='utf-8') as f:
     version_regex = re.compile(r"(?m)__version__\s*=\s*'(\d+\.\d+\.\d+)'")
     version = version_regex.search(f.read()).group(1)
 
-# Running `python setup.py test` should run unit tests (see `test_suite`).
-def _my_tests():
-    import unittest
-    test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('test')
-    return test_suite
-
 
 setup(
     name='pylibofp',
@@ -64,5 +57,5 @@ setup(
     ],
 
     zip_safe=True,
-    test_suite="setup._my_tests"
+    test_suite='test'
 )
