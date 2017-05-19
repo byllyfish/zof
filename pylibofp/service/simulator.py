@@ -69,13 +69,14 @@ class Simulator(object):
 
 
 app = ofp_app('simulator')
+app.simulator_count = 100
 app.sims = []
 app.conn_to_sim = {}
 
 
 @app.event('start')
 def start(_):
-    for i in range(500):
+    for i in range(app.simulator_count):
         sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start())
 
