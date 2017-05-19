@@ -110,7 +110,8 @@ def _make_default_loggers(loglevel, logfile):
     """Prepare the default loggers.
     """
     root_logger = logging.getLogger()
-    root_logger.addHandler(_stderr_handler)
+    if not root_logger.hasHandlers():
+        root_logger.addHandler(_stderr_handler)
 
     if logfile and logfile != EXT_STDERR:
         logfile_handler = _make_logfile_handler(logfile)
