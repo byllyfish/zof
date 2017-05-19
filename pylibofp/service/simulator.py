@@ -70,12 +70,20 @@ class Simulator(object):
 
 app = ofp_app('simulator')
 app.simulator_count = 100
+app.exit_timeout = None
 app.sims = []
 app.conn_to_sim = {}
 
 
+async def _exit_timeout(timeout):
+    await asyncio.sleep(timeout)
+    app.post_event('EXIT')
+
+
 @app.event('start')
 def start(_):
+    if app.exit_timeout:
+        app.ensure_future(_exit_timeout(app.exit_timeout))
     for i in range(app.simulator_count):
         sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start())
@@ -103,6 +111,9 @@ def channel_down(event):
         app.sims.remove(sim)
 
 
-if __name__ == '__main__':
+def main():
     oftr_options = {'args': '--loglevel=info --logfile=oftr.log'}
     ofp_run(oftr_options=oftr_options)
+
+if __name__ == '__main__':
+    main()
