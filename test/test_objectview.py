@@ -1,7 +1,6 @@
 import unittest
 import ipaddress
 import argparse
-from types import FunctionType
 from pylibofp.objectview import ObjectView, to_json, make_objectview
 
 
@@ -130,6 +129,11 @@ class ObjectViewTestCase(unittest.TestCase):
         s = str(o)
         self.assertEqual(s, '{"q":[1,2,3]}')
 
+    def test_repr(self):
+        o = ObjectView(dict(q=[1, 2, 3]))
+        s = repr(o)
+        self.assertEqual(s, "{'q': [1, 2, 3]}")
+
     def test_to_json(self):
         o = ObjectView(dict(q=[1, 2, 3]))
         s = to_json(o)
@@ -155,3 +159,7 @@ class ObjectViewTestCase(unittest.TestCase):
         o = make_objectview(d)
         self.assertEqual(o.a.b, 5)
         self.assertEqual(o.b[1].c, 7)
+
+        # Object is already an ObjectView
+        x = make_objectview(o)
+        self.assertTrue(x is o)

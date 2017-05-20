@@ -1,7 +1,6 @@
 """Implements the ObjectView class."""
 
 import json
-import io
 import argparse
 from ipaddress import IPv4Address, IPv6Address
 
@@ -110,8 +109,6 @@ def _json_serialize(obj):
         return obj.hex()
     if isinstance(obj, ObjectView):
         return obj.__dict__
-    if isinstance(obj, io.IOBase):
-        return 'file:%s' % obj.name
     if isinstance(obj, (IPv4Address, IPv6Address)):
         return str(obj)
     if isinstance(obj, argparse.Namespace):
