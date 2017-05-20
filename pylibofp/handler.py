@@ -104,8 +104,9 @@ class MessageHandler(BaseHandler):
     def match(self, event):
         # Quick check to see if we can return False immediately.
         if callable(self.subtype):
-            return self.subtype(event.type)
-        if self.subtype != event.type:
+            if not self.subtype(event.type):
+                return False
+        elif self.subtype != event.type:
             return False
         #if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
         #    return False
