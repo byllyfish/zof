@@ -1,7 +1,8 @@
-from .ofp_app import ofp_run
-import importlib
 import argparse
-import sys
+
+from .ofp_app import ofp_run
+from .ofp_args import import_module
+
 
 def main():
     args = parse_args()
@@ -26,14 +27,6 @@ def parse_args():
     parser.add_argument('--logfile', default=None, help='log file')
     parser.add_argument('modules', metavar='module', type=str, nargs='+', help='modules to import')
     return parser.parse_args()
-
-
-def import_module(module):
-    try:
-        importlib.import_module(module)
-    except ImportError as ex:
-        print(ex, file=sys.stderr, flush=True)
-        sys.exit(1)
 
 
 if __name__ == '__main__':

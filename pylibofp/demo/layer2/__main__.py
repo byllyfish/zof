@@ -7,15 +7,15 @@ from . import layer2
 def main():
     args = parse_args()
     if args.shell:
-        from pylibofp.service.command_shell import app
-        app.command_prompt = 'layer2> '
+        import pylibofp.service.command_shell as cmd_shell
+        cmd_shell.app.command_prompt = 'layer2> '
     ofp_run(args=args)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='layer2',
-        description='Layer2 Controller Demo',
+        description='Layer2 Demo',
         parents=[ofp_default_args()])
     parser.add_argument(
         '--shell', action='store_true', help='use command shell')
