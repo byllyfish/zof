@@ -1,17 +1,17 @@
 #!/bin/bash
 
 
-COV=""
+CMD="python"
 
 if [ "$1" = '--coverage' ]; then
-    COV="coverage run --source pylibofp"
+    CMD="coverage run -a --source pylibofp"
 fi
 
 echo "Test layer2 demo with unknown argument."
-$COV python -m pylibofp.demo.layer2 --unknown-argument
+$CMD -m pylibofp.demo.layer2 --unknown-argument
 
 echo "Test layer2 demo with simulator (count=50)"
-$COV python -m pylibofp.service.simulator \
+$CMD -m pylibofp.service.simulator \
         --exit-timeout=3 \
         --simulator-count=50 \
         --loglevel=warning \
