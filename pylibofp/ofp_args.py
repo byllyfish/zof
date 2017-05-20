@@ -1,4 +1,6 @@
 import argparse
+import importlib
+import sys
 
 
 class _SplitCommaAction(argparse.Action):
@@ -28,3 +30,13 @@ def ofp_default_args():
     group.add_argument('--loglevel', metavar='LEVEL', help='log level')
     group.add_argument('--logfile', metavar='FILE', help='log file')
     return parser
+
+
+def import_module(module_name):
+    """Import module by name.
+    """
+    try:
+        importlib.import_module(module_name)
+    except ImportError as ex:
+        print(ex, file=sys.stderr, flush=True)
+        sys.exit(1)
