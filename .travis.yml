@@ -9,13 +9,15 @@ python:
 #  - pip install pyyaml
 script:
   - pip list
-  # Run unit tests.
+  # Run unit tests and integration tests.
   - python -m unittest discover
+  - test/integration_tests.sh
   # Run coverage.
   - |
     if [ "$TRAVIS_PYTHON_VERSION" = "3.5.2" ]; then 
       pip install codecov
       coverage run --source pylibofp -m unittest test/*.py
+      test/integration_tests.sh --coverage
       codecov
     fi
   # Create source package.
