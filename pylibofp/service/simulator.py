@@ -1,4 +1,8 @@
-from pylibofp import ofp_app, ofp_run, ofp_compile
+import argparse
+import asyncio
+
+from pylibofp import ofp_app, ofp_run, ofp_compile, ofp_default_args
+from pylibofp.ofp_args import import_module
 
 
 class Simulator(object):
@@ -22,6 +26,13 @@ class Simulator(object):
                 'capabilities': [],
                 'ports': self._portdescs() if event.version < 4 else []
             }
+        }
+        ofp_compile(msg).send()
+
+    def barrier_request(self, event):
+        msg = {
+            'type': 'BARRIER_REPLY',
+            'xid': event.xid
         }
         ofp_compile(msg).send()
 
@@ -94,6 +105,11 @@ def features_request(event):
     app.conn_to_sim[event.conn_id].features_request(event)
 
 
+@app.message('barrier_request', datapath_id=None)
+def barrier_request(event):
+    app.conn_to_sim[event.conn_id].barrier_request(event)
+
+
 @app.message('request.port_desc', datapath_id=None)
 def request_portdesc(event):
     app.conn_to_sim[event.conn_id].request_portdesc(event)
@@ -112,8 +128,26 @@ def channel_down(event):
 
 
 def main():
-    oftr_options = {'args': '--loglevel=info --logfile=oftr.log'}
-    ofp_run(oftr_options=oftr_options)
+    args = parse_args()
+    for module in args.modules:
+        import_module(module)
+    app.simulator_count = args.simulator_count
+    app.exit_timeout = args.exit_timeout
+    ofp_run(args=args)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog='simulator',
+        description='Simulator Demo',
+        parents=[ofp_default_args()])
+    parser.add_argument(
+        '--simulator-count', type=int, help='Number of datapaths to simulate')
+    parser.add_argument(
+        '--exit-timeout', type=float, help='Seconds to run simulation')
+    parser.add_argument('modules', nargs='+', help='Modules to load')
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
     main()
