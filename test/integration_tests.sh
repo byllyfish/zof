@@ -11,7 +11,7 @@ echo "Test layer2 demo with unknown argument."
 $CMD -m pylibofp.demo.layer2 --unknown-argument
 
 echo "Test layer2 demo with simulator (count=50)"
-$CMD -m pylibofp.service.simulator \
+$CMD -m pylibofp.demo.simulator \
         --exit-timeout=3 \
         --simulator-count=50 \
         --loglevel=warning \

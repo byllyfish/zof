@@ -7,7 +7,7 @@ from pylibofp import ofp_app
 class SimulatorTestCase(unittest.TestCase):
 
     def test_simulator(self):
-        import  pylibofp.service.simulator as sim
+        import  pylibofp.demo.simulator as sim
         import pylibofp.service.device as dev
         from pylibofp.logging import init_logging
 
