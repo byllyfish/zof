@@ -8,7 +8,6 @@ EXT_STDERR = 'ext://stderr'
 
 default_formatter = logging.Formatter(
     '%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-logger_name = __package__
 
 _logging_inited = False
 
@@ -120,7 +119,7 @@ def _make_default_loggers(loglevel, logfile):
         # When there is a log file, only log critical events to stderr.
         _stderr_handler.setLevel('CRITICAL')
 
-    ofp_logger = logging.getLogger(logger_name)
+    ofp_logger = logging.getLogger(__package__)
     ofp_logger.setLevel(loglevel.upper())
 
     asyncio_logger = logging.getLogger('asyncio')

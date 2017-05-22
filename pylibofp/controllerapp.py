@@ -40,7 +40,7 @@ class ControllerApp(object):
         self.kill_on_exception = kill_on_exception
         self.set_controller(parent)
 
-        self.logger = logging.getLogger('pylibofp.%s' % self.name)
+        self.logger = logging.getLogger('%s.%s' % (__package__, self.name))
         self.logger.info('Create app "%s"', self.name)
 
     def set_controller(self, controller):
