@@ -15,6 +15,6 @@ $CMD -m pylibofp.service.simulator \
         --exit-timeout=3 \
         --simulator-count=50 \
         --loglevel=warning \
-        pylibofp.demo.layer2.layer2
+        pylibofp.demo.layer2
 
 exit 0

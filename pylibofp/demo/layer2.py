@@ -6,9 +6,10 @@
 
 """
 
-from pylibofp import ofp_app
+import argparse
+
+from pylibofp import ofp_app, ofp_run, ofp_compile, ofp_default_args
 from pylibofp.pktview import pktview_from_list
-from . import ofmsg
 
 app = ofp_app('layer2')
 
@@ -24,9 +25,9 @@ def channel_up(event):
     app.logger.info('%s Connected', event.datapath_id)
     app.logger.info('%s Remove all flows', event.datapath_id)
 
-    ofmsg.delete_flows.send()
-    ofmsg.barrier.send()
-    ofmsg.table_miss_flow.send()
+    delete_flows.send()
+    barrier.send()
+    table_miss_flow.send()
 
 
 @app.message('channel_down')
@@ -72,15 +73,15 @@ def packet_in(event):
     if out_port != 'ALL':
         app.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id,
                         pkt.eth_dst, vlan_vid, out_port)
-        ofmsg.learn_mac_flow.send(
+        learn_mac_flow.send(
             vlan_vid=vlan_vid, eth_dst=pkt.eth_dst, out_port=out_port)
-        ofmsg.packet_out.send(out_port=out_port, data=msg.data)
+        packet_out.send(out_port=out_port, data=msg.data)
 
     else:
         # Send packet back out all ports (except the one it came in).
         app.logger.info('%s Flood %s packet to %s vlan %s', event.datapath_id,
                         pkt.pkt_type, pkt.eth_dst, vlan_vid)
-        ofmsg.packet_flood.send(in_port=in_port, data=msg.data)
+        packet_flood.send(in_port=in_port, data=msg.data)
 
 
 @app.message('flow_removed')
@@ -103,3 +104,98 @@ def flow_removed(event):
 def other_message(event):
     """Log ignored messages."""
     app.logger.debug('Ignored message: %r', event)
+
+
+delete_flows = ofp_compile('''
+  # Delete flows in table 0.
+  type: FLOW_MOD
+  msg:
+    command: DELETE
+    table_id: 0
+''')
+
+barrier = ofp_compile('''
+  type: BARRIER_REQUEST
+''')
+
+table_miss_flow = ofp_compile('''
+  # Add permanent table miss flow entry to table 0
+  type: FLOW_MOD
+  msg:
+    command: ADD
+    table_id: 0
+    priority: 0
+    instructions:
+      - instruction: APPLY_ACTIONS
+        actions:
+          - action: OUTPUT
+            port_no: CONTROLLER
+            max_len: NO_BUFFER
+''')
+
+learn_mac_flow = ofp_compile('''
+  type: FLOW_MOD
+  msg:
+    table_id: 0
+    command: ADD
+    idle_timeout: 60
+    hard_timeout: 120
+    priority: 10
+    buffer_id: NO_BUFFER
+    flags: [ SEND_FLOW_REM ]
+    match:
+      - field: ETH_DST
+        value: $eth_dst
+      - field: VLAN_VID
+        value: $vlan_vid
+    instructions:
+      - instruction: APPLY_ACTIONS
+        actions:
+          - action: OUTPUT
+            port_no: $out_port
+            max_len: MAX
+''')
+
+packet_out = ofp_compile('''
+  type: PACKET_OUT
+  msg:
+    actions: 
+      - action: OUTPUT
+        port_no: $out_port
+        max_len: MAX
+    data: $data
+''')
+
+packet_flood = ofp_compile('''
+  type: PACKET_OUT
+  msg:
+    in_port: $in_port
+    actions: 
+      - action: OUTPUT
+        port_no: ALL
+        max_len: MAX
+    data: $data
+''')
+
+
+
+def main():
+    args = parse_args()
+    if args.shell:
+        import pylibofp.service.command_shell as cmd_shell
+        cmd_shell.app.command_prompt = 'layer2> '
+    ofp_run(args=args)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog='layer2',
+        description='Layer2 Demo',
+        parents=[ofp_default_args()])
+    parser.add_argument(
+        '--shell', action='store_true', help='use command shell')
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    main()
