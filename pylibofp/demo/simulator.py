@@ -133,7 +133,7 @@ def main():
         import_module(module)
     app.simulator_count = args.simulator_count
     app.exit_timeout = args.exit_timeout
-    ofp_run(args=args)
+    ofp_run(args=args, listen_endpoints=None)
 
 
 def parse_args():
@@ -142,10 +142,10 @@ def parse_args():
         description='Simulator Demo',
         parents=[ofp_default_args()])
     parser.add_argument(
-        '--simulator-count', type=int, help='Number of datapaths to simulate')
+        '--simulator-count', type=int, default=10, help='Number of datapaths to simulate')
     parser.add_argument(
-        '--exit-timeout', type=float, help='Seconds to run simulation')
-    parser.add_argument('modules', nargs='+', help='Modules to load')
+        '--exit-timeout', type=float, default=0, help='Seconds to run simulation')
+    parser.add_argument('modules', nargs='*', help='Modules to load')
     return parser.parse_args()
 
 

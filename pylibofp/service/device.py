@@ -13,6 +13,7 @@ Events Produced:
 import asyncio
 from collections import OrderedDict
 from .. import ofp_app, ofp_run, ofp_compile
+from ..event import make_event
 
 OPENFLOW_VERSION_1 = 0
 
@@ -104,17 +105,17 @@ class Port(object):
 
         event = ''
         was_down = ('LINK_DOWN' in self.state)
-        if was_down != ('LINK_DOWN' in port.state):
+        if was_down != ('LINK_DOWN' in port_msg.state):
             event = 'port_up' if was_down else 'port_down'
 
         if not event:
-            if port.config != self.config or port.state != self.state:
-                event = 'port_changed'
+            if port_msg.config != self.config or port_msg.state != self.state:
+                event = 'port_modified'
 
         self.state = port_msg.state
         self.config = port_msg.config
 
-        return make_event(event, port=self)
+        return make_event(event=event, port=self)
 
     def is_up(self):
         return 'LINK_DOWN' not in self.state
@@ -202,10 +203,10 @@ def port_status(event):
     port_no = msg.port_no
 
     if msg.reason == 'ADD':
-        device.ports[port_no] = Port(port_no)
+        device.ports[port_no] = Port(msg)
 
     port = device.ports[port_no]
-    change_event = port.update(event)
+    change_event = port.update(msg)
 
     if change_event.event == 'PORT_DELETED':
         del device.ports[port_no]
