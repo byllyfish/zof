@@ -38,8 +38,7 @@ class CompiledMessage(object):
             kwds (dict): Template argument values.
         """
         kwds.setdefault('xid', self._parent.next_xid())
-        task_locals = asyncio.Task.current_task().ofp_task_locals
-        self._parent.write(self._complete(kwds, task_locals))
+        self._parent.write(self._complete(kwds, _task_locals()))
 
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
@@ -48,8 +47,7 @@ class CompiledMessage(object):
             kwds (dict): Template argument values.
         """
         xid = kwds.setdefault('xid', self._parent.next_xid())
-        task_locals = asyncio.Task.current_task().ofp_task_locals
-        return self._parent.write(self._complete(kwds, task_locals), xid)
+        return self._parent.write(self._complete(kwds, _task_locals()), xid)
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.
@@ -70,13 +68,13 @@ class CompiledMessage(object):
         Translate `bytes` values to hexadecimal and escape all string values.
         """
 
-        kwds.setdefault('datapath_id', task_locals['datapath_id'])
-        kwds.setdefault('conn_id', task_locals['conn_id'])
+        dpid = kwds.setdefault('datapath_id', task_locals.get('datapath_id'))
+        conn_id = kwds.setdefault('conn_id', task_locals.get('conn_id'))
 
-        if kwds.get('conn_id') is None:
+        if conn_id is None:
             # Either conn_id is not present *or* it's equal to None.
             kwds['conn_id'] = 0
-            if not kwds['datapath_id']:
+            if not dpid:
                 raise ValueError('Must specify either datapath_id or conn_id.')
 
         for key in kwds:
@@ -125,8 +123,7 @@ class CompiledObject(object):
             kwds (dict): Template argument values.
         """
         kwds.setdefault('xid', self._parent.next_xid())
-        task_locals = asyncio.Task.current_task().ofp_task_locals
-        self._parent.write(self._complete(kwds, task_locals))
+        self._parent.write(self._complete(kwds, _task_locals()))
 
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
@@ -135,8 +132,7 @@ class CompiledObject(object):
             kwds (dict): Template argument values.
         """
         xid = kwds.setdefault('xid', self._parent.next_xid())
-        task_locals = asyncio.Task.current_task().ofp_task_locals
-        return self._parent.write(self._complete(kwds, task_locals), xid)
+        return self._parent.write(self._complete(kwds, _task_locals()), xid)
 
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.
@@ -180,3 +176,10 @@ class MyTemplate(string.Template):
             if named:
                 result.add(named)
         return result
+
+
+def _task_locals():
+    task = asyncio.Task.current_task()
+    task_locals = getattr(task, 'ofp_task_locals', {})
+    assert isinstance(task_locals, dict)
+    return task_locals

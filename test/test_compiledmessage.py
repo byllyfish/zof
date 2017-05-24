@@ -97,7 +97,7 @@ params:
         '''
         cmsg = CompiledMessage(None, msg)
 
-        with self.assertRaises(LookupError):
+        with self.assertRaises(ValueError):
           cmsg._complete(dict(), dict())
         
     def test_unknown_argument(self):

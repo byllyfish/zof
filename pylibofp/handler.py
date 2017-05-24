@@ -71,10 +71,10 @@ class BaseHandler(object):
         else:
             task = asyncio.Task.current_task()
             if task:
-                task.ofp_task_locals = ObjectView({
+                task.ofp_task_locals = {
                     'datapath_id': datapath_id,
                     'conn_id': conn_id
-                })
+                }
             self.callback(event)
 
     def __repr__(self):
