@@ -51,6 +51,7 @@ class Device(object):
         self.sw_desc = ''
         self.serial_num = ''
         self.name = '<%s>' % event.datapath_id
+        self.device_up = False
 
     def __getstate__(self):
         return self.__dict__
@@ -158,7 +159,12 @@ def channel_down(event):
         return
 
     del app.devices[event.datapath_id]
-    app.post_event('device_down', datapath_id=event.datapath_id, device=device)
+
+    if device.device_up:
+        app.logger.info('DEVICE_DOWN %s (%s) [version=%d]', device.datapath_id, device.endpoint, device.version)
+        app.post_event('device_down', datapath_id=event.datapath_id, device=device)
+    else:
+        app.logger.warning('DEVICE_HICCUP %s (%s) [version=%d]', device.datapath_id, device.endpoint, device.version)
 
 
 @app.message('features_reply')
@@ -189,6 +195,8 @@ async def features_reply(event):
     device.serial_num = d.msg.serial_num
     #app.logger.info('desc %r', desc)
 
+    device.device_up = True
+    app.logger.info('DEVICE_UP %s (%s) "%s %s" [version=%d]', device.datapath_id, device.endpoint, device.hw_desc, device.sw_desc, device.version)
     app.post_event('device_up', datapath_id=event.datapath_id, device=device)
 
 
@@ -289,6 +297,10 @@ async def flows(_event):
             print('%s: table %d pri %d %r\n    %r' %
                   (dpid, flow.table_id, flow.priority, flow.match,
                    flow.instructions))
+
+
+def get_devices():
+    return app.devices.values()
 
 
 if __name__ == '__main__':
