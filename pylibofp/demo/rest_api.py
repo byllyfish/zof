@@ -4,11 +4,15 @@ from pylibofp.service.device import get_devices
 
 
 app = ofp_app('webserver')
-web = HttpServer('8080', logger=app.logger)
+app.http_endpoint = '127.0.0.1:8080'
+
+web = HttpServer(logger=app.logger)
+
 
 @app.event('start')
 async def start(_):
-    await web.start()
+    await web.start(app.http_endpoint)
+
 
 @app.event('stop')
 async def stop(_):

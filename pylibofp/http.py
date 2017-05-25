@@ -1,35 +1,38 @@
 import asyncio
 import aiohttp.web as web
 import inspect
+import re
 from pylibofp.objectview import to_json
 
 class HttpServer(object):
     """Simple async web server.
     """
 
-    def __init__(self, endpoint, *, logger):
-        self.endpoint = _parse_endpoint(endpoint)
+    def __init__(self, *, logger):
+        self.endpoint = None
         self.logger = logger
         self.web_app = web.Application()
         self.web_handler = None
         self.web_server = None
 
-    async def start(self):
+    async def start(self, endpoint):
+        self.endpoint = _parse_endpoint(endpoint)
         loop = asyncio.get_event_loop()
         self.web_handler = self.web_app.make_handler(loop=loop, access_log=self.logger)
         await self.web_app.startup()
 
         self.web_server = await loop.create_server(self.web_handler, self.endpoint[0], self.endpoint[1])
-        self.logger.info('HttpServer: Start listening on %s:%s' % self.endpoint)
+        self.logger.info('HttpServer: Start listening on %s', endpoint_str(self.endpoint))
 
     async def stop(self):
+        assert self.endpoint
         self.web_server.close()
         await self.web_server.wait_closed()
 
         await self.web_app.shutdown()
         await self.web_handler.shutdown(timeout=10)
         await self.web_app.cleanup()
-        self.logger.info('HttpServer: Stop listening on %s:%s' % self.endpoint)
+        self.logger.info('HttpServer: Stop listening on %s', endpoint_str(self.endpoint))
 
 
     def route(self, path):
@@ -43,5 +46,20 @@ class HttpServer(object):
             return func
         return _wrap
 
+
+_ENDPOINT_REGEX = re.compile(r'^(?:\[(.*)\]|(.*)):(\d+)$')
+
+
 def _parse_endpoint(endpoint):
-    return ('127.0.0.1', 8080)
+    if ':' not in endpoint:
+        return ('', int(endpoint))
+    m = _ENDPOINT_REGEX.match(endpoint)
+    if not m:
+        raise ValueError('Invalid endpoint: %s' % endpoint)
+    return (m.group(1) or m.group(2), int(m.group(3)))
+
+
+def endpoint_str(endpoint):
+    if ':' in endpoint[0]:
+        return '[%s]:%u' % endpoint
+    return '%s:%u' % endpoint

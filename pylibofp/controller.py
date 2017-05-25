@@ -216,6 +216,7 @@ class Controller(object):
 
     async def _listen_on_endpoints(self, listen_endpoints, listen_versions):
         """Listen on a list of endpoints."""
+        assert isinstance(listen_endpoints, (list, tuple))
         options = ['FEATURES_REQ']
         versions = _prepare_versions(listen_versions, self._supported_versions)
         try:
