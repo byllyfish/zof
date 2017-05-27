@@ -1,6 +1,7 @@
 from pylibofp import ofp_app, ofp_run, ofp_compile
 from pylibofp.http import HttpServer
 from pylibofp.service.device import get_devices
+import json
 
 
 app = ofp_app('webserver')
@@ -27,13 +28,14 @@ def get_switches():
 @web.route(r'/stats/flow/{dpid:[0-9A-F:]+}')
 async def get_flows(dpid):
     result = await FLOW_REQ.request(datapath_id=_parse_dpid(dpid))
-    return result.msg
+    _translate_flows(result.msg)
+    return {dpid:result.msg}
 
 
 @web.route(r'/stats/groupdesc/{dpid:[0-9A-F:]+}')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
-    return result.msg
+    return {dpid:result.msg}
 
 
 @web.route(r'/stats/port/{dpid}/{port_no}')
@@ -73,6 +75,30 @@ def _parse_dpid(dpid):
 
 def _parse_port(port_no):
     return int(port_no, 0)
+
+
+def _translate_flows(msgs):
+    for msg in msgs:
+        if 'instructions' in msg:
+            msg.actions = _translate_instructions(msg.instructions)
+
+def _translate_instructions(instrs):
+    result = []
+    for instr in instrs:
+        result += _translate_instruction(instr)
+    return result
+
+def _translate_instruction(instr):
+    if instr.instruction == 'APPLY_ACTIONS':
+        return [_translate_action(act) for act in instr.actions]
+    return [instr]
+
+def _translate_action(action):
+    if action.action == 'OUTPUT':
+        return 'OUTPUT:%s' % action.port_no
+    if action.action == 'SET_FIELD':
+        return 'SET_FIELD: {%s:%s}' % (action.field, action.value)
+    return action
 
 
 if __name__ == '__main__':
