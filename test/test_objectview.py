@@ -139,6 +139,10 @@ class ObjectViewTestCase(unittest.TestCase):
         s = to_json(o)
         self.assertEqual(s, '{"q":[1,2,3]}')
 
+    def test_from_json(self):
+        o = from_json(b'{"a":1}')
+        self.assertEqual(o, {'a':1})
+
     def test_ip_address(self):
         o = ObjectView(dict(a=[ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address('2001::1')]))
         s = to_json(o)

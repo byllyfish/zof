@@ -303,5 +303,10 @@ def get_devices():
     return app.devices.values()
 
 
+def get_device_port(datapath_id, port_no):
+    device = app.devices[datapath_id]
+    return device.ports[port_no]
+
+
 if __name__ == '__main__':
     ofp_run()

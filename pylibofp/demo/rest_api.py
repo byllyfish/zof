@@ -1,6 +1,6 @@
 from pylibofp import ofp_app, ofp_run, ofp_compile
 from pylibofp.http import HttpServer
-from pylibofp.service.device import get_devices
+from pylibofp.service.device import get_devices, get_device_port
 import json
 
 
@@ -44,6 +44,20 @@ async def get_portstats(dpid, port_no):
     return result.msg
 
 
+@web.route(r'/stats/portdesc/modify', method='POST')
+async def modify_portdesc(request):
+    dpid = _parse_dpid(request.dpid)
+    port_no = _parse_port(request.port_no)
+    port = get_device_port(dpid, port_no)
+    PORTMOD_REQ.send(datapath_id=dpid,
+        port_no=port_no, hw_addr=port.hw_addr, config=request.config, mask=request.mask)
+    # FIXME(bfish): This code does not handle OpenFlow errors elicited from the PortMod
+    # message. Any errors returned will only show up in the log. The barrier here is
+    # just a cheap trick to verify that the portmod *should* have been acted on.
+    result = await BARRIER_REQ.request(datapath_id=dpid)
+    return result.msg
+    
+
 FLOW_REQ = ofp_compile('''
     type: REQUEST.FLOW
     msg:
@@ -54,6 +68,7 @@ FLOW_REQ = ofp_compile('''
         cookie_mask: 0
         match: []
 ''')
+
 
 GROUPDESC_REQ = ofp_compile('''
     type: REQUEST.GROUP_DESC
@@ -67,13 +82,37 @@ PORTSTATS_REQ = ofp_compile('''
 ''')
 
 
+PORTMOD_REQ = ofp_compile('''
+    type: PORT_MOD
+    msg:
+        port_no: $port_no
+        hw_addr: $hw_addr
+        config: [$config]
+        mask: [$mask]
+''')
+
+
+BARRIER_REQ = ofp_compile('''
+    type: BARRIER_REQUEST
+''')
+
+
 def _parse_dpid(dpid):
+    if isinstance(dpid, int):
+        return _convert_dpid(dpid)
     if ':' in dpid:
         return dpid
-    return hex(int(dpid, 0))
+    return _convert_dpid(int(dpid, 0))
+
+
+def _convert_dpid(dpid):
+    hs = '%16.16x' % dpid
+    return ':'.join(hs[2*i:2*i+2] for i in range(8))
 
 
 def _parse_port(port_no):
+    if isinstance(port_no, int):
+        return port_no
     return int(port_no, 0)
 
 

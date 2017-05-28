@@ -1,5 +1,5 @@
 import json
-from .objectview import ObjectView, to_json
+from .objectview import ObjectView, to_json, from_json
 from .pktview import pktview_from_list
 
 
@@ -22,11 +22,8 @@ class Event(ObjectView):
 
 
 def load_event(event):
-    # If `event` is a byte string, decode it as utf-8.
-    if isinstance(event, bytes):
-        event = event.decode('utf-8')
     try:
-        return json.loads(event, object_hook=Event)
+        return from_json(event, object_hook=Event)
     except ValueError as ex:
         # Report malformed JSON input.
         return make_event(event='EXCEPTION', reason=str(ex), input=event)

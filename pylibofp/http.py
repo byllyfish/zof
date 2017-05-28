@@ -2,7 +2,7 @@ import asyncio
 import aiohttp.web as web
 import inspect
 import re
-from pylibofp.objectview import to_json
+from pylibofp.objectview import to_json, from_json
 
 class HttpServer(object):
     """Simple async web server.
@@ -35,14 +35,21 @@ class HttpServer(object):
         self.logger.info('HttpServer: Stop listening on %s', endpoint_str(self.endpoint))
 
 
-    def route(self, path):
+    def route(self, path, *, method='GET'):
+        method = method.upper()
         def _wrap(func):
-            async def _exec_async(req):
-                return web.json_response(await func(**req.match_info), dumps=to_json)
-            def _exec_sync(req):
-                return web.json_response(func(**req.match_info), dumps=to_json)
-            _exec = _exec_async if inspect.iscoroutinefunction(func) else _exec_sync
-            self.web_app.router.add_get(path, _exec)
+            if method == 'GET':
+                async def _exec_async(req):
+                    return web.json_response(await func(**req.match_info), dumps=to_json)
+                def _exec_sync(req):
+                    return web.json_response(func(**req.match_info), dumps=to_json)
+                _exec_get = _exec_async if inspect.iscoroutinefunction(func) else _exec_sync
+                self.web_app.router.add_get(path, _exec_get)
+            elif method == 'POST':
+                async def _exec_post(req):
+                    post_data = await req.json(loads=from_json)
+                    return web.json_response(await func(post_data), dumps=to_json)
+                self.web_app.router.add_post(path, _exec_post)
             return func
         return _wrap
 

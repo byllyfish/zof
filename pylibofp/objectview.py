@@ -104,6 +104,15 @@ def to_json(obj):
         default=_json_serialize)
 
 
+def from_json(text, object_hook=ObjectView):
+    """Parse text as json.
+    """
+    # If `text` is a byte string, decode it as utf-8.
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
+    return json.loads(text, object_hook=object_hook)
+
+
 def _json_serialize(obj):
     if isinstance(obj, bytes):
         return obj.hex()
