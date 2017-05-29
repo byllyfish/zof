@@ -16,7 +16,8 @@ class ControllerApp(object):
     Attributes:
         name (str): App name.
         precedence (int): App precedence.
-        kill_on_exception (bool): Terminate immediately if app raises exception.
+        kill_on_exception (bool|str): Terminate immediately if app raises 
+            exception.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
         handlers (Dict[str,List[BaseHandler]]): App handlers.
@@ -65,13 +66,17 @@ class ControllerApp(object):
 
     def handle_exception(self, event, handler_type):
         """Handle exception."""
-        self.logger.exception('Exception caught while handling "%s": %r',
-                              handler_type, event)
+        fatal_str = 'Fatal ' if self.kill_on_exception else ''
+        self.logger.critical('%sException caught while handling "%s": %r',
+                             fatal_str, handler_type, event, exc_info=True)
         if self.kill_on_exception:
-            self.logger.critical(
-                'Terminate controller; kill_on_exception set for app "%s"',
-                self.name,
-                exc_info=True)
+            # If the value of `kill_on_exception` is a string, find the logger
+            # with this name and log the critical exception here also.
+            if isinstance(self.kill_on_exception, str):
+                logger = logging.getLogger(self.kill_on_exception)
+                logger.critical('%sException caught while handling "%s": %r',
+                                fatal_str, handler_type, event, exc_info=True)
+            # Shutdown the program immediately.
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
 

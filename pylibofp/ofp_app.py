@@ -34,8 +34,9 @@ def ofp_app(name, *, kill_on_exception=False, precedence=1000):
 
     Args:
         name (str): Name of the app.
-        kill_on_exception (Optiona[bool]): Abort if app raises exception.
-        precedence (Optional[int]): Precedence for event dispatch
+        kill_on_exception (bool|str): Abort if app raises exception. If this
+            value is a string, it's treated as the name of the exception log.
+        precedence (int): Precedence for event dispatch
 
     Returns:
         AppFacade: API object for app.
