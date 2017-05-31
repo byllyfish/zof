@@ -1,7 +1,7 @@
 from pylibofp import ofp_app, ofp_run, ofp_compile
 from pylibofp.http import HttpServer
 from pylibofp.service.device import get_devices, get_device_port
-import json
+from pylibofp.pktview import pktview_from_list
 
 
 app = ofp_app('webserver')
@@ -118,6 +118,8 @@ def _parse_port(port_no):
 
 def _translate_flows(msgs):
     for msg in msgs:
+        if 'match' in msg:
+            msg.match = pktview_from_list(msg.match)
         if 'instructions' in msg:
             msg.actions = _translate_instructions(msg.instructions)
 
