@@ -1,5 +1,6 @@
 import ipaddress
 from .objectview import ObjectView
+from .ofctl import convert_ofctl_fields
 
 # Reserved payload field.
 PAYLOAD = 'payload'
@@ -114,11 +115,7 @@ def pktview_from_ofctl(ofctl):
     if not isinstance(ofctl, dict):
         raise ValueError('Expected a dict')
 
-    pkt = make_pktview()
-    for key, value in ofctl.items():
-        key = _convert_legacy_field(key, ofctl)
-        pkt[key] = value
-    return pkt
+    return PktView(convert_ofctl_fields(ofctl))
 
 
 def _make_field(name, value):
@@ -138,19 +135,6 @@ def _iter_items(obj):
     if isinstance(obj, dict):
         return obj.items()
     return obj.__dict__.items()
-
-
-def _convert_legacy_field(key, ofctl):
-    """Convert ofctl legacy field names."""
-    legacy_fields = dict(
-        dl_type='eth_type',
-        dl_src='eth_src',
-        dl_dst='eth_dst',
-        dl_vlan='vlan_vid',
-        nw_src='ipv4_src',
-        nw_dst='ipv4_dst',
-        nw_proto='ip_proto')
-    return legacy_fields.get(key, key)
 
 
 def _convert_slash_notation(value):

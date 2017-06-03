@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias
+from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias, pktview_from_ofctl
 
 
 class PktViewTestCase(unittest.TestCase):
@@ -104,6 +104,11 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(pkt.pkt_type, 'IPV4')
         pkt = make_pktview(eth_type=0xFEDC)
         self.assertEqual(pkt.pkt_type, '0xfedc')
+
+    def test_pktview_from_ofctl(self):
+        data = dict(dl_type=0x0800, nw_proto=6, tp_dst=80)
+        pkt = pktview_from_ofctl(data)
+        self.assertEqual(pkt, {'ip_proto': 6, 'eth_type': 2048, 'tcp_dst': 80})
 
 
 def _by_field(item):

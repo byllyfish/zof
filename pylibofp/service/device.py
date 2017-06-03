@@ -209,9 +209,15 @@ def port_status(event):
     device = app.devices[event.datapath_id]
     msg = event.msg
     port_no = msg.port_no
+    exists = port_no in device.ports
 
     if msg.reason == 'ADD':
+        if exists:
+            app.logger.warning('PORT_STATUS:ADD for existing port %r', port_no)
         device.ports[port_no] = Port(msg)
+    elif not exists:
+        app.logger.warning('PORT_STATUS:%s for unknown port %r', msg.reason, port_no)
+        return
 
     port = device.ports[port_no]
     change_event = port.update(msg)
