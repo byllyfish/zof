@@ -8,7 +8,7 @@ Environment Variables:
 
     OFP_APP_LOGLEVEL            Default logging mode.
     OFP_APP_OFTR_PREFIX         Prefix used to launch oftr. Used for tools
-                                like valgrind or strace.
+                                like valgrind, strace, or catchsegv.
     OFP_APP_OFTR_PATH           Path to oftr version to use.
     OFP_APP_OFTR_ARGS           Arguments passed to oftr.
     OFP_APP_UVLOOP              Set to true to use uvloop.
