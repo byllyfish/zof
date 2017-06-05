@@ -5,7 +5,7 @@ __pycache__/
 venv*/
 doc/tutorial/
 doc/reference/
-doc/sphinx/
+doc/sphinx/_build/
 demos/
 *.egg-info/
 .eggs/
