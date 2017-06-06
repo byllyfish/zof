@@ -1,5 +1,6 @@
 import unittest
-from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias, pktview_from_ofctl
+from pylibofp.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias, pktview_from_ofctl, convert_slash_notation
+from ipaddress import IPv4Address, IPv6Address, ip_address
 
 
 class PktViewTestCase(unittest.TestCase):
@@ -25,6 +26,14 @@ class PktViewTestCase(unittest.TestCase):
     def test_invalid_init(self):
         with self.assertRaises(ValueError):
             pkt = pktview_from_list(dict(A='a'))
+
+    def test_from_list(self):
+        data = [dict(field='A', value=5, mask=255)]
+        pkt = pktview_from_list(data)
+        self.assertEqual(pkt, {'a': (5, 255)})
+
+        pkt = pktview_from_list(data, slash_notation=True)
+        self.assertEqual(pkt, {'a': '5/255'})
 
     def test_to_list(self):
         data = dict(a = 'a', b = 2, c='ddd')
@@ -80,15 +89,13 @@ class PktViewTestCase(unittest.TestCase):
         self.assertFalse('ip' in pkt)
 
     def test_pktview_alias_converter(self):
-        import ipaddress
-
         class SubPktView(PktView):
-            ip = pktview_alias('ip', ipaddress.ip_address)
+            ip = pktview_alias('ip', ip_address)
 
         pkt = SubPktView({})
         pkt.ip = '1.2.3.4'
-        self.assertIsInstance(pkt.ip, ipaddress.IPv4Address)
-        self.assertEqual(pkt.ip, ipaddress.ip_address('1.2.3.4'))
+        self.assertIsInstance(pkt.ip, IPv4Address)
+        self.assertEqual(pkt.ip, ip_address('1.2.3.4'))
         self.assertTrue('ip' in pkt)
         del pkt.ip
         self.assertFalse('ip' in pkt)
@@ -109,6 +116,19 @@ class PktViewTestCase(unittest.TestCase):
         data = dict(dl_type=0x0800, nw_proto=6, tp_dst=80)
         pkt = pktview_from_ofctl(data)
         self.assertEqual(pkt, {'ip_proto': 6, 'eth_type': 2048, 'tcp_dst': 80})
+
+        data = dict(dl_dst='ab:cd:00:00:00:00/ff:ff:00:00:00:00')
+        pkt = pktview_from_ofctl(data)
+        self.assertEqual(pkt, {'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'})
+        items = pktview_to_list(pkt)
+        self.assertEqual(items, [{'value': 'ab:cd:00:00:00:00', 'field': 'ETH_DST', 'mask': 'ff:ff:00:00:00:00'}])
+
+    def test_convert_slash_notation(self):
+        self.assertEqual(convert_slash_notation('ETH_SRC', '0e:dc:00:00:00:00/ff:ff:00:00:00:00'), ('0e:dc:00:00:00:00', 'ff:ff:00:00:00:00'))
+        self.assertEqual(convert_slash_notation('IPV4_SRC', '1.2.3.4/255.255.0.0'), (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
+        self.assertEqual(convert_slash_notation('IPV4_SRC', '1.2.3.4/16'), (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
+        self.assertEqual(convert_slash_notation('IPV6_SRC', '2001::1/ffff::'), (IPv6Address('2001::1'), IPv6Address('ffff::')))
+        self.assertEqual(convert_slash_notation('IPV6_SRC', '2001::1/16'), (IPv6Address('2001::1'), IPv6Address('ffff::')))
 
 
 def _by_field(item):

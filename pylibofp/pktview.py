@@ -1,6 +1,6 @@
 import ipaddress
 from .objectview import ObjectView
-from .ofctl import convert_ofctl_fields
+from .ofctl import convert_from_ofctl
 
 # Reserved payload field.
 PAYLOAD = 'payload'
@@ -82,10 +82,14 @@ def make_pktview(**kwds):
     return PktView(kwds)
 
 
-def pktview_from_list(fields):
+def pktview_from_list(fields, *, slash_notation=False):
     """Construct a PktView object from a list of field objects.
 
     A field object may be an ObjectView or a dict.
+
+    Args:
+        fields (Seq[ObjectView|dict]): Sequence of fields.
+        slash_notation (bool): If true, convert to "value/mask" notation.
     """
     if not isinstance(fields, (list, tuple)):
         raise ValueError('Expected list or tuple')
@@ -96,9 +100,12 @@ def pktview_from_list(fields):
         if key == PAYLOAD:
             raise ValueError('Field "payload" is reserved')
         if 'mask' in field:
-            pkt[key] = (field['value'], field['mask'])
+            value = (field['value'], field['mask'])
+            if slash_notation:
+                value = '%s/%s' % value
         else:
-            pkt[key] = field['value']
+            value = field['value']
+        pkt[key] = value
     return pkt
 
 
@@ -115,13 +122,13 @@ def pktview_from_ofctl(ofctl):
     if not isinstance(ofctl, dict):
         raise ValueError('Expected a dict')
 
-    return PktView(convert_ofctl_fields(ofctl))
+    return PktView(convert_from_ofctl(ofctl))
 
 
 def _make_field(name, value):
     fname = name.upper()
-    if fname in {'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST'}:
-        value = _convert_slash_notation(value)
+    if fname in _SLASH_FIELDS:
+        value = convert_slash_notation(fname, value)
 
     if isinstance(value, tuple):
         if len(value) != 2:
@@ -137,11 +144,28 @@ def _iter_items(obj):
     return obj.__dict__.items()
 
 
-def _convert_slash_notation(value):
-    """Convert string value in slash notation into a tuple (addr, mask)."""
-    if not isinstance(value, str):
+def convert_slash_notation(fname, value):
+    """Convert string value in slash notation into a tuple (addr, mask).
+    """
+    assert fname.isupper()
+    if not isinstance(value, str) or '/' not in value:
         return value
-    if '/' not in value:
-        return value
-    addr = ipaddress.ip_interface(value)
-    return (addr.ip, addr.netmask)
+
+    if fname in _MAC_FIELDS:
+        return tuple(value.split('/', 1))
+
+    try:
+        # ip_interface handles IP prefix notation "/nn"
+        addr = ipaddress.ip_interface(value)
+        return (addr.ip, addr.netmask)
+    except ValueError as ex:
+        if not fname.startswith('IPV6_'):
+            raise
+
+    # Handle generic slash notation for IPv6 addresses.
+    addr = value.split('/', 1)
+    return (ipaddress.IPv6Address(addr[0]), ipaddress.IPv6Address(addr[1]))
+
+
+_MAC_FIELDS = { 'ETH_DST', 'ETH_SRC', 'ARP_SHA', 'ARP_THA' }
+_SLASH_FIELDS = { 'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST' } | _MAC_FIELDS

@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.ofctl import convert_ofctl_fields
+from pylibofp.ofctl import convert_from_ofctl
 
 
 class TestOfctl(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestOfctl(unittest.TestCase):
             'tp_dst': 1002,
             'other_field': 'other_value'
         }
-        result = convert_ofctl_fields(ofctl)
+        result = convert_from_ofctl(ofctl)
         self.assertEqual(result, {
             'eth_src': '00:00:00:00:00:01',
             'eth_dst': '00:00:00:00:00:02',

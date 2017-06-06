@@ -20,7 +20,7 @@ _LEGACY_FIELDS = dict(
     tp_src=_convert_tp_src)
 
 
-def convert_ofctl_fields(ofctl):
+def convert_from_ofctl(ofctl):
     """Convert ofctl legacy field names."""
     result = {}
     for key, value in ofctl.items():
@@ -34,9 +34,7 @@ def convert_ofctl_fields(ofctl):
 def convert_ofctl_field(key, ofctl):
     """Convert ofctl legacy field name."""
     conv = _LEGACY_FIELDS.get(key, key)
-    if callable(conv):
-        return conv(key, ofctl)
-    return conv
+    return conv(key, ofctl) if callable(conv) else conv
 
 
 def _ip_proto_name(ofctl):
