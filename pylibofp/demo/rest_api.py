@@ -119,7 +119,7 @@ def _parse_port(port_no):
 def _translate_flows(msgs):
     for msg in msgs:
         if 'match' in msg:
-            msg.match = pktview_from_list(msg.match)
+            msg.match = pktview_from_list(msg.match, slash_notation=True)
         if 'instructions' in msg:
             msg.actions = _translate_instructions(msg.instructions)
 
