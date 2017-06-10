@@ -11,7 +11,7 @@ Welcome to of_app's documentation!
    :caption: Contents:
 
    readme
-
+   scalar
 
 Indices and tables
 ==================
