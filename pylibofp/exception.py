@@ -80,22 +80,6 @@ class StopPropagationException(ControlFlowException):
         return '[StopPropagationException]'
 
 
-class CommandException(ControlFlowException):
-    """Exception class used by app commands to exit.
-
-    This exception is caught by the command_shell service.
-    """
-
-    def __init__(self, *, status, message=None):
-        super().__init__()
-        self.status = status
-        self.message = message
-
-    def __str__(self):
-        return '[CommandException status=%s, message=%s]' % (self.status,
-                                                             self.message)
-
-
 class ExitException(ControlFlowException):
     """Internal exception class used to stop the controller."""
 

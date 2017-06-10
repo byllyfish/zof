@@ -12,16 +12,39 @@ from prompt_toolkit import AbortAction
 
 from .. import ofp_app, ofp_run
 from ..event import make_event
-from ..logging import TailBufferedHandler, PatchedConsoleHandler
-from ..exception import CommandException
+from ..exception import ControlFlowException
 
-app = ofp_app('service.command_shell')
+
+class CommandException(ControlFlowException):
+    """Exception class used by app commands to exit.
+
+    This exception is caught by the command_shell service.
+    """
+
+    def __init__(self, *, status, message=None):
+        super().__init__()
+        self.status = status
+        self.message = message
+
+    def __str__(self):
+        return '[CommandException status=%s, message=%s]' % (self.status,
+                                                             self.message)
+
+
+class _ArgumentParser(argparse.ArgumentParser):
+    def exit(self, status=0, message=None):
+        if asyncio.Task.current_task():
+            raise CommandException(status=0)
+        super().exit(status, message)
+
+
+cmd.ArgumentParser = _ArgumentParser
+
+
+
+app = ofp_app('command_shell')
 app.foreground_task = None
 app.command_prompt = '> '
-
-_tail_handler = TailBufferedHandler.install()
-_console_handler = PatchedConsoleHandler.install()
-
 
 @app.event('start')
 async def command_shell(_event):
@@ -232,6 +255,80 @@ async def log_cmd(event):
 def exit_cmd(_event):
     """Exit command shell."""
     app.post_event('EXIT')
+
+
+class TailBufferedHandler(logging.Handler):
+    """Logging handler that records the last N log records."""
+
+    def __init__(self, maxlen=10):
+        super().__init__()
+        self._tail = collections.deque(maxlen=maxlen)
+
+    def lines(self):
+        """Return last N log lines."""
+        return self._tail
+
+    def emit(self, record):
+        """Log the specified log record."""
+        try:
+            self._tail.append(self.format(record))
+        except Exception:  # pylint: disable=broad-except
+            self.handleError(record)
+
+    def close(self):
+        """Close the log handler."""
+        super().close()
+        self._tail.clear()
+
+    @staticmethod
+    def install():
+        """Install tail logging handler."""
+        handler = TailBufferedHandler()
+        handler.setFormatter(default_formatter)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        return handler
+
+
+class PatchedConsoleHandler(logging.Handler):
+    """Logging handler that writes to stdout EVEN when stdout is patched.
+
+    The normal StreamHandler grabs a reference to `sys.stdout` once at
+    initialization time. This class always logs to the current sys.stdout
+    which may be patched at runtime by prompt_toolkit.
+
+    This class disables the default StreamHandler if it is logging to stderr.
+    """
+
+    def emit(self, record):
+        try:
+            self.write(self.format(record))
+        except Exception:  # pylint: disable=broad-except
+            self.handleError(record)
+
+    def write(self, line):  # pylint: disable=no-self-use
+        stream = sys.stdout
+        stream.write(line)
+        stream.write('\n')
+
+    @staticmethod
+    def install():
+        """Install stdout logging handler.
+
+        Change level of default stderr logging handler.
+        """
+        handler = PatchedConsoleHandler()
+        handler.setFormatter(default_formatter)
+        handler.setLevel('WARNING')
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        # From now on, only log critical events to stderr.
+        stderr_handler.setLevel('CRITICAL')
+        return handler
+
+
+_tail_handler = TailBufferedHandler.install()
+_console_handler = PatchedConsoleHandler.install()
 
 
 if __name__ == '__main__':

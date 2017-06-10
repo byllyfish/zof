@@ -2,7 +2,8 @@ import asyncio
 import aiohttp.web as web
 import inspect
 import re
-from pylibofp.objectview import to_json, from_json
+from .objectview import to_json, from_json
+
 
 class HttpServer(object):
     """Simple async web server.

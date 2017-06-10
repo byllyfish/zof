@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-from .exception import CommandException
 
 
 class AppFacade(object):
@@ -61,15 +60,6 @@ class AppFacade(object):
 
         return _wrap
 
-    def command(self, subtype, **kwds):
-        """Command decorator.
-        """
-
-        def _wrap(func):
-            return self.subscribe(func, 'command', subtype, kwds)
-
-        return _wrap
-
     # TODO(bfish): Add an 'intercept' decorator for intercepting outgoing
     # messages. (Advanced)
 
@@ -98,12 +88,3 @@ class AppFacade(object):
     #def post_event(self, event, **kwds):
     #    self._app.post_event(make_event(event=event.upper(), **kwds))
 
-
-class _ArgumentParser(argparse.ArgumentParser):
-    def exit(self, status=0, message=None):
-        if asyncio.Task.current_task():
-            raise CommandException(status=0)
-        super().exit(status, message)
-
-
-AppFacade.command.ArgumentParser = _ArgumentParser

@@ -156,21 +156,6 @@ class EventHandler(BaseHandler):
         return True
 
 
-class CommandHandler(BaseHandler):
-    def __call__(self, event, app):
-        """Return value of invoking command callback.
-
-        The result may be an awaitable object.
-        """
-        return self.callback(event)
-
-    def match(self, event):
-        raise NotImplementedError("CommandHandler does not support match()")
-
-    def verify(self):
-        return True
-
-
 def _verify_callback(callback, param_count):
     """Make sure callback  has the expected number of positional parameters."""
     if not callable(callback):

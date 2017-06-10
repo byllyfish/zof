@@ -256,55 +256,6 @@ async def _fetch_desc():
     return await desc.request()
 
 
-@app.command('device')
-def device_list(_event):
-    """List all devices.
-
-    ls [-lap] <dpid>
-    """
-    yield 'VER  NAME               DPID                   ENDPOINT  PORT BUF  CONN'
-    for device in app.devices.values():
-        yield '%3d %-20s %s %s  %d %d %d %s' % (
-            device.version, device.name, device.datapath_id, device.endpoint,
-            len(device.ports), device.n_buffers, device.conn_id,
-            device.hw_desc)
-
-
-@app.command('port')
-def port_list(_event):
-    yield 'PORT   NAME        MAC   CONFIG   STATE  TX PKTS BYTES  RX PKTS BYTES'
-    for device in app.devices.values():
-        for port in device.ports.values():
-            s = port.stats
-            if s:
-                stats = '%d %d %d %d' % (s.tx_packets, s.tx_bytes,
-                                         s.rx_packets, s.rx_bytes)
-            else:
-                stats = '<nostats>'
-            yield '%5s %-20s %s %s %s %s %s' % (port.port_no, port.name,
-                                                port.hw_addr, device.name,
-                                                port.config, port.state, stats)
-
-
-@app.command('portmod')
-async def portmod(event):
-    dpid = event.args[0]
-    portnum = int(event.args[1])
-    device = app.devices[dpid.lower()]
-    await device.port_mod(portnum, port_down=True)
-
-
-@app.command('flows')
-async def flows(_event):
-    for dpid in app.devices:
-        result = await REQ_FLOWS.request(datapath_id=dpid)
-        for flow in sorted(
-                result.msg, key=lambda x: (x.table_id, -x.priority)):
-            print('%s: table %d pri %d %r\n    %r' %
-                  (dpid, flow.table_id, flow.priority, flow.match,
-                   flow.instructions))
-
-
 def get_devices():
     return app.devices.values()
 
