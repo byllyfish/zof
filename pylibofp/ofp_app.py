@@ -42,6 +42,8 @@ def ofp_app(name, *, kill_on_exception=False, precedence=1000):
         AppFacade: API object for app.
     """
     controller = Controller.singleton()
+    if controller.find_app(name):
+        raise ValueError('App named "%s" already exists.' % name)
     app = ControllerApp(
         controller,
         name=name,

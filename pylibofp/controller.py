@@ -52,6 +52,10 @@ class Controller(object):
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
 
+    def find_app(self, name):
+        """Find application object by name."""
+        return any(True for app in self.apps if app.name == name)
+
     def run_loop(self,
                  *,
                  listen_endpoints=None,

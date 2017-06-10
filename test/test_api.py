@@ -20,3 +20,10 @@ class TestApi(unittest.TestCase):
 
         # Test that apps are sorted by precedence.
         self.assertEqual(app1.all_apps(), [app2._app, app1._app])
+
+
+    def test_duplicate_name(self):
+        # Do not allow two apps to have the same name.
+        app3 = ofp_app('app3')
+        with self.assertRaises(ValueError):
+            app4 = ofp_app('app3')

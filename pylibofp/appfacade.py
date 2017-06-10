@@ -35,8 +35,6 @@ class AppFacade(object):
         #self.controller = app.parent
 
         self.ensure_future = app.ensure_future
-        self.subscribe = app.subscribe
-        self.unsubscribe = app.subscribe
         self.post_event = app.post_event
         self.rpc_call = app.rpc_call
 
@@ -47,7 +45,7 @@ class AppFacade(object):
         """
 
         def _wrap(func):
-            return self.subscribe(func, 'message', subtype, kwds)
+            return self._app.subscribe(func, 'message', subtype, kwds)
 
         return _wrap
 
@@ -56,7 +54,7 @@ class AppFacade(object):
         """
 
         def _wrap(func):
-            return self.subscribe(func, 'event', subtype, kwds)
+            return self._app.subscribe(func, 'event', subtype, kwds)
 
         return _wrap
 
