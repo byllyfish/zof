@@ -10,10 +10,10 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FFBE06FBB4EDC679174
         python3-setuptools \
     && rm -rf /var/lib/apt/lists/* \
     && cd /root \
-    && curl -L https://github.com/byllyfish/pylibofp/archive/master.tar.gz | tar -xvz \
-    && mv pylibofp-master pylibofp \
-    && pip3 install ./pylibofp
+    && curl -L https://github.com/byllyfish/ofp_app/archive/master.tar.gz | tar -xvz \
+    && mv ofp_app-master ofp_app \
+    && pip3 install ./ofp_app
 
 EXPOSE 6653
 
-CMD ["python3", "-m", "pylibofp.demo.layer2"]
+CMD ["python3", "-m", "ofp_app.demo.layer2"]

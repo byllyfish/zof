@@ -1,4 +1,4 @@
-"""A setuptools based setup module for pylibofp.
+"""A setuptools based setup module for ofp_app.
 See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
@@ -13,7 +13,7 @@ import re
 
 here = path.abspath(path.dirname(__file__))
 description_path = path.join(here, 'README.rst')
-version_path = path.join(here, 'pylibofp', '__init__.py')
+version_path = path.join(here, 'ofp_app', '__init__.py')
 
 # Read long_description.rst.
 with open(description_path, encoding='utf-8') as f:
@@ -26,7 +26,7 @@ with open(version_path, encoding='utf-8') as f:
 
 
 setup(
-    name='pylibofp',
+    name='ofp_app',
     packages=find_packages(exclude=['test']),
     version=version,
     license='MIT',
@@ -36,7 +36,7 @@ setup(
     keywords='openflow controller mininet',
 
     # The project's main homepage and author.
-    url='https://github.com/byllyfish/pylibofp',
+    url='https://github.com/byllyfish/ofp_app',
     author='William W. Fisher',
     author_email='william.w.fisher@gmail.com',
 

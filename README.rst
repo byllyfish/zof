@@ -1,8 +1,8 @@
-PYLIBOFP: OpenFlow App Framework
+OFP_APP: OpenFlow App Framework
 ================================
 
-Pylibofp is a Python framework for creating asyncio-based applications that control 
-the network using the OpenFlow protocol. Pylibofp uses a separate *oftr* process to 
+`ofp_app` is a Python framework for creating asyncio-based applications that control 
+the network using the OpenFlow protocol. `ofp_app` uses a separate *oftr* process to 
 terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
 .. figure:: doc/sphinx/_static/img/ofp_app_architecture.png
@@ -36,10 +36,10 @@ Install - Linux
     sudo apt-get update
     sudo apt-get install oftr
 
-    # Create virtual environment and install pylibofp.
+    # Create virtual environment and install ofp_app.
     python3.5 -m venv myenv
     source myenv/bin/activate
-    pip install pylibofp
+    pip install ofp_app
 
 
 Demos
@@ -47,13 +47,13 @@ Demos
 
 To run the controller demo::
 
-    python -m pylibofp.demo.l2_demo --help
+    python -m ofp_app.demo.l2_demo --help
 
 
 .. (TODO) To run the agent simulator demo::
 
-    python -m pylibofp.demo.agent_simulator --help
+    python -m ofp_app.demo.agent_simulator --help
 
 .. (TODO) To run the command line tool demo::
 
-    python -m pylibofp.demo.ofctl --help
+    python -m ofp_app.demo.ofctl --help

@@ -16,17 +16,17 @@ script:
   - |
     if [ "$TRAVIS_PYTHON_VERSION" = "3.5.2" ]; then 
       pip install codecov
-      coverage run --source pylibofp -m unittest test/*.py
+      coverage run --source ofp_app -m unittest test/*.py
       test/integration_tests.sh --coverage
       codecov
     fi
   # Create source package.
   - python setup.py sdist
   # Run unit tests again from source package.
-  - cd dist ; tar xvfz pylibofp-*.tar.gz ; cd pylibofp-* ; python setup.py test
+  - cd dist ; tar xvfz ofp_app-*.tar.gz ; cd ofp_app-* ; python setup.py test
 
 #  - python3 -m doctest README.adoc
-#  - coverage run --source pylibofp -m test
+#  - coverage run --source ofp_app -m test
 #after_success:
 #  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then codecov; fi
 
