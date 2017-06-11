@@ -38,8 +38,6 @@ def make_handler(callback, type_, subtype='', options=None):
         return MessageHandler(callback, type_, subtype, options)
     if type_ == 'event':
         return EventHandler(callback, type_, subtype, options)
-    if type_ == 'command':
-        return CommandHandler(callback, type_, subtype, options)
     raise ValueError('make_handler: Unknown handler type: "%s"' % type_)
 
 
@@ -102,14 +100,12 @@ class BaseHandler(object):
 
 class MessageHandler(BaseHandler):
     def match(self, event):
-        # Quick check to see if we can return False immediately.
+        # Check subtype to see if we can return False immediately.
         if callable(self.subtype):
             if not self.subtype(event.type):
                 return False
         elif self.subtype != event.type:
             return False
-        #if not (event.type == self.subtype or self.subtype == _ALL_SUBTYPE):
-        #    return False
         # Check for events that don't have a datapath_id. For these, the app
         # must explicitly opt in using `datapath_id=None`.
         if 'datapath_id' not in event:
@@ -119,7 +115,7 @@ class MessageHandler(BaseHandler):
                 return False
         # Check for matching option values in event.
         for key, value in self.options.items():
-            if not _match_message_event(key, value, event):
+            if not _match_message(key, value, event):
                 return False
         return True
 
@@ -141,9 +137,17 @@ class MessageHandler(BaseHandler):
 
 class EventHandler(BaseHandler):
     def match(self, event):
+        # Check subtype to see if we can return false immediately.
         if callable(self.subtype):
-            return self.subtype(event['event'])
-        return event['event'] == self.subtype
+            if not self.subtype(event['event']):
+                return False
+        elif event['event'] != self.subtype:
+            return False
+        # Check for matching option values in event.
+        for key, value in self.options.items():
+            if not _match_event(key, value, event):
+                return False
+        return True
 
     def verify(self):
         if not _verify_callback(self.callback, 1):
@@ -169,8 +173,8 @@ def _verify_callback(callback, param_count):
     return True
 
 
-def _match_message_event(key, value, event):
-    """Return true if `key` and `value` exist within the given message event."""
+def _match_message(key, value, event):
+    """Return true if `key` and `value` exist within the given message."""
     if key == 'datapath_id' and value is None:
         return True
     val = str(value).upper()
@@ -180,4 +184,12 @@ def _match_message_event(key, value, event):
         pkt = event.msg.pkt
         if key in pkt:
             return str(pkt[key]).upper() == val
+    return False
+
+
+def _match_event(key, value, event):
+    """Return true if `key` and `value` exist within the given event."""
+    val = str(value).upper()
+    if key in event:
+        return str(event[key]).upper() == val
     return False

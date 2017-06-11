@@ -1,5 +1,7 @@
 import unittest
 from pylibofp.handler import make_handler
+from pylibofp.objectview import make_objectview
+from pylibofp.event import make_event
 
 
 NO_HELP = 'No help available'
@@ -49,6 +51,79 @@ class HandlerTestCase(unittest.TestCase):
     def test_bad_subtype_function(self):
         h = make_handler(func, 'message', bad_func)
         self.assertFalse(h.verify())
+
+    def test_message_filter(self):
+        h1 = make_handler(func, 'message', 'PACKET_IN', {'cookie':123})
+        self.assertTrue(h1.verify())
+
+        h2 = make_handler(func, 'message', 'PACKET_IN', {'x': 9})
+        self.assertTrue(h2.verify())
+
+        evt = make_objectview({
+            'datapath_id': '00:00:00:00:00:00:00:01',
+            'type': 'PACKET_IN',
+            'msg': {
+                'cookie': 124
+            }
+        })
+        self.assertFalse(h1.match(evt))
+        self.assertFalse(h2.match(evt))
+        evt.msg.cookie = 123
+        self.assertTrue(h1.match(evt))
+        self.assertFalse(h2.match(evt))
+        evt.type = 'PACKET_OUT'
+        self.assertFalse(h1.match(evt))
+        self.assertFalse(h2.match(evt))
+
+    def test_message_datapath(self):
+        # Test datapath_id=None filter on message handler.
+        h = make_handler(func, 'message', 'PACKET_OUT', {})
+        self.assertTrue(h.verify())
+
+        evt = make_objectview({
+            'datapath_id': '00:00:00:00:00:00:00:01',
+            'type': 'PACKET_OUT',
+            'msg': {
+                'cookie': 124
+            }
+        })
+        self.assertTrue(h.match(evt))
+        evt.datapath_id = None
+        self.assertTrue(h.match(evt))
+        del evt['datapath_id']
+        self.assertFalse(h.match(evt))  # only case where it makes a difference
+
+    def test_message_no_datapath(self):
+        # Test datapath_id=None filter on message handler.
+        h = make_handler(func, 'message', 'PACKET_OUT', {'datapath_id': None})
+        self.assertTrue(h.verify())
+
+        evt = make_objectview({
+            'datapath_id': '00:00:00:00:00:00:00:01',
+            'type': 'PACKET_OUT',
+            'msg': {
+                'cookie': 124
+            }
+        })
+        self.assertTrue(h.match(evt))
+        evt.datapath_id = None
+        self.assertTrue(h.match(evt))
+        del evt['datapath_id']
+        self.assertTrue(h.match(evt))
+
+    def test_event_filter(self):
+        h1 = make_handler(func, 'event', 'SIGNAL', {'signal':'SIGHUP'})
+        self.assertTrue(h1.verify())
+
+        h2 = make_handler(func, 'event', 'SIGNAL', { 'x': 3})
+        self.assertTrue(h2.verify())
+
+        evt = make_event(event='SIGNAL', signal='SIGTERM')
+        self.assertFalse(h1.match(evt))
+        self.assertFalse(h2.match(evt))
+        evt.signal = 'SIGHUP'
+        self.assertTrue(h1.match(evt))
+        self.assertFalse(h2.match(evt))
 
 
 def func(event):

@@ -127,6 +127,11 @@ def channel_down(event):
         app.sims.remove(sim)
 
 
+@app.message(any, datapath_id=None)
+def other(event):
+    app.logger.info('Unhandled message: %r' % event)
+
+
 def main():
     args = parse_args()
     for module in args.modules:
