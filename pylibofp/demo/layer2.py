@@ -182,7 +182,7 @@ packet_flood = ofp_compile('''
 def main():
     args = parse_args()
     if args.shell:
-        import pylibofp.service.command_shell as cmd_shell
+        import pylibofp.demo.command_shell as cmd_shell
         cmd_shell.app.command_prompt = 'layer2> '
     ofp_run(args=args)
 

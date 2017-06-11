@@ -1,7 +1,10 @@
+import sys
 import shlex
 import inspect
 import asyncio
-from collections import defaultdict
+import argparse
+import logging
+import collections
 
 from prompt_toolkit.shortcuts import prompt_async
 from prompt_toolkit.styles import style_from_dict
@@ -13,6 +16,7 @@ from prompt_toolkit import AbortAction
 from .. import ofp_app, ofp_run
 from ..event import make_event
 from ..exception import ControlFlowException
+from ..logging import default_formatter, stderr_handler
 
 
 class CommandException(ControlFlowException):
@@ -38,13 +42,25 @@ class _ArgumentParser(argparse.ArgumentParser):
         super().exit(status, message)
 
 
-cmd.ArgumentParser = _ArgumentParser
-
-
-
 app = ofp_app('command_shell')
 app.foreground_task = None
 app.command_prompt = '> '
+app.commands = {}
+
+_Handler = collections.namedtuple('_Handler', 'subtype func options')
+
+
+def _command(subtype, **kwds):
+    """Command decorator.
+    """
+    def _wrap(func):
+        t = subtype.upper()
+        app.commands[t] = _Handler(t, func, kwds)
+    return _wrap
+
+app.command = _command
+app.command.ArgumentParser = _ArgumentParser
+
 
 @app.event('start')
 async def command_shell(_event):
@@ -119,22 +135,15 @@ def exec_command(cmd, handler):
         parser.prog = cmd[0]
         cmd = parser.parse_args(cmd[1:])
     event = make_event(event='COMMAND', args=cmd)
-    return handler(event, app)
+    return handler.func(event)
 
 
 def find_command_handler(cmd):
-    for handler in all_command_handlers():
-        if handler.subtype == cmd.upper():
-            return handler
-    return None
+    return app.commands.get(cmd.upper())
 
 
 def all_command_handlers():
-    result = []
-    for capp in app.all_apps():
-        if 'command' in capp.handlers:
-            result += capp.handlers['command']
-    return result
+    return list(app.commands.values())
 
 
 #=================#
@@ -142,10 +151,21 @@ def all_command_handlers():
 #=================#
 
 
+def _help_brief(handler):
+    brief = handler.options.get('brief')
+    if brief:
+        return brief
+    parser = handler.options.get('argparser')
+    if parser and parser.description:
+        # Return first line of parser description.
+        return parser.description.strip().split('\n', 1)[0]
+    else:
+        return 'No help.'
+
+
 def _help_args():
-    desc = '''List all commands or show help for a specific command.
-    '''
-    parser = app.command.ArgumentParser(desc)
+    desc = '''List all commands or show help for a specific command.'''
+    parser = app.command.ArgumentParser(description=desc)
     parser.add_argument('command', nargs='?', help='name of command')
     return parser
 
@@ -157,9 +177,9 @@ def help_cmd(event):
     if cmd_name:
         yield _show_help(cmd_name)
     else:
-        for handler in all_command_handlers():
+        for handler in sorted(all_command_handlers()):
             yield '%-12s - %s' % (handler.subtype.lower(),
-                                  handler.help_brief())
+                                  _help_brief(handler))
 
 
 def _show_help(cmd_name):
@@ -171,11 +191,11 @@ def _show_help(cmd_name):
         parser.prog = cmd_name
         return parser.format_help()
     else:
-        return handler.help()
+        return ''
 
 
 def _ls_args():
-    parser = app.command.ArgumentParser()
+    parser = app.command.ArgumentParser(description='List datapaths, ports or flows.')
     parser.add_argument(
         '-l', '--long', action='store_true', help='list in long format')
     return parser
@@ -203,7 +223,7 @@ def _ps_args():
 @app.command('ps', argparser=_ps_args())
 def ps_cmd(event):
     """List all running apps/tasks."""
-    app_tasks = defaultdict(list)
+    app_tasks = collections.defaultdict(list)
     if event.args.all:
         for task in asyncio.Task.all_tasks():
             capp = getattr(task, 'ofp_task_app', None)
@@ -251,7 +271,7 @@ async def log_cmd(event):
             _console_handler.setLevel(console_level)
 
 
-@app.command('exit')
+@app.command('exit', brief='Exit command shell.')
 def exit_cmd(_event):
     """Exit command shell."""
     app.post_event('EXIT')
