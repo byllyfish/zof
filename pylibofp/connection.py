@@ -7,7 +7,7 @@ import shlex
 
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
-LOGGER = logging.getLogger('pylibofp.controller')
+LOGGER = logging.getLogger(__package__)
 
 
 class Connection(object):

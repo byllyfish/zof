@@ -1,15 +1,15 @@
 import unittest
 import asyncio
-from pylibofp.controller import Controller
-from pylibofp import ofp_app
+from ofp_app.controller import Controller
+from ofp_app import ofp_app
 
 
 class SimulatorTestCase(unittest.TestCase):
 
     def test_simulator(self):
-        import  pylibofp.demo.simulator as sim
-        import pylibofp.service.device as dev
-        from pylibofp.logging import init_logging
+        import  ofp_app.demo.simulator as sim
+        import ofp_app.service.device as dev
+        from ofp_app.logging import init_logging
 
         init_logging('INFO')
         sim.app.simulator_count = 50

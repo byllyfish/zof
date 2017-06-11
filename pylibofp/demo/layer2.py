@@ -8,8 +8,8 @@
 
 import argparse
 
-from pylibofp import ofp_app, ofp_run, ofp_compile, ofp_default_args
-from pylibofp.pktview import pktview_from_list
+from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_default_args
+from ofp_app.pktview import pktview_from_list
 
 app = ofp_app('layer2')
 
@@ -182,7 +182,7 @@ packet_flood = ofp_compile('''
 def main():
     args = parse_args()
     if args.shell:
-        import pylibofp.demo.command_shell as cmd_shell
+        import ofp_app.demo.command_shell as cmd_shell
         cmd_shell.app.command_prompt = 'layer2> '
     ofp_run(args=args)
 

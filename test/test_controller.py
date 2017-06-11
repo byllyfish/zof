@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.controller import Controller
+from ofp_app.controller import Controller
 
 
 class ControllerTestCase(unittest.TestCase):

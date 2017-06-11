@@ -1,7 +1,7 @@
 import unittest
-from pylibofp.handler import make_handler
-from pylibofp.objectview import make_objectview
-from pylibofp.event import make_event
+from ofp_app.handler import make_handler
+from ofp_app.objectview import make_objectview
+from ofp_app.event import make_event
 
 
 NO_HELP = 'No help available'

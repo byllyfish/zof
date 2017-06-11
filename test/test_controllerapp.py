@@ -1,6 +1,6 @@
 import unittest
-from pylibofp.controllerapp import ControllerApp
-from pylibofp.appfacade import AppFacade
+from ofp_app.controllerapp import ControllerApp
+from ofp_app.appfacade import AppFacade
 
 
 class MockController(object):

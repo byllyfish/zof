@@ -5,7 +5,7 @@ import logging
 from .objectview import ObjectView, to_json
 from .pktview import pktview_to_list
 
-LOGGER = logging.getLogger('pylibofp')
+LOGGER = logging.getLogger(__package__)
 
 _TEMPLATE = """\
 method: OFP.SEND

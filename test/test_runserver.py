@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 import signal
-from pylibofp.run_server import run_server
+from ofp_app.run_server import run_server
 
 
 class RunServerTestCase(unittest.TestCase):

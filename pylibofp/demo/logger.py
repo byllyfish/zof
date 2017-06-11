@@ -1,4 +1,4 @@
-from pylibofp import ofp_app, ofp_run
+from ofp_app import ofp_app, ofp_run
 import asyncio
 
 app = ofp_app('logger', precedence=0)

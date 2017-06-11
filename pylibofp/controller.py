@@ -17,7 +17,7 @@ _MAX_XID = 0xFFFFFFFF
 _API_VERSION = 0.9
 _VERSION = '0.1.0'
 
-LOGGER = logging.getLogger('pylibofp')
+LOGGER = logging.getLogger(__package__)
 
 
 class Controller(object):

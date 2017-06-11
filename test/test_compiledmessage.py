@@ -1,6 +1,6 @@
 import unittest
-from pylibofp.compiledmessage import CompiledMessage
-from pylibofp.objectview import ObjectView
+from ofp_app.compiledmessage import CompiledMessage
+from ofp_app.objectview import ObjectView
 
 
 class CompiledMessageTestCase(unittest.TestCase):

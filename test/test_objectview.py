@@ -1,7 +1,7 @@
 import unittest
 import ipaddress
 import argparse
-from pylibofp.objectview import ObjectView, to_json, from_json, make_objectview
+from ofp_app.objectview import ObjectView, to_json, from_json, make_objectview
 
 
 def _test_dict():

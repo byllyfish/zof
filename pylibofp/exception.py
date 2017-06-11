@@ -1,15 +1,15 @@
-# pylibofp uses the following Exception hierarchy:
+# ofp_app uses the following Exception hierarchy:
 #
 #     Exception (built into Python)
-#       +-- pylibofp.ControllerException
-#       |     +-- pylibofp.TimeoutException
-#       |     +-- pylibofp.RPCException
-#       |     +-- pylibofp.ErrorException
-#       |     +-- pylibofp.DeliveryException
-#       +-- pylibofp.ControlFlowException
-#             +-- pylibofp.StopPropagationException
-#             +-- pylibofp.CommandException
-#             +-- pylibofp.ExitException
+#       +-- ofp_app.ControllerException
+#       |     +-- ofp_app.TimeoutException
+#       |     +-- ofp_app.RPCException
+#       |     +-- ofp_app.ErrorException
+#       |     +-- ofp_app.DeliveryException
+#       +-- ofp_app.ControlFlowException
+#             +-- ofp_app.StopPropagationException
+#             +-- ofp_app.CommandException
+#             +-- ofp_app.ExitException
 
 
 class ControllerException(Exception):
@@ -68,7 +68,7 @@ class DeliveryException(ControllerException):
 
 
 class ControlFlowException(Exception):
-    """Base class for control flow exceptions used in pylibofp."""
+    """Base class for control flow exceptions used in ofp_app."""
 
 
 class StopPropagationException(ControlFlowException):

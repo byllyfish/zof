@@ -3,7 +3,7 @@ import re
 import os
 import difflib
 from glob import glob
-from pylibofp.connection import Connection
+from ofp_app.connection import Connection
 
 if __package__:
     from .asynctestcase import AsyncTestCase

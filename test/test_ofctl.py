@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.ofctl import convert_from_ofctl
+from ofp_app.ofctl import convert_from_ofctl
 
 
 class TestOfctl(unittest.TestCase):

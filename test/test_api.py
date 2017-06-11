@@ -1,6 +1,6 @@
 import unittest
-from pylibofp import ofp_app
-from pylibofp.controller import Controller
+from ofp_app import ofp_app
+from ofp_app.controller import Controller
 
 
 class TestApi(unittest.TestCase):

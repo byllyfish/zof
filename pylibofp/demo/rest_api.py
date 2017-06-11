@@ -1,7 +1,7 @@
-from pylibofp import ofp_app, ofp_run, ofp_compile
-from pylibofp.http import HttpServer
-from pylibofp.service.device import get_devices, get_device_port
-from pylibofp.pktview import pktview_from_list
+from ofp_app import ofp_app, ofp_run, ofp_compile
+from ofp_app.http import HttpServer
+from ofp_app.service.device import get_devices, get_device_port
+from ofp_app.pktview import pktview_from_list
 
 
 app = ofp_app('webserver')

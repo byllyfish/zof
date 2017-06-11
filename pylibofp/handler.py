@@ -3,7 +3,7 @@ import logging
 import asyncio
 from .objectview import ObjectView
 
-LOGGER = logging.getLogger('pylibofp.controller')
+LOGGER = logging.getLogger(__package__)
 
 _MSG_SUBTYPES = {
     "CHANNEL_UP", "CHANNEL_DOWN", "CHANNEL_ALERT", "HELLO", "ERROR",

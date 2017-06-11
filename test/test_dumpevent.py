@@ -1,5 +1,5 @@
 import unittest
-from pylibofp.event import dump_event, Event
+from ofp_app.event import dump_event, Event
 
 
 class DumpEventTestCase(unittest.TestCase):

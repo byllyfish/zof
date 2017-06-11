@@ -1,6 +1,6 @@
 import unittest
-from pylibofp.event import load_event, Event
-from pylibofp.objectview import to_json
+from ofp_app.event import load_event, Event
+from ofp_app.objectview import to_json
 
 
 class LoadEventTestCase(unittest.TestCase):
