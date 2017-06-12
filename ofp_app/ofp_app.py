@@ -29,7 +29,7 @@ if os.environ.get('OFP_APP_LOGLEVEL'):
 _LISTEN_ENDPOINTS = [6653]
 
 
-def ofp_app(name, *, kill_on_exception=False, precedence=1000):
+def ofp_app(name, *, kill_on_exception=False, precedence=100):
     """Construct a new app.
 
     Args:

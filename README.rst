@@ -14,6 +14,44 @@ terminate OpenFlow connections and translate OpenFlow messages to JSON.
 There is no built-in OpenFlow API. You construct OpenFlow messages via YAML strings or Python dictionaries. 
 Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constants such as 'NO_BUFFER' appear as strings.
 
+::
+
+    type: FLOW_MOD
+    msg:
+      command: ADD
+      match:
+        - field: IN_PORT
+          value: 1
+        - field: ETH_DST
+          value: 00:00:00:00:00:01
+      instructions:
+        - instruction: APPLY_ACTIONS
+          actions:
+            - action: OUTPUT
+              port_no: ALL
+
+The basic building block of ofp_app is an `app`. An `app` is associated with various message and event handlers.
+You create an app object using the `ofp_app` function. Then, you associate handlers using the app's `message` decorator.
+
+::
+
+    from ofp_app import ofp_app, ofp_run
+
+    app = ofp_app('app_name_here')
+
+    @app.message('packet_in', cookie=123)
+    def packet_in(event):
+        app.logger.info('packet_in message %r', event)
+
+    @app.message(any)
+    def other(event):
+        app.logger.info('other message %r', event)
+
+    if __name__ == '__main__':
+        ofp_run()
+
+This app handles 'PACKET_IN' messages with a cookie value of 123 using the packet_in function. All other messages including other 'PACKET_IN' messages are dispatched to the `other` function.
+
 An OpenFlow application may be composed of multiple "app modules".  The framework includes built-in "system modules" that you can build upon.
 
 .. (TODO) image of command line 
@@ -36,10 +74,10 @@ Install - Linux
     sudo apt-get update
     sudo apt-get install oftr
 
-    # Create virtual environment and install ofp_app.
+    # Create virtual environment and install latest ofp_app.
     python3.5 -m venv myenv
     source myenv/bin/activate
-    pip install ofp_app
+    pip install git+https://github.com/byllyfish/ofp_app.git
 
 
 Demos

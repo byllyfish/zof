@@ -17,7 +17,7 @@ from ..event import make_event
 
 OPENFLOW_VERSION_1 = 0
 
-app = ofp_app('service.device', precedence=500)
+app = ofp_app('service.device', precedence=10)
 app.devices = OrderedDict()
 
 set_config = ofp_compile('''

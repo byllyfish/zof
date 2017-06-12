@@ -8,7 +8,6 @@
 #       |     +-- ofp_app.DeliveryException
 #       +-- ofp_app.ControlFlowException
 #             +-- ofp_app.StopPropagationException
-#             +-- ofp_app.CommandException
 #             +-- ofp_app.ExitException
 
 
