@@ -17,7 +17,7 @@ class _SplitCommaAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def ofp_default_args():
+def ofp_common_args():
     """Construct default ArgumentParser parent.
     """
     parser = argparse.ArgumentParser(add_help=False)

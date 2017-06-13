@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_default_args
+from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_common_args
 from ofp_app.ofp_args import import_module
 
 
@@ -145,7 +145,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog='simulator',
         description='Simulator Demo',
-        parents=[ofp_default_args()])
+        parents=[ofp_common_args()])
     parser.add_argument(
         '--simulator-count', type=int, default=10, help='Number of datapaths to simulate')
     parser.add_argument(

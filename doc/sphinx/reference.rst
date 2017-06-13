@@ -4,6 +4,7 @@ Reference
 =========
 
 
-.. automodule:: ofp_app.ofp_app
+.. automodule:: ofp_app
     :members:
+
 

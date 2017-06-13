@@ -2,8 +2,8 @@ import argparse
 import asyncio
 
 
-class AppFacade(object):
-    """Facade that provides access to API functions.
+class AppRef(object):
+    """Provides access to API functions.
 
     This object will be returned by `ofp_app` function.
 

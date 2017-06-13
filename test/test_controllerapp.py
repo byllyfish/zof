@@ -1,6 +1,6 @@
 import unittest
 from ofp_app.controllerapp import ControllerApp
-from ofp_app.appfacade import AppFacade
+from ofp_app.appref import AppRef
 
 
 class MockController(object):
@@ -12,7 +12,7 @@ class ControllerAppTestCase(unittest.TestCase):
 
     def setUp(self):
         app = ControllerApp(MockController(), name='mock-app')
-        ofp = AppFacade(app)
+        ofp = AppRef(app)
 
         @ofp.message(any)
         def _message_default(event):

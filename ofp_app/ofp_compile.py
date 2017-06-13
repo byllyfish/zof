@@ -2,6 +2,7 @@ import string
 import textwrap
 import asyncio
 import logging
+from .controller import Controller
 from .objectview import ObjectView, to_json
 from .pktview import pktview_to_list
 
@@ -14,6 +15,15 @@ params:
   datapath_id: $datapath_id
   conn_id: $conn_id
   %s"""
+
+
+def ofp_compile(msg):
+    """Compile an OpenFlow message template."""
+    controller = Controller.singleton()
+    if isinstance(msg, str):
+        return CompiledMessage(controller, msg)
+    else:
+        return CompiledObject(controller, msg)
 
 
 class CompiledMessage(object):

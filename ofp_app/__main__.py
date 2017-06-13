@@ -1,7 +1,7 @@
 import argparse
 
 from .ofp_app import ofp_run
-from .ofp_args import ofp_default_args, import_module
+from .ofp_args import ofp_common_args, import_module
 
 
 def main():
@@ -15,7 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog='ofp_app',
         description='ofp_app runner', 
-        parents=[ofp_default_args()])
+        parents=[ofp_common_args()])
     parser.add_argument('modules', metavar='module', type=str, nargs='+', help='modules to import')
     return parser.parse_args()
 

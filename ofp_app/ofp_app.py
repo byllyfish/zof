@@ -19,8 +19,7 @@ import asyncio
 
 from .controller import Controller
 from .controllerapp import ControllerApp
-from .appfacade import AppFacade
-from .compiledmessage import CompiledMessage, CompiledObject
+from .appref import AppRef
 from .logging import init_logging, EXT_STDERR
 
 if os.environ.get('OFP_APP_LOGLEVEL'):
@@ -29,17 +28,27 @@ if os.environ.get('OFP_APP_LOGLEVEL'):
 _LISTEN_ENDPOINTS = [6653]
 
 
-def ofp_app(name, *, kill_on_exception=False, precedence=100):
-    """Construct a new app.
+def ofp_app(name, *, precedence=100, kill_on_exception=False):
+    """Construct a new app object.
+
+    The app object provides the API to register event handlers.
+
+    An app is required to have a unique name. 
+
+    An app logs to a logger named `ofp_app.<name>`.
+
+    An app's precedence determines the order that events are dispatched to
+    various apps.
 
     Args:
         name (str): Name of the app.
-        kill_on_exception (bool|str): Abort if app raises exception. If this
-            value is a string, it's treated as the name of the exception log.
-        precedence (int): Precedence for event dispatch
+        precedence (int): Precedence for app event dispatch.
+        kill_on_exception (bool|str): If true, abort app when a handler raises 
+          an exception. When the value is a string, it's treated as the name of 
+          the exception logger `ofp_app.<exc_log>`.
 
     Returns:
-        AppFacade: API object for app.
+        AppRef: App API object.
     """
     controller = Controller.singleton()
     if controller.find_app(name):
@@ -49,7 +58,7 @@ def ofp_app(name, *, kill_on_exception=False, precedence=100):
         name=name,
         kill_on_exception=kill_on_exception,
         precedence=precedence)
-    return AppFacade(app)
+    return AppRef(app)
 
 
 def ofp_run(*,
@@ -63,9 +72,9 @@ def ofp_run(*,
     """Run event loop for ofp_app.
 
     Args:
-        listen_endpoints (Optional[List[str]]): Endpoints to listen on.
+        listen_endpoints (str|List[str]): Endpoints to listen on.
             If None, don't listen. If "default", listen on default port.
-        listen_versions (Optional[List[int]]): Acceptible OpenFlow protocol 
+        listen_versions (List[int]): Acceptible OpenFlow protocol 
             versions. If None or empty, accept all versions.
         oftr_options (Optional[Dict[str, str]]): Dictionary with settings for
             launching oftr process.
@@ -81,7 +90,7 @@ def ofp_run(*,
                 - "cert": SSL Certificate with Private Key (PEM)
                 - "cafile": CA Certificate (PEM)
                 - "password": Password for "cert", if needed.
-        args (Optional[argparse.Namespace]): Arguments from `ofp_default_args`
+        args (Optional[argparse.Namespace]): Arguments from `ofp_common_args`
             ArgumentParser.
     """
     if listen_endpoints is None:
@@ -115,15 +124,6 @@ def ofp_run(*,
         listen_versions=listen_versions,
         oftr_options=oftr_options,
         security=security)
-
-
-def ofp_compile(msg):
-    """Compile an OpenFlow message template."""
-    controller = Controller.singleton()
-    if isinstance(msg, str):
-        return CompiledMessage(controller, msg)
-    else:
-        return CompiledObject(controller, msg)
 
 
 def _arg(args, key, default=None):

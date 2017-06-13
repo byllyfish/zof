@@ -5,7 +5,7 @@ Event Dispatch
 
 Events are dispatched to apps in order of precedence.
 
-All apps are initially sorted by precedence value in ascending order. The default precedence value for an app is 100. You have the option to set the precedence value when you call ofp_app(). Where two apps have the same precedence value, they are sorted by app name.
+All apps are initially sorted by precedence value in ascending order. The default precedence value for an app is 100. You have the option to set the precedence value when you call ofp_app(). Where two apps have the same precedence value, they remain in their original order.
 
 Events are dispatched one at a time to each app in order. Each app checks its handlers from top to bottom, and runs the first handler that matches. Then, the dispatcher proceeds to the next app.
 
@@ -15,7 +15,7 @@ After the event is dispatched to all apps, the dispatcher yields any running asy
 Event
 -----
 
-There are two types of events: message events and internal events.  Message events have a 'type' attribute. They represent incoming OpenFlow messages.
+There are two types of events: message events and internal events. Message events have a 'type' attribute. They represent incoming OpenFlow messages.
 
 ::
 

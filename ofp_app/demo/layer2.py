@@ -8,7 +8,7 @@
 
 import argparse
 
-from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_default_args
+from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_common_args
 from ofp_app.pktview import pktview_from_list
 
 app = ofp_app('layer2')
@@ -191,7 +191,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog='layer2',
         description='Layer2 Demo',
-        parents=[ofp_default_args()])
+        parents=[ofp_common_args()])
     parser.add_argument(
         '--shell', action='store_true', help='use command shell')
     return parser.parse_args()

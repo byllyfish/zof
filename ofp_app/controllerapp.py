@@ -120,7 +120,11 @@ class ControllerApp(object):
         return callback
 
     def unsubscribe(self, callback):
-        """Function used to unsubscribe a handler."""
+        """Function used to unsubscribe a handler.
+        
+        Currently, this function is completely unused. It may be removed in 
+        later versions.
+        """
         for key in self.handlers:
             for handler in self.handlers[key]:
                 if handler.callback is callback:
