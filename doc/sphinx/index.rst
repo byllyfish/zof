@@ -4,14 +4,17 @@
    contain the root `toctree` directive.
 
 Welcome to ofp_app's documentation!
-==================================
+===================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    readme
+   dispatch
    scalar
+   signals
+   reference
 
 Indices and tables
 ==================

@@ -22,7 +22,8 @@ class ObjectView(object):
     present, e.g. `obj('foo', default='bar')`.
 
     This class does _not_ recursively wrap sub-objects; it's designed to be
-    used as a `json.loads` object_hook.
+    used as a `json.loads` object_hook. Use `make_objectview` to recursively
+    wrap a dictionary.
 
     This class does not define any non-dunder methods to avoid conflict
     with attribute names.
@@ -92,6 +93,8 @@ class ObjectView(object):
     def __str__(self):
         """Return JSON representation."""
         return to_json(self.__dict__)
+
+    # TODO(bfish): Implement __copy__ and __deepcopy__?
 
 
 def to_json(obj):
