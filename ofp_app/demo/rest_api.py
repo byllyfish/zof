@@ -35,6 +35,7 @@ async def get_flows(dpid):
 @web.route(r'/stats/groupdesc/{dpid:[0-9A-F:]+}')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
+    _translate_groups(result.msg)
     return {dpid:result.msg}
 
 
@@ -123,6 +124,13 @@ def _translate_flows(msgs):
         if 'instructions' in msg:
             msg.actions = _translate_instructions(msg.instructions)
 
+def _translate_groups(msgs):
+    for msg in msgs:
+        for bkt in msg.buckets:
+            if 'actions' in bkt:
+                bkt.actions = _translate_actions(bkt.actions)
+
+
 def _translate_instructions(instrs):
     result = []
     for instr in instrs:
@@ -131,15 +139,24 @@ def _translate_instructions(instrs):
 
 def _translate_instruction(instr):
     if instr.instruction == 'APPLY_ACTIONS':
-        return [_translate_action(act) for act in instr.actions]
-    return [instr]
+        return _translate_action(instr.actions)
+    return [str(instr)]
+
+
+def _translate_actions(actions):
+    return [_translate_action(act) for act in actions]
+
 
 def _translate_action(action):
     if action.action == 'OUTPUT':
         return 'OUTPUT:%s' % action.port_no
+    if action.action == 'GROUP':
+        return 'GROUP:%s' % action.group_id
     if action.action == 'SET_FIELD':
-        return 'SET_FIELD: {%s:%s}' % (action.field, action.value)
-    return action
+        return 'SET_FIELD: {%s:%s}' % (action.field.lower(), action.value)
+    if len(action) == 1:
+        return '%s' % action.action
+    return str(action)
 
 
 if __name__ == '__main__':
