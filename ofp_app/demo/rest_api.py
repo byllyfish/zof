@@ -42,7 +42,7 @@ async def get_groupdesc(dpid):
 @web.route(r'/stats/port/{dpid}/{port_no}')
 async def get_portstats(dpid, port_no):
     result = await PORTSTATS_REQ.request(datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
-    return result.msg
+    return {dpid:result.msg}
 
 
 @web.route(r'/stats/portdesc/modify', method='POST')
@@ -139,7 +139,7 @@ def _translate_instructions(instrs):
 
 def _translate_instruction(instr):
     if instr.instruction == 'APPLY_ACTIONS':
-        return _translate_action(instr.actions)
+        return _translate_actions(instr.actions)
     return [str(instr)]
 
 

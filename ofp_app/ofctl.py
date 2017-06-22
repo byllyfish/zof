@@ -6,6 +6,8 @@ def _convert_tp_dst(key, ofctl):
 def _convert_tp_src(key, ofctl):
     return '%s_src' % _ip_proto_name(ofctl)
 
+_OFPVID_PRESENT = 0x1000
+
 _IP_PROTO_NAME = { 6: 'tcp', 11: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
 
 _LEGACY_FIELDS = dict(
@@ -28,6 +30,9 @@ def convert_from_ofctl(ofctl):
         if key in result:
             raise ValueError('Duplicate ofctl field: %s' % key)
         result[key] = value
+    vlan = result.get('vlan_vid')
+    if vlan and isinstance(vlan, int):
+        result['vlan_vid'] = vlan | _OFPVID_PRESENT
     return result
 
 

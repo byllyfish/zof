@@ -28,3 +28,18 @@ class TestOfctl(unittest.TestCase):
             'tcp_dst': 1002,
             'other_field': 'other_value'
             })
+
+    def test_dl_vlan(self):
+        ofctl = {
+            'dl_src': '00:00:00:00:00:01',
+            'dl_dst': '00:00:00:00:00:02',
+            'dl_vlan': 0x123,
+            'dl_type': 0x0800
+        }
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {
+            'eth_src': '00:00:00:00:00:01',
+            'eth_dst': '00:00:00:00:00:02',
+            'eth_type': 0x0800,
+            'vlan_vid': 0x0123
+            })    
