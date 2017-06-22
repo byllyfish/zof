@@ -41,5 +41,5 @@ class TestOfctl(unittest.TestCase):
             'eth_src': '00:00:00:00:00:01',
             'eth_dst': '00:00:00:00:00:02',
             'eth_type': 0x0800,
-            'vlan_vid': 0x0123
+            'vlan_vid': 0x1123
             })    
