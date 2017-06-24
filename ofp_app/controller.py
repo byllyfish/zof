@@ -281,10 +281,17 @@ class Controller(object):
         self._reqs[xid] = (fut, expiration, _XID_TIMEOUT)
         return fut
 
-    def rpc_call(self, method, **params):
-        """Send a RPC request and return a future for the reply."""
-        xid = self.next_xid()
-        event = dict(id=xid, method=method, params=params)
+    def rpc_call(self, method, *, ignore_result=False, **params):
+        """Send a RPC request and return a future for the reply.
+
+        If ignore_result is True, issue the request but don't return the future.
+        """
+        if ignore_result:
+            xid = None
+            event = dict(method=method, params=params)
+        else:
+            xid = self.next_xid()
+            event = dict(id=xid, method=method, params=params)
         LOGGER.debug('rpc_call %r', event)
         return self.write(event, xid)
 

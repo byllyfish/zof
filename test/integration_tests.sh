@@ -18,4 +18,10 @@ $CMD -m ofp_app.demo.simulator \
         --loglevel=warning \
         ofp_app.demo.layer2
 
+echo "Test conntest demo with simulator (count=10)"
+$CMD -m ofp_app.demo.simulator \
+        --listen-endpoints=6653 \
+        --exit-timeout=3 \
+        ofp_app.demo.conntest
+
 exit 0
