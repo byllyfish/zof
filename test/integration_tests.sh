@@ -1,14 +1,17 @@
 #!/bin/bash
 
+set -e
+set -u
 
 CMD="python"
+ARG1="${1:-}"
 
-if [ "$1" = '--coverage' ]; then
+if [ "$ARG1" = '--coverage' ]; then
     CMD="coverage run -a --source ofp_app"
 fi
 
 echo "Test layer2 demo with unknown argument."
-$CMD -m ofp_app.demo.layer2 --unknown-argument
+$CMD -m ofp_app.demo.layer2 --unknown-argument || true
 
 echo "Test layer2 demo with simulator (count=50)"
 $CMD -m ofp_app.demo.simulator \

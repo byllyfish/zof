@@ -79,7 +79,7 @@ class Simulator(object):
         }
 
 
-app = ofp_app('simulator')
+app = ofp_app('simulator', kill_on_exception=True)
 app.simulator_count = 100
 app.exit_timeout = None
 app.sims = []
@@ -99,6 +99,11 @@ def start(_):
         sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start())
 
+@app.message('channel_up', datapath_id=None)
+@app.message('channel_down', datapath_id=None)
+@app.message('flow_mod', datapath_id=None)
+def ignore(_):
+    return
 
 @app.message('features_request', datapath_id=None)
 def features_request(event):
@@ -130,6 +135,7 @@ def channel_down(event):
 @app.message(any, datapath_id=None)
 def other(event):
     app.logger.info('Unhandled message: %r' % event)
+    raise ValueError('Unexpected message: %r' % event)
 
 
 def main():

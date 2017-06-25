@@ -109,9 +109,10 @@ class MessageHandler(BaseHandler):
         # Check for events that don't have a datapath_id. For these, the app
         # must explicitly opt in using `datapath_id=None`.
         if 'datapath_id' not in event:
-            if 'datapath_id' not in self.options:
+            if self.options.get('datapath_id', '') is not None:
                 return False
-            elif self.options['datapath_id'] is not None:
+        else:
+            if self.options.get('datapath_id', '') is None:
                 return False
         # Check for matching option values in event.
         for key, value in self.options.items():

@@ -105,9 +105,9 @@ class HandlerTestCase(unittest.TestCase):
                 'cookie': 124
             }
         })
-        self.assertTrue(h.match(evt))
+        self.assertFalse(h.match(evt))
         evt.datapath_id = None
-        self.assertTrue(h.match(evt))
+        self.assertFalse(h.match(evt))
         del evt['datapath_id']
         self.assertTrue(h.match(evt))
 
