@@ -207,12 +207,13 @@ class Controller(object):
         try:
             result = await self.rpc_call(
                 'OFP.ADD_IDENTITY',
-                certificate=security['cert'],
-                verifier=security['cafile'],
+                cert=security['cert'],
+                cacert=security['cacert'],
+                privkey=security['privkey'],
                 password=security.get('password', ''))
             # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
-            self._tls_id = result.params.tls_id
+            self._tls_id = result.tls_id
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to create TLS identity: %s', ex.message)

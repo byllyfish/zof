@@ -87,9 +87,10 @@ def ofp_run(*,
         logfile (Optional[str]): Log file.  Defaults to stderr.
         security (Optional[Dict[str, str]]): Dictionary with security settings
             for oftr connections:
-                - "cert": SSL Certificate with Private Key (PEM)
-                - "cafile": CA Certificate (PEM)
-                - "password": Password for "cert", if needed.
+                - "cert": SSL Certificate Chain (PEM)
+                - "cacert": CA Certificate (PEM)
+                - "privkey": Private Key (PEM)
+                - "password": Password for "privkey", if needed.
         args (Optional[argparse.Namespace]): Arguments from `ofp_common_args`
             ArgumentParser.
     """
@@ -103,6 +104,15 @@ def ofp_run(*,
 
     if logfile is None:
         logfile = _arg(args, 'logfile', EXT_STDERR)
+
+    if args and security is None:
+        security = {
+            'cert': args.cert,
+            'cacert': args.cacert,
+            'privkey': args.privkey
+        }
+        if not any(security.values()):
+            security = None
 
     if loglevel:
         init_logging(loglevel, logfile)

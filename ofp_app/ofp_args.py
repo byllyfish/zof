@@ -29,6 +29,9 @@ def ofp_common_args():
         help='listen endpoints separated by commas')
     group.add_argument('--loglevel', metavar='LEVEL', help='log level')
     group.add_argument('--logfile', metavar='FILE', help='log file')
+    group.add_argument('--cert', type=file_content, metavar='FILE', help='certificate chain')
+    group.add_argument('--cacert', type=file_content, metavar='FILE', help='certificate authority')
+    group.add_argument('--privkey', type=file_content, metavar='FILE', help='private key')
     return parser
 
 
@@ -40,3 +43,8 @@ def import_module(module_name):
     except ImportError as ex:
         print(ex, file=sys.stderr, flush=True)
         sys.exit(1)
+
+
+def file_content(filename):
+    with open(filename, encoding='utf-8') as afile:
+        return afile.read()

@@ -11,7 +11,7 @@ class Simulator(object):
         app.sims.append(self)
 
     async def start(self):
-        conn_id = await app.connect('127.0.0.1:6653', versions=[1])
+        conn_id = await app.connect('127.0.0.1:6653', versions=[1], tls_id=app.tls_id)
         app.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
@@ -81,6 +81,8 @@ class Simulator(object):
 
 app = ofp_app('simulator', kill_on_exception=True)
 app.simulator_count = 100
+app.security = None
+app.tls_id = 0
 app.exit_timeout = None
 app.sims = []
 app.conn_to_sim = {}
@@ -89,6 +91,12 @@ app.conn_to_sim = {}
 async def _exit_timeout(timeout):
     await asyncio.sleep(timeout)
     app.post_event('EXIT')
+
+@app.event('prestart')
+async def prestart(_):
+    if app.security:
+        result = await app.rpc_call('OFP.ADD_IDENTITY', cert=app.security['cert'], cacert=app.security['cacert'], privkey=app.security['privkey'])
+        app.tls_id = result.tls_id
 
 
 @app.event('start')
@@ -138,12 +146,22 @@ def other(event):
     raise ValueError('Unexpected message: %r' % event)
 
 
+def _file_content(filename):
+    with open(filename, encoding='utf-8') as afile:
+        return afile.read()
+
 def main():
     args = parse_args()
     for module in args.modules:
         import_module(module)
     app.simulator_count = args.simulator_count
     app.exit_timeout = args.exit_timeout
+    if args.sim_cert:
+        app.security = {
+            'cert': args.sim_cert,
+            'privkey': args.sim_privkey,
+            'cacert': args.sim_cacert
+        }
     ofp_run(args=args, listen_endpoints=None)
 
 
@@ -156,6 +174,9 @@ def parse_args():
         '--simulator-count', type=int, default=10, help='Number of datapaths to simulate')
     parser.add_argument(
         '--exit-timeout', type=float, default=0, help='Seconds to run simulation')
+    parser.add_argument('--sim-cert', type=_file_content, help='Simulator certificate')
+    parser.add_argument('--sim-privkey', type=_file_content, help='Simulator private key')
+    parser.add_argument('--sim-cacert', type=_file_content, help='Simulator CA certificate')
     parser.add_argument('modules', nargs='*', help='Modules to load')
     return parser.parse_args()
 

@@ -70,12 +70,13 @@ class AppRef(object):
 
     # RPC Functions
 
-    async def connect(self, endpoint, *, options=(), versions=()):
+    async def connect(self, endpoint, *, options=(), versions=(), tls_id=0):
         """Make an outgoing OpenFlow connection.
         """
         result = await self.rpc_call(
             'OFP.CONNECT',
             endpoint=endpoint,
+            tls_id=tls_id,
             options=options,
             versions=versions)
         return result.conn_id
