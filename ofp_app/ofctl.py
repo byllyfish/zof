@@ -1,14 +1,14 @@
-
-def _convert_tp_dst(key, ofctl):
+def _convert_tp_dst(_key, ofctl):
     return '%s_dst' % _ip_proto_name(ofctl)
 
 
-def _convert_tp_src(key, ofctl):
+def _convert_tp_src(_key, ofctl):
     return '%s_src' % _ip_proto_name(ofctl)
+
 
 _OFPVID_PRESENT = 0x1000
 
-_IP_PROTO_NAME = { 6: 'tcp', 11: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
+_IP_PROTO_NAME = {6: 'tcp', 11: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
 
 _LEGACY_FIELDS = dict(
     dl_type='eth_type',

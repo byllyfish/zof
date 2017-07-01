@@ -1,4 +1,3 @@
-import json
 from .objectview import ObjectView, to_json, from_json
 from .pktview import pktview_from_list
 

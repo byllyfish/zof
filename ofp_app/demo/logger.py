@@ -1,5 +1,5 @@
-from ofp_app import ofp_app, ofp_run
 import asyncio
+from ofp_app import ofp_app, ofp_run
 
 app = ofp_app('logger', precedence=0)
 
@@ -14,6 +14,7 @@ def poststop(event):
 @app.event('STOP')
 async def stop(event):
     await logger(event)
+
 
 @app.message(any)
 @app.event(any)

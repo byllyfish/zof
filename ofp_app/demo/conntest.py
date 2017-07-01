@@ -1,6 +1,5 @@
-from ofp_app import ofp_app, ofp_run
 import asyncio
-
+from ofp_app import ofp_app, ofp_run
 
 app = ofp_app('conntest', kill_on_exception=True)
 
@@ -14,7 +13,8 @@ async def start(_):
         for conn in conns.stats:
             if conn.datapath_id:
                 app.logger.info('close %d %s', conn.conn_id, conn.datapath_id)
-                result = await app.rpc_call('OFP.CLOSE', datapath_id=conn.datapath_id)
+                result = await app.rpc_call(
+                    'OFP.CLOSE', datapath_id=conn.datapath_id)
                 assert result.count == 1
 
 

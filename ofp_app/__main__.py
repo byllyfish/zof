@@ -14,12 +14,16 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='ofp_app',
-        description='ofp_app runner', 
+        description='ofp_app runner',
         parents=[ofp_common_args()])
-    parser.add_argument('modules', metavar='module', type=str, nargs='+', help='modules to import')
+    parser.add_argument(
+        'modules',
+        metavar='module',
+        type=str,
+        nargs='+',
+        help='modules to import')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     main()
-

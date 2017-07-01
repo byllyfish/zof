@@ -167,5 +167,5 @@ def convert_slash_notation(fname, value):
     return (ipaddress.IPv6Address(addr[0]), ipaddress.IPv6Address(addr[1]))
 
 
-_MAC_FIELDS = { 'ETH_DST', 'ETH_SRC', 'ARP_SHA', 'ARP_THA' }
-_SLASH_FIELDS = { 'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST' } | _MAC_FIELDS
+_MAC_FIELDS = {'ETH_DST', 'ETH_SRC', 'ARP_SHA', 'ARP_THA'}
+_SLASH_FIELDS = {'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST'} | _MAC_FIELDS

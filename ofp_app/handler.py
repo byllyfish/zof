@@ -1,7 +1,7 @@
 import inspect
 import logging
 import asyncio
-from .objectview import ObjectView
+
 
 LOGGER = logging.getLogger(__package__)
 
@@ -45,11 +45,12 @@ class BaseHandler(object):
     """A Handler is a wrapper around an event callback.
 
     Attributes:
-        callback (function): Callback function or coroutine 
+        callback (function): Callback function or coroutine
         type (str): "message", "event" or "command"
         subtype (str | function): Event or message subtype
         options (Optional[dict]): Handler options.
     """
+
     def __init__(self, callback, type_, subtype='', options=None):
         self.callback = callback
         self.type = type_
@@ -77,8 +78,8 @@ class BaseHandler(object):
 
     def __repr__(self):
         cb_name = self.callback.__name__ if self.callback else 'NONE'
-        return '%s[%s] %s %r' % (self.type, self.subtype,
-                                 cb_name, self.options)
+        return '%s[%s] %s %r' % (self.type, self.subtype, cb_name,
+                                 self.options)
 
     def verify(self):
         return _verify_callback(self.callback, 1)

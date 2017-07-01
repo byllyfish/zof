@@ -1,7 +1,7 @@
 import asyncio
-import aiohttp.web as web
 import inspect
 import re
+import aiohttp.web as web
 from .objectview import to_json, from_json
 
 
@@ -19,11 +19,14 @@ class HttpServer(object):
     async def start(self, endpoint):
         self.endpoint = _parse_endpoint(endpoint)
         loop = asyncio.get_event_loop()
-        self.web_handler = self.web_app.make_handler(loop=loop, access_log=self.logger)
+        self.web_handler = self.web_app.make_handler(
+            loop=loop, access_log=self.logger)
         await self.web_app.startup()
 
-        self.web_server = await loop.create_server(self.web_handler, self.endpoint[0], self.endpoint[1])
-        self.logger.info('HttpServer: Start listening on %s', endpoint_str(self.endpoint))
+        self.web_server = await loop.create_server(
+            self.web_handler, self.endpoint[0], self.endpoint[1])
+        self.logger.info('HttpServer: Start listening on %s',
+                         endpoint_str(self.endpoint))
 
     async def stop(self):
         assert self.endpoint
@@ -33,25 +36,36 @@ class HttpServer(object):
         await self.web_app.shutdown()
         await self.web_handler.shutdown(timeout=10)
         await self.web_app.cleanup()
-        self.logger.info('HttpServer: Stop listening on %s', endpoint_str(self.endpoint))
-
+        self.logger.info('HttpServer: Stop listening on %s',
+                         endpoint_str(self.endpoint))
 
     def route(self, path, *, method='GET'):
         method = method.upper()
+
         def _wrap(func):
             if method == 'GET':
+
                 async def _exec_async(req):
-                    return web.json_response(await func(**req.match_info), dumps=to_json)
+                    return web.json_response(
+                        await func(**req.match_info), dumps=to_json)
+
                 def _exec_sync(req):
-                    return web.json_response(func(**req.match_info), dumps=to_json)
-                _exec_get = _exec_async if inspect.iscoroutinefunction(func) else _exec_sync
+                    return web.json_response(
+                        func(**req.match_info), dumps=to_json)
+
+                _exec_get = _exec_async if inspect.iscoroutinefunction(
+                    func) else _exec_sync
                 self.web_app.router.add_get(path, _exec_get)
             elif method == 'POST':
+
                 async def _exec_post(req):
                     post_data = await req.json(loads=from_json)
-                    return web.json_response(await func(post_data), dumps=to_json)
+                    return web.json_response(
+                        await func(post_data), dumps=to_json)
+
                 self.web_app.router.add_post(path, _exec_post)
             return func
+
         return _wrap
 
 

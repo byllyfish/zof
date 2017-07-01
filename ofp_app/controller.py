@@ -75,7 +75,8 @@ class Controller(object):
                     security=security))
             run_server(
                 signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
-                signal_handler=self._handle_signal, logger=LOGGER)
+                signal_handler=self._handle_signal,
+                logger=LOGGER)
             self._set_phase('POSTSTOP')
 
         except Exception as ex:  # pylint: disable=broad-except

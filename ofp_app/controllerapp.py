@@ -16,7 +16,7 @@ class ControllerApp(object):
     Attributes:
         name (str): App name.
         precedence (int): App precedence.
-        kill_on_exception (bool|str): Terminate immediately if app raises 
+        kill_on_exception (bool|str): Terminate immediately if app raises
             exception.
         parent (Controller): App's parent controller object.
         logger (Logger): App's logger.
@@ -67,15 +67,23 @@ class ControllerApp(object):
     def handle_exception(self, event, handler_type):
         """Handle exception."""
         fatal_str = 'Fatal ' if self.kill_on_exception else ''
-        self.logger.critical('%sException caught while handling "%s": %r',
-                             fatal_str, handler_type, event, exc_info=True)
+        self.logger.critical(
+            '%sException caught while handling "%s": %r',
+            fatal_str,
+            handler_type,
+            event,
+            exc_info=True)
         if self.kill_on_exception:
             # If the value of `kill_on_exception` is a string, find the logger
             # with this name and log the critical exception here also.
             if isinstance(self.kill_on_exception, str):
                 logger = logging.getLogger(self.kill_on_exception)
-                logger.critical('%sException caught while handling "%s": %r',
-                                fatal_str, handler_type, event, exc_info=True)
+                logger.critical(
+                    '%sException caught while handling "%s": %r',
+                    fatal_str,
+                    handler_type,
+                    event,
+                    exc_info=True)
             # Shutdown the program immediately.
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
@@ -121,8 +129,8 @@ class ControllerApp(object):
 
     def unsubscribe(self, callback):
         """Function used to unsubscribe a handler.
-        
-        Currently, this function is completely unused. It may be removed in 
+
+        Currently, this function is completely unused. It may be removed in
         later versions.
         """
         for key in self.handlers:
@@ -135,4 +143,5 @@ class ControllerApp(object):
     def __repr__(self):
         evt_count = len(self.handlers.get('event', []))
         msg_count = len(self.handlers.get('message', []))
-        return '<ControllerApp name="%s" precedence=%d evt=%d msg=%d>' % (self.name, self.precedence, evt_count, msg_count)
+        return '<ControllerApp name="%s" precedence=%d evt=%d msg=%d>' % (
+            self.name, self.precedence, evt_count, msg_count)

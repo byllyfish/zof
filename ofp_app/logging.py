@@ -1,4 +1,3 @@
-import collections
 import logging.config
 import os
 import warnings

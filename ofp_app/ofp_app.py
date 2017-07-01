@@ -33,7 +33,7 @@ def ofp_app(name, *, precedence=100, kill_on_exception=False):
 
     The app object provides the API to register event handlers.
 
-    An app is required to have a unique name. 
+    An app is required to have a unique name.
 
     An app logs to a logger named `ofp_app.<name>`.
 
@@ -43,8 +43,8 @@ def ofp_app(name, *, precedence=100, kill_on_exception=False):
     Args:
         name (str): Name of the app.
         precedence (int): Precedence for app event dispatch.
-        kill_on_exception (bool|str): If true, abort app when a handler raises 
-          an exception. When the value is a string, it's treated as the name of 
+        kill_on_exception (bool|str): If true, abort app when a handler raises
+          an exception. When the value is a string, it's treated as the name of
           the exception logger `ofp_app.<exc_log>`.
 
     Returns:
@@ -74,7 +74,7 @@ def ofp_run(*,
     Args:
         listen_endpoints (str|List[str]): Endpoints to listen on.
             If None, don't listen. If "default", listen on default port.
-        listen_versions (List[int]): Acceptible OpenFlow protocol 
+        listen_versions (List[int]): Acceptible OpenFlow protocol
             versions. If None or empty, accept all versions.
         oftr_options (Optional[Dict[str, str]]): Dictionary with settings for
             launching oftr process.
@@ -125,7 +125,7 @@ def ofp_run(*,
         }
 
     if os.environ.get('OFP_APP_UVLOOP'):
-        import uvloop
+        import uvloop  # pylint: disable=import-error
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     controller = Controller.singleton()

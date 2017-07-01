@@ -57,25 +57,6 @@ class Device(object):
         return self.__dict__
 
 
-"""
-    async def port_mod(self, port_no, *, port_down=False):
-        port = self.ports[port_no]
-        port_down = 'PORT_DOWN' if port_down else ''
-        req = ofp_compile('''
-            type: PORT_MOD
-            msg:
-              port_no: $port_no
-              hw_addr: $hw_addr
-              config: [ $port_down ]
-              mask: [ PORT_DOWN ]
-        ''')
-        req.send(
-            datapath_id=self.datapath_id,
-            port_no=port_no,
-            hw_addr=port.hw_addr,
-            port_down=port_down)
-"""
-
 
 class Port(object):
     """Concrete class to represent a switch port.
@@ -161,10 +142,13 @@ def channel_down(event):
     del app.devices[event.datapath_id]
 
     if device.device_up:
-        app.logger.info('DEVICE_DOWN %s (%s) [version=%d]', device.datapath_id, device.endpoint, device.version)
-        app.post_event('device_down', datapath_id=event.datapath_id, device=device)
+        app.logger.info('DEVICE_DOWN %s (%s) [version=%d]', device.datapath_id,
+                        device.endpoint, device.version)
+        app.post_event(
+            'device_down', datapath_id=event.datapath_id, device=device)
     else:
-        app.logger.warning('DEVICE_HICCUP %s (%s) [version=%d]', device.datapath_id, device.endpoint, device.version)
+        app.logger.warning('DEVICE_HICCUP %s (%s) [version=%d]',
+                           device.datapath_id, device.endpoint, device.version)
 
 
 @app.message('features_reply')
@@ -196,7 +180,9 @@ async def features_reply(event):
     #app.logger.info('desc %r', desc)
 
     device.device_up = True
-    app.logger.info('DEVICE_UP %s (%s) "%s %s" [version=%d]', device.datapath_id, device.endpoint, device.hw_desc, device.sw_desc, device.version)
+    app.logger.info('DEVICE_UP %s (%s) "%s %s" [version=%d]',
+                    device.datapath_id, device.endpoint, device.hw_desc,
+                    device.sw_desc, device.version)
     app.post_event('device_up', datapath_id=event.datapath_id, device=device)
 
 
@@ -216,7 +202,8 @@ def port_status(event):
             app.logger.warning('PORT_STATUS:ADD for existing port %r', port_no)
         device.ports[port_no] = Port(msg)
     elif not exists:
-        app.logger.warning('PORT_STATUS:%s for unknown port %r', msg.reason, port_no)
+        app.logger.warning('PORT_STATUS:%s for unknown port %r', msg.reason,
+                           port_no)
         return
 
     port = device.ports[port_no]

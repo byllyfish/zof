@@ -1,5 +1,3 @@
-import argparse
-import asyncio
 
 
 class AppRef(object):
@@ -86,4 +84,3 @@ class AppRef(object):
 
     #def post_event(self, event, **kwds):
     #    self._app.post_event(make_event(event=event.upper(), **kwds))
-

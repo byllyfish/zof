@@ -58,7 +58,7 @@ def packet_in(event):
     pkt = msg.pkt
     vlan_vid = pkt('vlan_vid', default=0)
 
-    # Retrieve fwd_table for this datapath. 
+    # Retrieve fwd_table for this datapath.
     fwd_table = app.forwarding_table.setdefault(event.datapath_id, {})
 
     # Update fwd_table based on eth_src and in_port.
@@ -178,7 +178,6 @@ packet_flood = ofp_compile('''
 ''')
 
 
-
 def main():
     args = parse_args()
     if args.shell:
@@ -189,9 +188,7 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog='layer2',
-        description='Layer2 Demo',
-        parents=[ofp_common_args()])
+        prog='layer2', description='Layer2 Demo', parents=[ofp_common_args()])
     parser.add_argument(
         '--shell', action='store_true', help='use command shell')
     return parser.parse_args()

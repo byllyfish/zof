@@ -9,6 +9,7 @@ class _SplitCommaAction(argparse.Action):
             raise ValueError('nargs not allowed')
         super().__init__(option_strings, dest, **kwargs)
         self._count = 0
+
     def __call__(self, parser, namespace, values, option_string=None):
         self._count += 1
         if self._count > 1:
@@ -29,9 +30,15 @@ def ofp_common_args():
         help='listen endpoints separated by commas')
     group.add_argument('--loglevel', metavar='LEVEL', help='log level')
     group.add_argument('--logfile', metavar='FILE', help='log file')
-    group.add_argument('--cert', type=file_content, metavar='FILE', help='certificate chain')
-    group.add_argument('--cacert', type=file_content, metavar='FILE', help='certificate authority')
-    group.add_argument('--privkey', type=file_content, metavar='FILE', help='private key')
+    group.add_argument(
+        '--cert', type=file_content, metavar='FILE', help='certificate chain')
+    group.add_argument(
+        '--cacert',
+        type=file_content,
+        metavar='FILE',
+        help='certificate authority')
+    group.add_argument(
+        '--privkey', type=file_content, metavar='FILE', help='private key')
     return parser
 
 

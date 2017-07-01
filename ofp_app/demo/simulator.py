@@ -6,12 +6,15 @@ from ofp_app.ofp_args import import_module
 
 
 class Simulator(object):
+    # pylint: disable = no-self-use
+
     def __init__(self, datapath_id):
         self.datapath_id = datapath_id
         app.sims.append(self)
 
     async def start(self):
-        conn_id = await app.connect('127.0.0.1:6653', versions=[1], tls_id=app.tls_id)
+        conn_id = await app.connect(
+            '127.0.0.1:6653', versions=[1], tls_id=app.tls_id)
         app.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
@@ -30,10 +33,7 @@ class Simulator(object):
         ofp_compile(msg).send()
 
     def barrier_request(self, event):
-        msg = {
-            'type': 'BARRIER_REPLY',
-            'xid': event.xid
-        }
+        msg = {'type': 'BARRIER_REPLY', 'xid': event.xid}
         ofp_compile(msg).send()
 
     def request_portdesc(self, event):
@@ -92,10 +92,15 @@ async def _exit_timeout(timeout):
     await asyncio.sleep(timeout)
     app.post_event('EXIT')
 
+
 @app.event('prestart')
 async def prestart(_):
     if app.security:
-        result = await app.rpc_call('OFP.ADD_IDENTITY', cert=app.security['cert'], cacert=app.security['cacert'], privkey=app.security['privkey'])
+        result = await app.rpc_call(
+            'OFP.ADD_IDENTITY',
+            cert=app.security['cert'],
+            cacert=app.security['cacert'],
+            privkey=app.security['privkey'])
         app.tls_id = result.tls_id
 
 
@@ -107,11 +112,13 @@ def start(_):
         sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start())
 
+
 @app.message('channel_up', datapath_id=None)
 @app.message('channel_down', datapath_id=None)
 @app.message('flow_mod', datapath_id=None)
 def ignore(_):
     return
+
 
 @app.message('features_request', datapath_id=None)
 def features_request(event):
@@ -150,6 +157,7 @@ def _file_content(filename):
     with open(filename, encoding='utf-8') as afile:
         return afile.read()
 
+
 def main():
     args = parse_args()
     for module in args.modules:
@@ -171,12 +179,21 @@ def parse_args():
         description='Simulator Demo',
         parents=[ofp_common_args()])
     parser.add_argument(
-        '--simulator-count', type=int, default=10, help='Number of datapaths to simulate')
+        '--simulator-count',
+        type=int,
+        default=10,
+        help='Number of datapaths to simulate')
     parser.add_argument(
-        '--exit-timeout', type=float, default=0, help='Seconds to run simulation')
-    parser.add_argument('--sim-cert', type=_file_content, help='Simulator certificate')
-    parser.add_argument('--sim-privkey', type=_file_content, help='Simulator private key')
-    parser.add_argument('--sim-cacert', type=_file_content, help='Simulator CA certificate')
+        '--exit-timeout',
+        type=float,
+        default=0,
+        help='Seconds to run simulation')
+    parser.add_argument(
+        '--sim-cert', type=_file_content, help='Simulator certificate')
+    parser.add_argument(
+        '--sim-privkey', type=_file_content, help='Simulator private key')
+    parser.add_argument(
+        '--sim-cacert', type=_file_content, help='Simulator CA certificate')
     parser.add_argument('modules', nargs='*', help='Modules to load')
     return parser.parse_args()
 

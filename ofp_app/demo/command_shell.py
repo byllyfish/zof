@@ -53,10 +53,13 @@ _Handler = collections.namedtuple('_Handler', 'subtype func options')
 def _command(subtype, **kwds):
     """Command decorator.
     """
+
     def _wrap(func):
-        t = subtype.upper()
-        app.commands[t] = _Handler(t, func, kwds)
+        upper_type = subtype.upper()
+        app.commands[upper_type] = _Handler(upper_type, func, kwds)
+
     return _wrap
+
 
 app.command = _command
 app.command.ArgumentParser = _ArgumentParser
@@ -195,7 +198,8 @@ def _show_help(cmd_name):
 
 
 def _ls_args():
-    parser = app.command.ArgumentParser(description='List datapaths, ports or flows.')
+    parser = app.command.ArgumentParser(
+        description='List datapaths, ports or flows.')
     parser.add_argument(
         '-l', '--long', action='store_true', help='list in long format')
     return parser
@@ -349,7 +353,6 @@ class PatchedConsoleHandler(logging.Handler):
 
 _tail_handler = TailBufferedHandler.install()
 _console_handler = PatchedConsoleHandler.install()
-
 
 if __name__ == '__main__':
     ofp_run()

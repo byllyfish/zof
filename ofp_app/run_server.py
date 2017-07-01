@@ -43,7 +43,8 @@ def run_server(*,
 
     try:
         if logger:
-            logger.debug('run_server started: %r', asyncio.Task.all_tasks(loop))
+            logger.debug('run_server started: %r',
+                         asyncio.Task.all_tasks(loop))
         # Run loop until stopped with `loop.stop()`.
         loop.run_forever()
 
@@ -75,7 +76,7 @@ def _shutdown_pending(loop, pending_timeout, logger):
     if logger:
         tasks = _running_tasks(loop)
         if tasks:
-            logger.warning('run_server: shutdown completed: %d tasks:\n  %s', 
+            logger.warning('run_server: shutdown completed: %d tasks:\n  %s',
                            len(tasks), '\n  '.join(repr(t) for t in tasks))
         else:
             logger.debug('run_server: shutdown completed')
