@@ -1,15 +1,17 @@
+from .controller import Controller
+from .controllerapp import ControllerApp
 
 
-class AppRef(object):
-    """Provides access to API functions.
-
-    This object will be returned by `ofp_app` function.
+class Application(object):
+    """The Application class represents a controller "app". Your app's
+    code registers for events and issues commands primarily via an 
+    `Application` instance.
 
     Example:
 
         from ofp_app import ofp_app, ofp_run
 
-        app = ofp_app('appname')
+        app = Application('appname')
 
         @app.message(any)
         def any_message(event):
@@ -19,19 +21,28 @@ class AppRef(object):
             ofp_run()
 
     Args:
-        app (ControllerApp): Internal app object.
+        name (str): Name of the app.
+        precedence (int): Precedence for app event dispatch.
+        kill_on_exception (bool|str): If true, abort app when a handler raises
+          an exception. When the value is a string, it's treated as the name of
+          the exception logger `ofp_app.<exc_log>`.
 
     Attributes:
         name (str): App name.
         logger (Logger): App's logger.
     """
 
-    def __init__(self, app):
+    def __init__(self, name, *, precedence=100, kill_on_exception=False):
+        controller = Controller.singleton()
+        if controller.find_app(name):
+            raise ValueError('App named "%s" already exists.' % name)
+
+        # Construct internal ControllerApp object.
+        app = ControllerApp(controller, name=name, kill_on_exception=kill_on_exception, precedence=precedence)
+        
         self._app = app
         self.name = app.name
         self.logger = app.logger
-        #self.controller = app.parent
-
         self.ensure_future = app.ensure_future
         self.post_event = app.post_event
         self.rpc_call = app.rpc_call
@@ -56,16 +67,6 @@ class AppRef(object):
 
         return _wrap
 
-    # TODO(bfish): Add an 'intercept' decorator for intercepting outgoing
-    # messages. (Advanced)
-
-    # Basic Functions
-
-    #def compile(self, msg):
-    #    """Compile an OpenFlow message template.
-    #    """
-    #    return CompiledMessage(self._app.parent, msg)
-
     # RPC Functions
 
     async def connect(self, endpoint, *, options=(), versions=(), tls_id=0):
@@ -78,6 +79,12 @@ class AppRef(object):
             options=options,
             versions=versions)
         return result.conn_id
+
+
+    async def close(self, *, conn_id=0, datapath_id=None):
+        """Close an OpenFlow connection."""
+        result = await self.rpc_call('OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
+        return result.count
 
     def all_apps(self):
         return list(self._app.parent.apps)

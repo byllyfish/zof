@@ -8,10 +8,10 @@
 
 import argparse
 
-from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_common_args
+from ofp_app import Application, ofp_run, ofp_compile, ofp_common_args
 from ofp_app.pktview import pktview_from_list
 
-app = ofp_app('layer2')
+app = Application('layer2')
 
 # The forwarding table is a dictionary that maps:
 #   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }

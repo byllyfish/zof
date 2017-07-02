@@ -12,12 +12,12 @@ Events Produced:
 
 import asyncio
 from collections import OrderedDict
-from .. import ofp_app, ofp_run, ofp_compile
+from .. import Application, ofp_run, ofp_compile
 from ..event import make_event
 
 OPENFLOW_VERSION_1 = 0
 
-app = ofp_app('service.device', precedence=10)
+app = Application('service.device', precedence=10)
 app.devices = OrderedDict()
 
 set_config = ofp_compile('''

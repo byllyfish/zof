@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from ofp_app import ofp_app, ofp_run, ofp_compile, ofp_common_args
+from ofp_app import Application, ofp_run, ofp_compile, ofp_common_args
 from ofp_app.ofp_args import import_module
 
 
@@ -79,7 +79,7 @@ class Simulator(object):
         }
 
 
-app = ofp_app('simulator', kill_on_exception=True)
+app = Application('simulator', kill_on_exception=True)
 app.simulator_count = 100
 app.security = None
 app.tls_id = 0

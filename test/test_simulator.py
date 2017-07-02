@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 from ofp_app.controller import Controller
-from ofp_app import ofp_app
+from ofp_app import Application
 
 
 class SimulatorTestCase(unittest.TestCase):
@@ -26,7 +26,7 @@ class SimulatorTestCase(unittest.TestCase):
         
         task = asyncio.ensure_future(_exit_timeout())
 
-        app = ofp_app('test_simulator')
+        app = Application('test_simulator')
         app.count = 0
 
         @app.event('device_up')

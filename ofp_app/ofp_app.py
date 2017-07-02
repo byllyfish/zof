@@ -16,49 +16,13 @@ Environment Variables:
 
 import os
 import asyncio
-
 from .controller import Controller
-from .controllerapp import ControllerApp
-from .appref import AppRef
 from .logging import init_logging, EXT_STDERR
 
 if os.environ.get('OFP_APP_LOGLEVEL'):
     init_logging(os.environ.get('OFP_APP_LOGLEVEL'))
 
 _LISTEN_ENDPOINTS = [6653]
-
-
-def ofp_app(name, *, precedence=100, kill_on_exception=False):
-    """Construct a new app object.
-
-    The app object provides the API to register event handlers.
-
-    An app is required to have a unique name.
-
-    An app logs to a logger named `ofp_app.<name>`.
-
-    An app's precedence determines the order that events are dispatched to
-    various apps.
-
-    Args:
-        name (str): Name of the app.
-        precedence (int): Precedence for app event dispatch.
-        kill_on_exception (bool|str): If true, abort app when a handler raises
-          an exception. When the value is a string, it's treated as the name of
-          the exception logger `ofp_app.<exc_log>`.
-
-    Returns:
-        AppRef: App API object.
-    """
-    controller = Controller.singleton()
-    if controller.find_app(name):
-        raise ValueError('App named "%s" already exists.' % name)
-    app = ControllerApp(
-        controller,
-        name=name,
-        kill_on_exception=kill_on_exception,
-        precedence=precedence)
-    return AppRef(app)
 
 
 def ofp_run(*,

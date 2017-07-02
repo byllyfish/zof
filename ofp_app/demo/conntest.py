@@ -1,7 +1,7 @@
 import asyncio
-from ofp_app import ofp_app, ofp_run
+from ofp_app import Application, ofp_run
 
-app = ofp_app('conntest', kill_on_exception=True)
+app = Application('conntest', kill_on_exception=True)
 
 
 @app.event('start')
