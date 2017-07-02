@@ -8,9 +8,9 @@ if sys.version_info[:3] < (3, 5, 1):
         % platform.python_version())
 
 # pylint: disable=wrong-import-position
-from .appref import Application
-from .ofp_app import ofp_run
-from .ofp_args import ofp_common_args
-from .ofp_compile import ofp_compile
+from .application import Application
+from .run import ofp_run
+from .args import ofp_common_args
+from .compile import ofp_compile
 
 __all__ = ['Application', 'ofp_compile', 'ofp_run', 'ofp_common_args']

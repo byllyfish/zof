@@ -1,5 +1,5 @@
 import asyncio
-from ofp_app import Application, ofp_run
+from .. import Application, ofp_run
 
 app = Application('conntest', kill_on_exception=True)
 

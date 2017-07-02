@@ -1,7 +1,7 @@
 import argparse
 
-from .ofp_app import ofp_run
-from .ofp_args import ofp_common_args, import_module
+from .run import ofp_run
+from .args import ofp_common_args, import_module
 
 
 def main():

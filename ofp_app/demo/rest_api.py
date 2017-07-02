@@ -1,7 +1,7 @@
-from ofp_app import Application, ofp_run, ofp_compile
-from ofp_app.http import HttpServer
-from ofp_app.service.device import get_devices, get_device_port
-from ofp_app.pktview import pktview_from_list
+from .. import Application, ofp_run, ofp_compile
+from ..http import HttpServer
+from ..service.device import get_devices, get_device_port
+from ..pktview import pktview_from_list
 
 app = Application('webserver')
 app.http_endpoint = '127.0.0.1:8080'

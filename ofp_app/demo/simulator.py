@@ -1,8 +1,8 @@
 import argparse
 import asyncio
 
-from ofp_app import Application, ofp_run, ofp_compile, ofp_common_args
-from ofp_app.ofp_args import import_module
+from .. import Application, ofp_run, ofp_compile, ofp_common_args
+from ..args import import_module
 
 
 class Simulator(object):

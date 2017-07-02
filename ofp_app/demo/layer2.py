@@ -8,8 +8,8 @@
 
 import argparse
 
-from ofp_app import Application, ofp_run, ofp_compile, ofp_common_args
-from ofp_app.pktview import pktview_from_list
+from .. import Application, ofp_run, ofp_compile, ofp_common_args
+from ..pktview import pktview_from_list
 
 app = Application('layer2')
 
