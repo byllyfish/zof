@@ -1,7 +1,8 @@
 import asyncio
-from .. import Application, ofp_run
+import ofp_app
 
-app = Application('logger', precedence=0)
+
+app = ofp_app.Application('logger', precedence=0)
 
 app.logger.info('phase = %r' % app._app.parent._phase)
 
@@ -29,4 +30,4 @@ async def logger(event):
 
 
 if __name__ == '__main__':
-    ofp_run()
+    ofp_app.run()

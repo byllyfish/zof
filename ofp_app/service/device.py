@@ -12,26 +12,26 @@ Events Produced:
 
 import asyncio
 from collections import OrderedDict
-from .. import Application, ofp_run, ofp_compile
+import ofp_app
 from ..event import make_event
 
 OPENFLOW_VERSION_1 = 0
 
-app = Application('service.device', precedence=10)
+app = ofp_app.Application('service.device', precedence=10)
 app.devices = OrderedDict()
 
-set_config = ofp_compile('''
+set_config = ofp_app.compile('''
   type: SET_CONFIG
   msg:
     flags: [FRAG_NORMAL]
     miss_send_len: NO_BUFFER
 ''')
 
-desc = ofp_compile('type: REQUEST.DESC')
+desc = ofp_app.compile('type: REQUEST.DESC')
 
-portdesc = ofp_compile('type: REQUEST.PORT_DESC')
+portdesc = ofp_app.compile('type: REQUEST.PORT_DESC')
 
-barrier = ofp_compile('type: BARRIER_REQUEST')
+barrier = ofp_app.compile('type: BARRIER_REQUEST')
 
 
 class Device(object):
@@ -253,4 +253,4 @@ def get_device_port(datapath_id, port_no):
 
 
 if __name__ == '__main__':
-    ofp_run()
+    ofp_app.run()

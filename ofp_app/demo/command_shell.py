@@ -13,7 +13,7 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
-from .. import Application, ofp_run
+import ofp_app
 from ..event import make_event
 from ..exception import ControlFlowException
 from ..logging import default_formatter, stderr_handler
@@ -42,7 +42,7 @@ class _ArgumentParser(argparse.ArgumentParser):
         super().exit(status, message)
 
 
-app = Application('command_shell')
+app = ofp_app.Application('command_shell')
 app.foreground_task = None
 app.command_prompt = '> '
 app.commands = {}
@@ -355,4 +355,4 @@ _tail_handler = TailBufferedHandler.install()
 _console_handler = PatchedConsoleHandler.install()
 
 if __name__ == '__main__':
-    ofp_run()
+    ofp_app.run()

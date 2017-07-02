@@ -1,9 +1,4 @@
-"""Main ofp_app API.
-
-- ofp_app
-- ofp_run
-- ofp_compile
-
+"""
 Environment Variables:
 
     OFP_APP_LOGLEVEL            Default logging mode.
@@ -25,7 +20,7 @@ if os.environ.get('OFP_APP_LOGLEVEL'):
 _LISTEN_ENDPOINTS = [6653]
 
 
-def ofp_run(*,
+def run(*,
             listen_endpoints='default',
             listen_versions=None,
             oftr_options=None,

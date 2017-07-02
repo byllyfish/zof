@@ -17,7 +17,7 @@ params:
   %s"""
 
 
-def ofp_compile(msg):
+def compile(msg):
     """Compile an OpenFlow message template."""
     controller = Controller.singleton()
     if isinstance(msg, str):

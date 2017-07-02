@@ -1,5 +1,5 @@
 import unittest
-from ofp_app.compile import CompiledMessage
+from ofp_app.api_compile import CompiledMessage
 from ofp_app.objectview import ObjectView
 
 

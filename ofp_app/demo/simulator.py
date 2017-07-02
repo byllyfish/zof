@@ -1,8 +1,8 @@
 import argparse
 import asyncio
+import ofp_app
 
-from .. import Application, ofp_run, ofp_compile, ofp_common_args
-from ..args import import_module
+from ..api_args import import_module
 
 
 class Simulator(object):
@@ -30,11 +30,11 @@ class Simulator(object):
                 'ports': self._portdescs() if event.version < 4 else []
             }
         }
-        ofp_compile(msg).send()
+        ofp_app.compile(msg).send()
 
     def barrier_request(self, event):
         msg = {'type': 'BARRIER_REPLY', 'xid': event.xid}
-        ofp_compile(msg).send()
+        ofp_app.compile(msg).send()
 
     def request_portdesc(self, event):
         msg = {
@@ -42,7 +42,7 @@ class Simulator(object):
             'xid': event.xid,
             'msg': self._portdescs()
         }
-        ofp_compile(msg).send()
+        ofp_app.compile(msg).send()
 
     def request_desc(self, event):  # pylint: disable=no-self-use
         msg = {
@@ -56,7 +56,7 @@ class Simulator(object):
                 'dp_desc': ''
             }
         }
-        ofp_compile(msg).send()
+        ofp_app.compile(msg).send()
 
     def _portdescs(self):
         return [self._portdesc(i) for i in range(1, 5)]
@@ -79,7 +79,7 @@ class Simulator(object):
         }
 
 
-app = Application('simulator', kill_on_exception=True)
+app = ofp_app.Application('simulator', kill_on_exception=True)
 app.simulator_count = 100
 app.security = None
 app.tls_id = 0
@@ -170,14 +170,14 @@ def main():
             'privkey': args.sim_privkey,
             'cacert': args.sim_cacert
         }
-    ofp_run(args=args, listen_endpoints=None)
+    ofp_app.run(args=args, listen_endpoints=None)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='simulator',
         description='Simulator Demo',
-        parents=[ofp_common_args()])
+        parents=[ofp_app.common_args()])
     parser.add_argument(
         '--simulator-count',
         type=int,

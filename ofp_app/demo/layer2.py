@@ -7,11 +7,10 @@
 """
 
 import argparse
+import ofp_app
+from ofp_app.pktview import pktview_from_list
 
-from .. import Application, ofp_run, ofp_compile, ofp_common_args
-from ..pktview import pktview_from_list
-
-app = Application('layer2')
+app = ofp_app.Application('layer2')
 
 # The forwarding table is a dictionary that maps:
 #   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }
@@ -106,7 +105,7 @@ def other_message(event):
     app.logger.debug('Ignored message: %r', event)
 
 
-delete_flows = ofp_compile('''
+delete_flows = ofp_app.compile('''
   # Delete flows in table 0.
   type: FLOW_MOD
   msg:
@@ -114,11 +113,11 @@ delete_flows = ofp_compile('''
     table_id: 0
 ''')
 
-barrier = ofp_compile('''
+barrier = ofp_app.compile('''
   type: BARRIER_REQUEST
 ''')
 
-table_miss_flow = ofp_compile('''
+table_miss_flow = ofp_app.compile('''
   # Add permanent table miss flow entry to table 0
   type: FLOW_MOD
   msg:
@@ -133,7 +132,7 @@ table_miss_flow = ofp_compile('''
             max_len: NO_BUFFER
 ''')
 
-learn_mac_flow = ofp_compile('''
+learn_mac_flow = ofp_app.compile('''
   type: FLOW_MOD
   msg:
     table_id: 0
@@ -156,7 +155,7 @@ learn_mac_flow = ofp_compile('''
             max_len: MAX
 ''')
 
-packet_out = ofp_compile('''
+packet_out = ofp_app.compile('''
   type: PACKET_OUT
   msg:
     actions: 
@@ -166,7 +165,7 @@ packet_out = ofp_compile('''
     data: $data
 ''')
 
-packet_flood = ofp_compile('''
+packet_flood = ofp_app.compile('''
   type: PACKET_OUT
   msg:
     in_port: $in_port
@@ -183,12 +182,12 @@ def main():
     if args.shell:
         import ofp_app.demo.command_shell as cmd_shell
         cmd_shell.app.command_prompt = 'layer2> '
-    ofp_run(args=args)
+    ofp_app.run(args=args)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog='layer2', description='Layer2 Demo', parents=[ofp_common_args()])
+        prog='layer2', description='Layer2 Demo', parents=[ofp_app.common_args()])
     parser.add_argument(
         '--shell', action='store_true', help='use command shell')
     return parser.parse_args()
