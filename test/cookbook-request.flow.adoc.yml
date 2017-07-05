@@ -1,0 +1,21 @@
+---
+# # List all flows in all tables.
+# type: REQUEST.FLOW
+# msg:
+#   table_id: ALL
+#   out_port: ANY
+#   out_group: ANY
+#   cookie: 0
+#   cookie_mask: 0
+#   match: 
+type:            REQUEST.FLOW
+flags:           [  ]
+xid:             0x00000000
+version:         0x04
+msg:             
+  table_id:        ALL
+  out_port:        ANY
+  out_group:       ANY
+  cookie:          0x0000000000000000
+  cookie_mask:     0x0000000000000000
+  match:           

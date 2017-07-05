@@ -1,0 +1,10 @@
+=== Port Request Messages
+
+
+==== List all ports.
+
+[source,yaml]
+----
+# List all ports.
+type: REQUEST.PORT_DESC
+----

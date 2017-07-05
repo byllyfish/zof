@@ -1,0 +1,20 @@
+=== Flow Request Messages
+
+
+==== List all flows in all tables.
+
+[source,yaml]
+----
+# List all flows in all tables.
+type: REQUEST.FLOW
+msg:
+  table_id: ALL
+  out_port: ANY
+  out_group: ANY
+  cookie: 0
+  cookie_mask: 0
+  match: 
+----
+
+
+TODO: Optional attributes.
