@@ -67,15 +67,15 @@ class LoadEventTestCase(unittest.TestCase):
         self.assertEqual('EXCEPTION', event.event)
         self.assertTrue(event.reason.startswith('non-hexadecimal number found'))
 
-    def test_event_pkt_decode(self):
-        # Test that `_pkt_decode` lists are converted to dictionaries.
-        event = load_event(b'{"data": "ff", "_pkt_decode": [{"field":"a", "value":1}]}')
+    def test_event_pkt(self):
+        # Test that `_pkt` lists are converted to dictionaries.
+        event = load_event(b'{"data": "ff", "_pkt": [{"field":"a", "value":1}]}')
         self.assertEqual(event.pkt, {'a': 1})
-        self.assertFalse("_pkt_decode" in event)
-        # _pkt_decode requires the `data` value, otherwise it's not translated
-        event = load_event(b'{"_pkt_decode": [{"field":"a", "value":1}]}')
+        self.assertFalse("_pkt" in event)
+        # _pkt requires the `data` value, otherwise it's not translated
+        event = load_event(b'{"_pkt": [{"field":"a", "value":1}]}')
         self.assertFalse("pkt" in event)
-        self.assertTrue("_pkt_decode" in event)
+        self.assertTrue("_pkt" in event)
 
     def test_event_str(self):
         # Test that str(event) produces the expected json.
