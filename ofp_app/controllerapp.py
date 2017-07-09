@@ -18,11 +18,11 @@ class ControllerApp(object):
         precedence (int): App precedence.
         kill_on_exception (bool|str): Terminate immediately if app raises
             exception.
-        parent (Controller): App's parent controller object.
+        controller (Controller): App's parent controller object.
         logger (Logger): App's logger.
         handlers (Dict[str,List[BaseHandler]]): App handlers.
     Args:
-        parent (Controller): Parent controller object.
+        controller (Controller): Parent controller object.
         name (str): App name.
         kill_on_exception (bool): Terminate immediately if app raises exception.
         precedence (int): App precedence.
@@ -30,7 +30,7 @@ class ControllerApp(object):
     _curr_app_id = 0
 
     def __init__(self,
-                 parent,
+                 controller,
                  *,
                  name,
                  kill_on_exception=False,
@@ -39,14 +39,14 @@ class ControllerApp(object):
         self.precedence = precedence
         self.handlers = {}
         self.kill_on_exception = kill_on_exception
-        self.set_controller(parent)
+        self.set_controller(controller)
 
         self.logger = logging.getLogger('%s.%s' % (__package__, self.name))
         self.logger.info('Create app "%s"', self.name)
 
     def set_controller(self, controller):
         """Set controller parent."""
-        self.parent = controller
+        self.controller = controller
         # Insert app into controller's list sorted by precedence.
         controller.apps.append(self)
         controller.apps.sort(key=attrgetter('precedence'))
@@ -100,12 +100,12 @@ class ControllerApp(object):
         elif not isinstance(event, Event) or len(kwds) > 0:
             raise ValueError('Invalid arguments to post_event')
         self.logger.debug('post_event %r', event)
-        self.parent.post_event(event)
+        self.controller.post_event(event)
 
     def rpc_call(self, method, **params):
         """Function used to send a RPC request and receive a response."""
         self.logger.debug('rpc_call %s', method)
-        return self.parent.rpc_call(method, **params)
+        return self.controller.rpc_call(method, **params)
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
         """Function used by an app to run an async coroutine, under a specific
@@ -113,7 +113,7 @@ class ControllerApp(object):
         """
         assert inspect.isawaitable(coroutine)
         task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
-        return self.parent.ensure_future(
+        return self.controller.ensure_future(
             coroutine, app=self, task_locals=task_locals)
 
     def subscribe(self, callback, type_, subtype, options):

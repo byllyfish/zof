@@ -87,7 +87,7 @@ class Application(object):
         return result.count
 
     def all_apps(self):
-        return list(self._app.parent.apps)
+        return list(self._app.controller.apps)
 
     #def post_event(self, event, **kwds):
     #    self._app.post_event(make_event(event=event.upper(), **kwds))

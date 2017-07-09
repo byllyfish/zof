@@ -30,13 +30,13 @@ class CompiledMessage(object):
     """Concrete class representing a compiled OpenFlow message template.
 
     Attributes:
-        _parent (Controller): Controller object.
+        _controller (Controller): Controller object.
         _template (StringTemplate): Prepared message template.
     """
 
-    def __init__(self, parent, msg):
+    def __init__(self, controller, msg):
         assert isinstance(msg, str)
-        self._parent = parent
+        self._controller = controller
         self._template = None
         self._template_args = None
         self._compile(msg)
@@ -47,8 +47,8 @@ class CompiledMessage(object):
         Args:
             kwds (dict): Template argument values.
         """
-        kwds.setdefault('xid', self._parent.next_xid())
-        self._parent.write(self._complete(kwds, _task_locals()))
+        kwds.setdefault('xid', self._controller.next_xid())
+        self._controller.write(self._complete(kwds, _task_locals()))
 
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
@@ -56,8 +56,8 @@ class CompiledMessage(object):
         Args:
             kwds (dict): Template argument values.
         """
-        xid = kwds.setdefault('xid', self._parent.next_xid())
-        return self._parent.write(self._complete(kwds, _task_locals()), xid)
+        xid = kwds.setdefault('xid', self._controller.next_xid())
+        return self._controller.write(self._complete(kwds, _task_locals()), xid)
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.
@@ -118,10 +118,10 @@ class CompiledMessage(object):
 class CompiledObject(object):
     """Concrete class representing a compiled OpenFlow object template."""
 
-    def __init__(self, parent, obj):
+    def __init__(self, controller, obj):
         assert isinstance(obj, (dict, ObjectView))
         assert 'type' in obj
-        self._parent = parent
+        self._controller = controller
         self._obj = obj
         if self._obj['type'] in ('PACKET_OUT', 'PACKET_IN'):
             self._convert_pkt()
@@ -132,8 +132,8 @@ class CompiledObject(object):
         Args:
             kwds (dict): Template argument values.
         """
-        kwds.setdefault('xid', self._parent.next_xid())
-        self._parent.write(self._complete(kwds, _task_locals()))
+        kwds.setdefault('xid', self._controller.next_xid())
+        self._controller.write(self._complete(kwds, _task_locals()))
 
     def request(self, **kwds):
         """Send an OpenFlow request and receive a response.
@@ -141,8 +141,8 @@ class CompiledObject(object):
         Args:
             kwds (dict): Template argument values.
         """
-        xid = kwds.setdefault('xid', self._parent.next_xid())
-        return self._parent.write(self._complete(kwds, _task_locals()), xid)
+        xid = kwds.setdefault('xid', self._controller.next_xid())
+        return self._controller.write(self._complete(kwds, _task_locals()), xid)
 
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.
