@@ -6,6 +6,13 @@ def _convert_tp_src(_key, ofctl):
     return '%s_src' % _ip_proto_name(ofctl)
 
 
+def _convert_vlan(vlan):
+    vlan = int(vlan, 0)
+    if vlan > 0:
+        vlan |= _OFPVID_PRESENT
+    return vlan
+
+
 _OFPVID_PRESENT = 0x1000
 
 _IP_PROTO_NAME = {6: 'tcp', 11: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
@@ -30,9 +37,8 @@ def convert_from_ofctl(ofctl):
         if key in result:
             raise ValueError('Duplicate ofctl field: %s' % key)
         result[key] = value
-    vlan = result.get('vlan_vid')
-    if vlan and isinstance(vlan, int):
-        result['vlan_vid'] = vlan | _OFPVID_PRESENT
+    if 'vlan_vid' in result:
+        result['vlan_vid'] = _convert_vlan(result['vlan_vid'])
     return result
 
 
@@ -43,4 +49,10 @@ def convert_ofctl_field(key, ofctl):
 
 
 def _ip_proto_name(ofctl):
-    return _IP_PROTO_NAME[ofctl.get('ip_proto', None) or ofctl.get('nw_proto')]
+    proto = ofctl.get('ip_proto') or ofctl.get('nw_proto')
+    if proto is None:
+        return 'tcp'
+    try:
+        return _IP_PROTO_NAME[proto]
+    except KeyError:
+        raise ValueError('Unknown ip_proto %s' % proto)
