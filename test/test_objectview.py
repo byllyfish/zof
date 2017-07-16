@@ -167,3 +167,9 @@ class ObjectViewTestCase(unittest.TestCase):
         # Object is already an ObjectView
         x = make_objectview(o)
         self.assertTrue(x is o)
+
+    def test_make_objecview_argparse(self):
+        args = argparse.Namespace(x=1, y='2')
+        o = make_objectview(args)
+        self.assertEqual(o.x, 1)
+        self.assertEqual(o.y, '2')

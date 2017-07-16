@@ -94,7 +94,8 @@ class ObjectView(object):
         """Return JSON representation."""
         return to_json(self.__dict__)
 
-    # TODO(bfish): Implement __copy__ and __deepcopy__?
+    # TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
+    # Implement __format__?
 
 
 def to_json(obj):
@@ -137,6 +138,8 @@ def make_objectview(obj):
     """
     if isinstance(obj, ObjectView):
         return obj
+    if isinstance(obj, argparse.Namespace):
+        obj = vars(obj)
     return _make_objectview(obj)
 
 
