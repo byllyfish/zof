@@ -35,6 +35,44 @@ def pktview_alias(name, converter=(lambda x: x)):
     return property(fget=_fget, fset=_fset, fdel=_fdel)
 
 
+def _description(pkt):
+    """Return description of packet."""
+    eth_type = pkt('eth_type')
+    if eth_type == 0x0806:
+        arp_op = pkt('arp_op')
+        if arp_op == 1:
+            return 'ARP:REQ'
+        if arp_op == 2:
+            return 'ARP:REPLY'
+        return 'ARP:%s' % arp_op
+    if eth_type == 0x0800:
+        ip_proto = pkt('ip_proto')
+        if ip_proto == 1:
+            return 'ICMPv4'
+        if ip_proto == 2:
+            return 'IGMPv4'
+        if ip_proto == 6:
+            return 'TCPv4'
+        if ip_proto == 17:
+            udp_dst = pkt('udp_dst')
+            if udp_dst == 67:
+                return 'DHCPv4'
+            return 'UDPv4'
+        return 'IPv4:%s' % ip_proto
+    if eth_type == 0x86dd:
+        ip_proto = pkt('ip_proto')
+        if ip_proto == 58:
+            return 'ICMPv6'
+        if ip_proto == 6:
+            return 'TCPv6'
+        if ip_proto == 17:
+            return 'UDPv6'
+        return 'IPv6:%s' % ip_proto
+    if eth_type == 0x88cc:
+        return 'LLDP'
+    return 'ETH:%s' % eth_type
+
+
 class PktView(ObjectView):
     """Concrete class that represents a packet's header fields and payload.
 
@@ -42,7 +80,16 @@ class PktView(ObjectView):
     use a custom PktView subclass to add extra features.
     """
 
-    PKT_TYPES = {0x0806: 'ARP', 0x0800: 'IPV4', 0x86dd: 'IPV6', 0x88cc: 'LLDP'}
+    # Alias some packet fields.
+    ip_ttl = pktview_alias('nx_ip_ttl')
+    hop_limit = pktview_alias('nx_ip_ttl')
+    ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
+
+    def items(self):
+        return self.__dict__.items()
+
+    def get_description(self):
+        return _description(self)
 
     PROTO_FIELD = {
         'ETHERNET': 'eth_type',
@@ -53,11 +100,6 @@ class PktView(ObjectView):
         'ICMPV6': 'icmpv6_type'
     }
 
-    @property
-    def pkt_type(self):
-        """Human-readable description of packet type. (read-only)"""
-        return PktView.PKT_TYPES.get(self.eth_type, hex(self.eth_type))
-
     def get_protocol(self, protocol):
         """Check if pkt is of specified type and return `self`.
         
@@ -67,14 +109,6 @@ class PktView(ObjectView):
         populating all necessary protocol fields.
         """
         return self if PktView.PROTO_FIELD[protocol.upper()] in self else None
-
-    # Alias some packet fields.
-    ip_ttl = pktview_alias('nx_ip_ttl')
-    hop_limit = pktview_alias('nx_ip_ttl')
-    ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
-
-    def items(self):
-        return self.__dict__.items()
 
 
 def make_pktview(**kwds):
