@@ -52,8 +52,8 @@ $CMD -m ofp_app.demo.simulator \
         --sim-timeout=3 \
         --sim-count=5 \
         --loglevel=info \
-        --sim-cert="$SCRIPT_DIR/ss-sw1.cert" \
-        --sim-privkey="$SCRIPT_DIR/ss-sw1.key" \
+        --sim-cert="$SCRIPT_DIR/ss-sw2.cert" \
+        --sim-privkey="$SCRIPT_DIR/ss-sw2.key" \
         --sim-cacert="$SCRIPT_DIR/ss-cntl.cert" \
         --x-modules=ofp_app.demo.layer2 
 
