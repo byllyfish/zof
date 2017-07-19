@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import sys
 import ofp_app
 from ofp_app.api_args import file_content
 
@@ -31,11 +32,18 @@ app = ofp_app.Application('simulator', kill_on_exception=True, arg_parser=arg_pa
 app.tls_id = 0
 app.sims = []
 app.conn_to_sim = {}
+app.connect_count = 0
 
 
 async def _exit_timeout(timeout):
     await asyncio.sleep(timeout)
-    app.post_event('EXIT')
+    app.post_event('SIM_TIMEOUT')
+
+
+@app.event('sim_timeout')
+def sim_timeout(_):
+    exit_status = 20 if app.connect_count < app.args.sim_count else 0
+    app.post_event('EXIT', exit_status=exit_status)
 
 
 @app.event('prestart')
@@ -59,7 +67,6 @@ def start(_):
 
 
 @app.message('channel_up', datapath_id=None)
-@app.message('channel_down', datapath_id=None)
 @app.message('flow_mod', datapath_id=None)
 def ignore(_):
     return
@@ -67,6 +74,7 @@ def ignore(_):
 
 @app.message('features_request', datapath_id=None)
 def features_request(event):
+    app.connect_count += 1
     app.conn_to_sim[event.conn_id].features_request(event)
 
 
@@ -107,7 +115,7 @@ class Simulator(object):
 
     async def start(self):
         conn_id = await app.connect(
-            '127.0.0.1:6653', versions=[1], tls_id=app.tls_id)
+            '127.0.0.1:6653', versions=[4], tls_id=app.tls_id)
         app.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
@@ -175,7 +183,7 @@ class Simulator(object):
 def main():
     args = ofp_app.common_args()
     args.set_defaults(listen_endpoints=None)
-    ofp_app.run(args=args.parse_args())
+    return ofp_app.run(args=args.parse_args())
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

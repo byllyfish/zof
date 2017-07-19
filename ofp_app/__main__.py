@@ -1,4 +1,5 @@
 import ofp_app
+import sys
 
 if __name__ == '__main__':
-    ofp_app.run()
+    sys.exit(ofp_app.run())

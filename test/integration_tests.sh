@@ -19,7 +19,7 @@ $CMD -m ofp_app.demo.simulator \
         --listen-endpoints=6653 \
         --sim-timeout=3 \
         --sim-count=50 \
-        --loglevel=warning \
+        --loglevel=info \
         --x-modules=ofp_app.demo.layer2
 
 echo "Test conntest demo with simulator (count=10)"

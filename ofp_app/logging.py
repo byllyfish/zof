@@ -5,54 +5,67 @@ import sys
 
 EXT_STDERR = 'ext://stderr'
 
-default_formatter = logging.Formatter(
+DEFAULT_FORMATTER = logging.Formatter(
     '%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 
-_logging_inited = False
+STDERR_HANDLER = logging.StreamHandler(sys.stderr)
+STDERR_HANDLER.setFormatter(DEFAULT_FORMATTER)
 
-stderr_handler = logging.StreamHandler(sys.stderr)
-stderr_handler.setFormatter(default_formatter)
+_LOGGING_INITED = False
 
 
 def init_logging(loglevel, logfile=EXT_STDERR):
     """Set up logging.
 
+    This method attaches log handlers to the root logger:
+        - a stderr handler (only if the root logger has no other handlers)
+        - a file handler if specified
+
+    When a logfile is specified, the stderr handler will only log critical 
+    events.
+
     This routine enables asyncio debug mode if `loglevel` is 'debug'.
     """
-    global _logging_inited  # pylint: disable=global-statement
-    if _logging_inited:
+    global _LOGGING_INITED  # pylint: disable=global-statement
+    if _LOGGING_INITED:
         # Make sure we only initialize logging once.
+        set_loglevel(loglevel)
         return
-    _logging_inited = True
+    _LOGGING_INITED = True
+
+    _make_default_handlers(logfile)
+
+    set_loglevel(loglevel)
+    logging.captureWarnings(True)
+    warnings.simplefilter('always')
 
     if loglevel.lower() == 'debug':
         os.environ['PYTHONASYNCIODEBUG'] = '1'
 
-    _make_default_loggers(loglevel, logfile)
-
-    logging.captureWarnings(True)
-    warnings.simplefilter('always')
+    asyncio_logger = logging.getLogger('asyncio')
+    asyncio_logger.setLevel('WARNING')
 
 
-def _make_default_loggers(loglevel, logfile):
+def set_loglevel(loglevel):
+    """Change current log level.
+    """
+    ofp_logger = logging.getLogger(__package__)
+    ofp_logger.setLevel(loglevel.upper())
+
+
+def _make_default_handlers(logfile):
     """Prepare the default loggers.
     """
     root_logger = logging.getLogger()
     if not root_logger.hasHandlers():
-        root_logger.addHandler(stderr_handler)
+        root_logger.addHandler(STDERR_HANDLER)
 
     if logfile and logfile != EXT_STDERR:
         logfile_handler = _make_logfile_handler(logfile)
-        logfile_handler.setFormatter(default_formatter)
+        logfile_handler.setFormatter(DEFAULT_FORMATTER)
         root_logger.addHandler(logfile_handler)
         # When there is a log file, only log critical events to stderr.
-        stderr_handler.setLevel('CRITICAL')
-
-    ofp_logger = logging.getLogger(__package__)
-    ofp_logger.setLevel(loglevel.upper())
-
-    asyncio_logger = logging.getLogger('asyncio')
-    asyncio_logger.setLevel('WARNING')
+        STDERR_HANDLER.setLevel('CRITICAL')
 
 
 def _make_logfile_handler(logfile):

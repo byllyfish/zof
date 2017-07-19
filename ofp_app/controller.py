@@ -54,13 +54,17 @@ class Controller(object):
         self._tls_id = 0
         self._tasks = defaultdict(list)
         self._phase = 'INIT'
+        self._exit_status = 1
 
     def find_app(self, name):
         """Find application object by name."""
         return any(True for app in self.apps if app.name == name)
 
     def run_loop(self, *, args, under_test=False):
-        """Main entry point for running a controller."""
+        """Main entry point for running a controller.
+
+        Returns exit status.
+        """
         if len(self.apps) == 0:
             LOGGER.warning('No apps are loaded.')
 
@@ -82,7 +86,9 @@ class Controller(object):
             task_count = len(asyncio.Task.all_tasks())
             if task_count > 0:
                 LOGGER.warning('run_loop: Exiting with %d tasks!', task_count)
-            LOGGER.info('Exiting')
+            LOGGER.info('Exiting with status %d', self._exit_status)
+
+        return self._exit_status
 
     def _handle_signal(self, signame):
         """Handle signals.
@@ -108,10 +114,10 @@ class Controller(object):
             self._set_phase('PRESTART')
 
             asyncio.ensure_future(self._start())
-            asyncio.ensure_future(self._event_loop())
+            asyncio.ensure_future(self._read_loop())
             idle = asyncio.ensure_future(self._idle_task())
 
-            await self._read_loop()
+            await self._event_loop()
 
             idle.cancel()
             self._set_phase('STOP')
@@ -136,7 +142,8 @@ class Controller(object):
                 # If the event was dispatched to an async task, give it time
                 # now to run so it can get started.
                 await asyncio.sleep(0)
-        except _exc.ExitException:
+        except _exc.ExitException as ex:
+            self._exit_status = ex.exit_status
             self._conn.close(True)
             asyncio.get_event_loop().stop()
         except Exception:  # pylint: disable=broad-except
@@ -146,17 +153,17 @@ class Controller(object):
             LOGGER.debug('_event_loop exited')
 
     async def _read_loop(self):
-        """Read messages from the driver and push them onto the event queue."""
+        """Read messages from the driver and push them onto the event queue.
+
+        TODO(bfish): Could be implemented as a lower-level Protocol via
+        Connection class.
+        """
         LOGGER.debug('_read_loop entered')
-        running = True
-        while running:
+        while True:
             line = await self._conn.readline()
-            if line:
-                self.post_event(load_event(line))
-            else:
-                LOGGER.debug('_read_loop: posting EXIT event')
-                self.post_event(make_event(event='EXIT'))
-                running = False
+            if not line:
+                break
+            self.post_event(load_event(line))
         LOGGER.debug('_read_loop exited')
 
     async def _start(self):
@@ -170,6 +177,7 @@ class Controller(object):
                 await self._configure_tls()
             if self.args.listen_endpoints:
                 await self._listen_on_endpoints()
+            # TODO(bfish): Wait for other prestart tasks to finish.
             self._set_phase('START')
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._start')
@@ -202,8 +210,7 @@ class Controller(object):
                 'OFP.ADD_IDENTITY',
                 cert=self.args.listen_cert,
                 cacert=self.args.listen_cacert,
-                privkey=self.args.listen_privkey,
-                password='')
+                privkey=self.args.listen_privkey)
             # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
             self._tls_id = result.tls_id
@@ -321,13 +328,13 @@ class Controller(object):
         """Called when an internal event is received."""
         # Immediately begin shutting down if there is an 'EXIT' event.
         if event.event == 'EXIT':
-            raise _exc.ExitException()
+            raise _exc.ExitException(event('exit_status', default=0))
         # Let apps handle the event.
         for app in self.apps:
             app.handle_event(event, 'event')
         # Check for SIGNAL event asking for exit.
         if event.event == 'SIGNAL' and event.exit:
-            raise _exc.ExitException()
+            raise _exc.ExitException(_negative_signal_number(event.signal))
 
     def _handle_rpc_reply(self, event):
         """Called when a RPC reply is received."""
@@ -619,5 +626,16 @@ def _sanitize_rpc(event):
         event = event.copy()
         event['params'] = event['params'].copy()
         event['params']['privkey'] = '*** ELIDED ***'
-        event['params']['password'] = '*** ELIDED ***'
     return event
+
+
+def _negative_signal_number(signame):
+    """Return negative number to represent signal named `signame`.
+    
+    If signame is unknown, return -99.
+    """
+    try:
+        import signal
+        return -getattr(signal, signame)
+    except AttributeError:
+        return -99

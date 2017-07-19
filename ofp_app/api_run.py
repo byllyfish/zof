@@ -34,6 +34,8 @@ def run(*, args=None, under_test=False):
 
     try:
         controller = Controller.singleton()
-        controller.run_loop(args=args, under_test=under_test)
+        exit_status = controller.run_loop(args=args, under_test=under_test)
     finally:
         Controller.destroy()
+
+    return exit_status

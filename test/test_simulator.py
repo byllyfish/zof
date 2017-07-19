@@ -24,7 +24,7 @@ class SimulatorTestCase(unittest.TestCase):
             app.count += 1
             if app.count == sim.app.args.sim_count:
                 app.logger.info('all devices up')
-                app.post_event('EXIT')
+                app.post_event('EXIT', exit_status=0)
 
         @app.event(any)
         def any_event(event):
@@ -32,5 +32,5 @@ class SimulatorTestCase(unittest.TestCase):
 
         parser = ofp_app.common_args(under_test=True)
         args = parser.parse_args(['--sim-count=50', '--sim-timeout=3'])
-        ofp_app.run(args=args, under_test=True)
-
+        exit_status = ofp_app.run(args=args, under_test=True)
+        self.assertEqual(exit_status, 0)

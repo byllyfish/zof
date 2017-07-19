@@ -82,5 +82,9 @@ class StopPropagationException(ControlFlowException):
 class ExitException(ControlFlowException):
     """Internal exception class used to stop the controller."""
 
+    def __init__(self, exit_status=0):
+        super().__init__()
+        self.exit_status = exit_status
+
     def __str__(self):
-        return '[ExitException]'
+        return '[ExitException exit_status=%d]' % self.exit_status

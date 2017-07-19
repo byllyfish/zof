@@ -16,7 +16,7 @@ from prompt_toolkit import AbortAction
 import ofp_app
 from ..event import make_event
 from ..exception import ControlFlowException
-from ..logging import default_formatter, stderr_handler
+from ..logging import DEFAULT_FORMATTER, STDERR_HANDLER
 
 
 class CommandException(ControlFlowException):
@@ -308,7 +308,7 @@ class TailBufferedHandler(logging.Handler):
     def install():
         """Install tail logging handler."""
         handler = TailBufferedHandler()
-        handler.setFormatter(default_formatter)
+        handler.setFormatter(DEFAULT_FORMATTER)
         root_logger = logging.getLogger()
         root_logger.addHandler(handler)
         return handler
@@ -342,12 +342,12 @@ class PatchedConsoleHandler(logging.Handler):
         Change level of default stderr logging handler.
         """
         handler = PatchedConsoleHandler()
-        handler.setFormatter(default_formatter)
+        handler.setFormatter(DEFAULT_FORMATTER)
         handler.setLevel('WARNING')
         root_logger = logging.getLogger()
         root_logger.addHandler(handler)
         # From now on, only log critical events to stderr.
-        stderr_handler.setLevel('CRITICAL')
+        STDERR_HANDLER.setLevel('CRITICAL')
         return handler
 
 
