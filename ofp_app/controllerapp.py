@@ -15,7 +15,9 @@ class ControllerApp(object):
 
     Attributes:
         name (str): App name.
+        ref (Application): Externally visible ref to this object.
         precedence (int): App precedence.
+        arg_parser (ArgumentParser): Argument parser for this app.
         kill_on_exception (bool|str): Terminate immediately if app raises
             exception.
         controller (Controller): App's parent controller object.
@@ -24,8 +26,10 @@ class ControllerApp(object):
     Args:
         controller (Controller): Parent controller object.
         name (str): App name.
+        ref (Application): Externally visible ref to this object.
         kill_on_exception (bool): Terminate immediately if app raises exception.
         precedence (int): App precedence.
+        arg_parser (ArgumentParser): Argument parser for this app.
     """
     _curr_app_id = 0
 
@@ -33,12 +37,16 @@ class ControllerApp(object):
                  controller,
                  *,
                  name,
+                 ref,
                  kill_on_exception=False,
-                 precedence=1000):
+                 precedence=1000,
+                 arg_parser=None):
         self.name = name
+        self.ref = ref
         self.precedence = precedence
         self.handlers = {}
         self.kill_on_exception = kill_on_exception
+        self.arg_parser = arg_parser
         self.set_controller(controller)
 
         self.logger = logging.getLogger('%s.%s' % (__package__, self.name))

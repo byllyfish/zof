@@ -16,10 +16,10 @@ class TestApi(unittest.TestCase):
         app2 = Application('app2', precedence=12)
         self.assertEqual(app2.name, 'app2')
 
-        self.assertEqual(app1.all_apps(), app2.all_apps())
+        self.assertEqual(app1.apps, app2.apps)
 
         # Test that apps are sorted by precedence.
-        self.assertEqual(app1.all_apps(), [app2._app, app1._app])
+        self.assertEqual(app1.apps, [app2, app1])
 
 
     def test_duplicate_name(self):

@@ -1,38 +1,28 @@
 import unittest
 import asyncio
+import ofp_app
 from ofp_app.controller import Controller
-from ofp_app import Application
 
 
 class SimulatorTestCase(unittest.TestCase):
 
     def test_simulator(self):
         import  ofp_app.demo.simulator as sim
-        import ofp_app.service.device as dev
+        import ofp_app.service.device as _
         from ofp_app.logging import init_logging
 
         init_logging('INFO')
-        sim.app.simulator_count = 50
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        async def _exit_timeout():
-            try:
-                await asyncio.sleep(3.0)
-                self.assertEqual(sim.app.simulator_count, len(dev.app.devices))
-            finally:
-                sim.app.post_event('EXIT')
-        
-        task = asyncio.ensure_future(_exit_timeout())
-
-        app = Application('test_simulator')
+        app = ofp_app.Application('test_simulator')
         app.count = 0
 
         @app.event('device_up')
         def device_up(_):
             app.count += 1
-            if app.count == sim.app.simulator_count:
+            if app.count == sim.app.args.sim_count:
                 app.logger.info('all devices up')
                 app.post_event('EXIT')
 
@@ -40,11 +30,7 @@ class SimulatorTestCase(unittest.TestCase):
         def any_event(event):
             app.logger.info(event)
 
-        controller = Controller.singleton()
-        controller.run_loop(listen_endpoints=[6653])
-        Controller.destroy()
-
-        ex = task.exception()
-        if ex:
-            raise ex
+        parser = ofp_app.common_args(under_test=True)
+        args = parser.parse_args(['--sim-count=50', '--sim-timeout=3'])
+        ofp_app.run(args=args, under_test=True)
 

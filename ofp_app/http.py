@@ -5,6 +5,10 @@ import aiohttp.web as web
 from .objectview import to_json, from_json
 
 
+MIMETYPE_JSON = 'application/json'
+MIMETYPE_TEXT = 'text/plain'
+
+
 class HttpServer(object):
     """Simple async web server.
     """
@@ -29,7 +33,8 @@ class HttpServer(object):
                          endpoint_str(self.endpoint))
 
     async def stop(self):
-        assert self.endpoint
+        if not self.endpoint:
+            return
         self.web_server.close()
         await self.web_server.wait_closed()
 
@@ -39,7 +44,7 @@ class HttpServer(object):
         self.logger.info('HttpServer: Stop listening on %s',
                          endpoint_str(self.endpoint))
 
-    def route(self, path, *, method='GET'):
+    def route(self, path, *, method='GET', content_type=MIMETYPE_JSON):
         method = method.upper()
 
         def _wrap(func):

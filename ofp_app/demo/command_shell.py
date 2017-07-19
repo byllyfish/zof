@@ -234,7 +234,7 @@ def ps_cmd(event):
             app_tasks[capp].append(task)
 
     yield 'PREC NAME'
-    for capp in app.all_apps():
+    for capp in app.apps:
         yield '%4d %s' % (capp.precedence, capp.name)
         for task in app_tasks[capp]:
             yield '       %s:%s' % (_task_name(task), task.ofp_task_scope)

@@ -10,6 +10,7 @@ import argparse
 import ofp_app
 from ofp_app.pktview import pktview_from_list
 
+
 app = ofp_app.Application('layer2')
 
 # The forwarding table is a dictionary that maps:
@@ -21,7 +22,7 @@ app.forwarding_table = {}
 @app.message('channel_up')
 def channel_up(event):
     """Set up datapath when switch connects."""
-    app.logger.info('%s Connected', event.datapath_id)
+    app.logger.info('%s Connected from %s (version %d)', event.datapath_id, event.endpoint, event.version)
     app.logger.info('%s Remove all flows', event.datapath_id)
 
     delete_flows.send()
@@ -78,8 +79,8 @@ def packet_in(event):
 
     else:
         # Send packet back out all ports (except the one it came in).
-        app.logger.info('%s Flood %s packet to %s vlan %s', event.datapath_id,
-                        pkt.pkt_type, pkt.eth_dst, vlan_vid)
+        app.logger.info('%s Flood %s to %s vlan %s', event.datapath_id,
+                        pkt.get_description(), pkt.eth_dst, vlan_vid)
         packet_flood.send(in_port=in_port, data=msg.data)
 
 
@@ -103,6 +104,11 @@ def flow_removed(event):
 def other_message(event):
     """Log ignored messages."""
     app.logger.debug('Ignored message: %r', event)
+
+
+def _describe_pkt(pkt):
+    """Return description of packet contents."""
+    return pkt.get_description()
 
 
 delete_flows = ofp_app.compile('''
@@ -177,21 +183,5 @@ packet_flood = ofp_app.compile('''
 ''')
 
 
-def main():
-    args = parse_args()
-    if args.shell:
-        import ofp_app.demo.command_shell as cmd_shell
-        cmd_shell.app.command_prompt = 'layer2> '
-    ofp_app.run(args=args)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        prog='layer2', description='Layer2 Demo', parents=[ofp_app.common_args()])
-    parser.add_argument(
-        '--shell', action='store_true', help='use command shell')
-    return parser.parse_args()
-
-
 if __name__ == '__main__':
-    main()
+    ofp_app.run()

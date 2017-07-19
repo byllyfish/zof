@@ -1,5 +1,13 @@
+import os
 from .controller import Controller
 from .controllerapp import ControllerApp
+from .logging import init_logging
+
+
+# Enable logging before the first Application is created.
+_DEBUG = os.environ.get('OFP_APP_DEBUG')
+if _DEBUG:
+    init_logging('info' if _DEBUG.lower() == 'info' else 'debug')
 
 
 class Application(object):
@@ -9,16 +17,16 @@ class Application(object):
 
     Example:
 
-        from ofp_app import ofp_app, ofp_run
+        import ofp_app
 
-        app = Application('appname')
+        app = ofp_app.Application('appname')
 
         @app.message(any)
         def any_message(event):
             print(event)
 
         if __name__ == '__main__':
-            ofp_run()
+            ofp_app.run()
 
     Args:
         name (str): Name of the app.
@@ -32,13 +40,13 @@ class Application(object):
         logger (Logger): App's logger.
     """
 
-    def __init__(self, name, *, precedence=100, kill_on_exception=False):
+    def __init__(self, name, *, kill_on_exception=False, precedence=100, arg_parser=None):
         controller = Controller.singleton()
         if controller.find_app(name):
             raise ValueError('App named "%s" already exists.' % name)
 
         # Construct internal ControllerApp object.
-        app = ControllerApp(controller, name=name, kill_on_exception=kill_on_exception, precedence=precedence)
+        app = ControllerApp(controller, name=name, ref=self, kill_on_exception=kill_on_exception, precedence=precedence, arg_parser=arg_parser)
         
         self._app = app
         self.name = app.name
@@ -46,6 +54,23 @@ class Application(object):
         self.ensure_future = app.ensure_future
         self.post_event = app.post_event
         self.rpc_call = app.rpc_call
+
+    @property
+    def args(self):
+        return self._app.controller.args
+
+    @property
+    def precedence(self):
+        return self._app.precedence
+
+    @property
+    def phase(self):
+        return self._app.controller.phase
+        
+    @property
+    def apps(self):
+        return [app.ref for app in self._app.controller.apps]
+
 
     # Decorators
 
@@ -80,14 +105,7 @@ class Application(object):
             versions=versions)
         return result.conn_id
 
-
     async def close(self, *, conn_id=0, datapath_id=None):
         """Close an OpenFlow connection."""
         result = await self.rpc_call('OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
         return result.count
-
-    def all_apps(self):
-        return list(self._app.controller.apps)
-
-    #def post_event(self, event, **kwds):
-    #    self._app.post_event(make_event(event=event.upper(), **kwds))

@@ -6,6 +6,7 @@ import sys
 import functools
 from collections import defaultdict
 from .event import load_event, dump_event, make_event, Event
+from .objectview import make_objectview
 from .connection import Connection
 from .run_server import run_server
 from . import exception as _exc
@@ -25,6 +26,7 @@ class Controller(object):
 
     Attributes:
         apps (List[ControllerApp]): List of apps ordered by precedence.
+        args (argparse.Namespace): Arguments parsed by argparse module.
     """
 
     _singleton = None
@@ -43,6 +45,7 @@ class Controller(object):
 
     def __init__(self):
         self.apps = []
+        self.args = None
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
@@ -56,23 +59,15 @@ class Controller(object):
         """Find application object by name."""
         return any(True for app in self.apps if app.name == name)
 
-    def run_loop(self,
-                 *,
-                 listen_endpoints=None,
-                 listen_versions=None,
-                 oftr_options=None,
-                 security=None):
+    def run_loop(self, *, args, under_test=False):
         """Main entry point for running a controller."""
         if len(self.apps) == 0:
             LOGGER.warning('No apps are loaded.')
 
+        self.args = make_objectview(args)
+
         try:
-            asyncio.ensure_future(
-                self._run(
-                    listen_endpoints=listen_endpoints,
-                    listen_versions=listen_versions,
-                    oftr_options=oftr_options,
-                    security=security))
+            asyncio.ensure_future(self._run())
             run_server(
                 signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
                 signal_handler=self._handle_signal,
@@ -83,6 +78,10 @@ class Controller(object):
             LOGGER.exception(ex)
 
         finally:
+            # Log a warning if there are any asyncio tasks still present.
+            task_count = len(asyncio.Task.all_tasks())
+            if task_count > 0:
+                LOGGER.warning('run_loop: Exiting with %d tasks!', task_count)
             LOGGER.info('Exiting')
 
     def _handle_signal(self, signame):
@@ -95,26 +94,20 @@ class Controller(object):
                     self._event_queue.qsize())
         self.post_event(make_event(event='SIGNAL', signal=signame, exit=True))
 
-    async def _run(self,
-                   *,
-                   listen_endpoints=None,
-                   listen_versions=None,
-                   oftr_options=None,
-                   security=None):
+    async def _run(self):
         """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
-            self._conn = Connection(oftr_options=oftr_options)
+            self._conn = Connection(oftr_options={
+                'path': self.args('x_oftr_path'),
+                'args': self.args('x_oftr_args'),
+                'prefix': self.args('x_oftr_prefix')})
             await self._conn.connect()
 
             self._event_queue = asyncio.Queue()
             self._set_phase('PRESTART')
 
-            asyncio.ensure_future(
-                self._start(
-                    listen_endpoints=listen_endpoints,
-                    listen_versions=listen_versions,
-                    security=security))
+            asyncio.ensure_future(self._start())
             asyncio.ensure_future(self._event_loop())
             idle = asyncio.ensure_future(self._idle_task())
 
@@ -166,18 +159,17 @@ class Controller(object):
                 running = False
         LOGGER.debug('_read_loop exited')
 
-    async def _start(self, *, listen_endpoints, listen_versions, security):
+    async def _start(self):
         """Configure the oftr driver based on controller arguments.
 
         This method runs concurrently with `run()`.
         """
         try:
             await self._get_description()
-            if security:
-                await self._configure_tls(security)
-            if listen_endpoints:
-                await self._listen_on_endpoints(listen_endpoints,
-                                                listen_versions)
+            if self.args.listen_cert:
+                await self._configure_tls()
+            if self.args.listen_endpoints:
+                await self._listen_on_endpoints()
             self._set_phase('START')
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._start')
@@ -203,15 +195,15 @@ class Controller(object):
             LOGGER.error('Unable to get description from oftr %s', ex)
             raise
 
-    async def _configure_tls(self, security):
+    async def _configure_tls(self):
         """Set up a TLS identity for connections to use."""
         try:
             result = await self.rpc_call(
                 'OFP.ADD_IDENTITY',
-                cert=security['cert'],
-                cacert=security['cacert'],
-                privkey=security['privkey'],
-                password=security.get('password', ''))
+                cert=self.args.listen_cert,
+                cacert=self.args.listen_cacert,
+                privkey=self.args.listen_privkey,
+                password='')
             # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
             self._tls_id = result.tls_id
@@ -220,8 +212,10 @@ class Controller(object):
             LOGGER.error('Unable to create TLS identity: %s', ex.message)
             raise
 
-    async def _listen_on_endpoints(self, listen_endpoints, listen_versions):
+    async def _listen_on_endpoints(self):
         """Listen on a list of endpoints."""
+        listen_endpoints = self.args.listen_endpoints
+        listen_versions = self.args.listen_versions
         assert isinstance(listen_endpoints, (list, tuple))
         options = ['FEATURES_REQ']
         versions = _prepare_versions(listen_versions, self._supported_versions)
@@ -294,7 +288,8 @@ class Controller(object):
         else:
             xid = self.next_xid()
             event = dict(id=xid, method=method, params=params)
-        LOGGER.debug('rpc_call %r', event)
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug('rpc_call %r', _sanitize_rpc(event))
         return self.write(event, xid)
 
     def _handle_xid(self, event, xid, except_class=None):
@@ -616,3 +611,13 @@ def _prepare_versions(listen_versions, supported_versions):
     if len(unsupported) > 0:
         raise ValueError("Unsupported OpenFlow versions: %r" % unsupported)
     return listen_versions
+
+
+def _sanitize_rpc(event):
+    """Sanitize certain RPC events before logging them."""
+    if event['method'] == 'OFP.ADD_IDENTITY':
+        event = event.copy()
+        event['params'] = event['params'].copy()
+        event['params']['privkey'] = '*** ELIDED ***'
+        event['params']['password'] = '*** ELIDED ***'
+    return event

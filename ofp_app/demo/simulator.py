@@ -1,8 +1,101 @@
 import argparse
 import asyncio
 import ofp_app
+from ofp_app.api_args import file_content
 
-from ..api_args import import_module
+
+def arg_parser():
+    parser = argparse.ArgumentParser(
+        prog='simulator',
+        description='Simulator Demo')
+    parser.add_argument(
+        '--sim-count',
+        type=int,
+        default=10,
+        help='Number of datapaths to simulate')
+    parser.add_argument(
+        '--sim-timeout',
+        type=float,
+        default=0,
+        help='Seconds to run simulation')
+    parser.add_argument(
+        '--sim-cert', type=file_content, help='Simulator certificate')
+    parser.add_argument(
+        '--sim-privkey', type=file_content, help='Simulator private key')
+    parser.add_argument(
+        '--sim-cacert', type=file_content, help='Simulator CA certificate')
+    return parser
+
+
+app = ofp_app.Application('simulator', kill_on_exception=True, arg_parser=arg_parser())
+app.tls_id = 0
+app.sims = []
+app.conn_to_sim = {}
+
+
+async def _exit_timeout(timeout):
+    await asyncio.sleep(timeout)
+    app.post_event('EXIT')
+
+
+@app.event('prestart')
+async def prestart(_):
+    if app.args.sim_cert:
+        result = await app.rpc_call(
+            'OFP.ADD_IDENTITY',
+            cert=app.args.sim_cert,
+            cacert=app.args.sim_cacert,
+            privkey=app.args.sim_privkey)
+        app.tls_id = result.tls_id
+
+
+@app.event('start')
+def start(_):
+    if app.args.sim_timeout:
+        app.ensure_future(_exit_timeout(app.args.sim_timeout))
+    for i in range(app.args.sim_count):
+        sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
+        app.ensure_future(sim.start())
+
+
+@app.message('channel_up', datapath_id=None)
+@app.message('channel_down', datapath_id=None)
+@app.message('flow_mod', datapath_id=None)
+def ignore(_):
+    return
+
+
+@app.message('features_request', datapath_id=None)
+def features_request(event):
+    app.conn_to_sim[event.conn_id].features_request(event)
+
+
+@app.message('barrier_request', datapath_id=None)
+def barrier_request(event):
+    app.conn_to_sim[event.conn_id].barrier_request(event)
+
+
+@app.message('request.port_desc', datapath_id=None)
+def request_portdesc(event):
+    app.conn_to_sim[event.conn_id].request_portdesc(event)
+
+
+@app.message('request.desc', datapath_id=None)
+def request_desc(event):
+    app.conn_to_sim[event.conn_id].request_desc(event)
+
+
+@app.message('channel_down', datapath_id=None)
+def channel_down(event):
+    sim = app.conn_to_sim.pop(event.conn_id, None)
+    if sim:
+        app.sims.remove(sim)
+
+
+@app.message(any, datapath_id=None)
+def other(event):
+    app.logger.info('Unhandled message: %r' % event)
+    raise ValueError('Unexpected message: %r' % event)
 
 
 class Simulator(object):
@@ -79,124 +172,10 @@ class Simulator(object):
         }
 
 
-app = ofp_app.Application('simulator', kill_on_exception=True)
-app.simulator_count = 100
-app.security = None
-app.tls_id = 0
-app.exit_timeout = None
-app.sims = []
-app.conn_to_sim = {}
-
-
-async def _exit_timeout(timeout):
-    await asyncio.sleep(timeout)
-    app.post_event('EXIT')
-
-
-@app.event('prestart')
-async def prestart(_):
-    if app.security:
-        result = await app.rpc_call(
-            'OFP.ADD_IDENTITY',
-            cert=app.security['cert'],
-            cacert=app.security['cacert'],
-            privkey=app.security['privkey'])
-        app.tls_id = result.tls_id
-
-
-@app.event('start')
-def start(_):
-    if app.exit_timeout:
-        app.ensure_future(_exit_timeout(app.exit_timeout))
-    for i in range(app.simulator_count):
-        sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
-        app.ensure_future(sim.start())
-
-
-@app.message('channel_up', datapath_id=None)
-@app.message('channel_down', datapath_id=None)
-@app.message('flow_mod', datapath_id=None)
-def ignore(_):
-    return
-
-
-@app.message('features_request', datapath_id=None)
-def features_request(event):
-    app.conn_to_sim[event.conn_id].features_request(event)
-
-
-@app.message('barrier_request', datapath_id=None)
-def barrier_request(event):
-    app.conn_to_sim[event.conn_id].barrier_request(event)
-
-
-@app.message('request.port_desc', datapath_id=None)
-def request_portdesc(event):
-    app.conn_to_sim[event.conn_id].request_portdesc(event)
-
-
-@app.message('request.desc', datapath_id=None)
-def request_desc(event):
-    app.conn_to_sim[event.conn_id].request_desc(event)
-
-
-@app.message('channel_down', datapath_id=None)
-def channel_down(event):
-    sim = app.conn_to_sim.pop(event.conn_id, None)
-    if sim:
-        app.sims.remove(sim)
-
-
-@app.message(any, datapath_id=None)
-def other(event):
-    app.logger.info('Unhandled message: %r' % event)
-    raise ValueError('Unexpected message: %r' % event)
-
-
-def _file_content(filename):
-    with open(filename, encoding='utf-8') as afile:
-        return afile.read()
-
-
 def main():
-    args = parse_args()
-    for module in args.modules:
-        import_module(module)
-    app.simulator_count = args.simulator_count
-    app.exit_timeout = args.exit_timeout
-    if args.sim_cert:
-        app.security = {
-            'cert': args.sim_cert,
-            'privkey': args.sim_privkey,
-            'cacert': args.sim_cacert
-        }
-    ofp_app.run(args=args, listen_endpoints=None)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        prog='simulator',
-        description='Simulator Demo',
-        parents=[ofp_app.common_args()])
-    parser.add_argument(
-        '--simulator-count',
-        type=int,
-        default=10,
-        help='Number of datapaths to simulate')
-    parser.add_argument(
-        '--exit-timeout',
-        type=float,
-        default=0,
-        help='Seconds to run simulation')
-    parser.add_argument(
-        '--sim-cert', type=_file_content, help='Simulator certificate')
-    parser.add_argument(
-        '--sim-privkey', type=_file_content, help='Simulator private key')
-    parser.add_argument(
-        '--sim-cacert', type=_file_content, help='Simulator CA certificate')
-    parser.add_argument('modules', nargs='*', help='Modules to load')
-    return parser.parse_args()
-
+    args = ofp_app.common_args()
+    args.set_defaults(listen_endpoints=None)
+    ofp_app.run(args=args.parse_args())
 
 if __name__ == '__main__':
     main()
