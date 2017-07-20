@@ -73,6 +73,7 @@ def common_args(*, under_test=False):
     x_group.add_argument('--x-oftr-path', help='path to oftr executable')
     x_group.add_argument('--x-oftr-args', help='arguments passed to oftr')
     x_group.add_argument('--x-oftr-prefix', help='prefix used to launch oftr (valgrind, strace, catchsegv)')
+    x_group.add_argument('--x-under-test', action='store_true', default=under_test, help='special test mode')
 
     return parser
 

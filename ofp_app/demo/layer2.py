@@ -6,7 +6,6 @@
 
 """
 
-import argparse
 import ofp_app
 from ofp_app.pktview import pktview_from_list
 

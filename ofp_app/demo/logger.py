@@ -1,7 +1,6 @@
 import asyncio
 import ofp_app
 
-
 app = ofp_app.Application('logger', precedence=0)
 
 app.logger.info('phase = %r' % app.phase)

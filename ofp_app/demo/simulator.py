@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import sys
 import ofp_app
 from ofp_app.api_args import file_content
 
@@ -183,7 +182,7 @@ class Simulator(object):
 def main():
     args = ofp_app.common_args()
     args.set_defaults(listen_endpoints=None)
-    return ofp_app.run(args=args.parse_args())
+    ofp_app.run(args=args.parse_args())
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

@@ -13,4 +13,3 @@ from .api_run import run
 from .api_args import common_args
 from .api_compile import compile
 
-__all__ = ['Application', 'ofp_compile', 'ofp_run', 'ofp_common_args']

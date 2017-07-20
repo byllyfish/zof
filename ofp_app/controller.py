@@ -60,7 +60,7 @@ class Controller(object):
         """Find application object by name."""
         return any(True for app in self.apps if app.name == name)
 
-    def run_loop(self, *, args, under_test=False):
+    def run_loop(self, *, args):
         """Main entry point for running a controller.
 
         Returns exit status.

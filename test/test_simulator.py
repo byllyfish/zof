@@ -32,5 +32,5 @@ class SimulatorTestCase(unittest.TestCase):
 
         parser = ofp_app.common_args(under_test=True)
         args = parser.parse_args(['--sim-count=50', '--sim-timeout=3'])
-        exit_status = ofp_app.run(args=args, under_test=True)
+        exit_status = ofp_app.run(args=args)
         self.assertEqual(exit_status, 0)
