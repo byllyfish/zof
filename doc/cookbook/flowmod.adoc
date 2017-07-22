@@ -39,7 +39,6 @@ msg:
       actions:
         - action: OUTPUT
           port_no: CONTROLLER
-          max_len: MAX
 ----
 
 ==== Add a Table Miss Flow Entry to Drop Packets

@@ -23,7 +23,6 @@ msg:
   actions:
     - action: OUTPUT
       port_no: 1
-      max_len: MAX
 ----
 
 
@@ -38,13 +37,10 @@ msg:
   actions:
     - action: OUTPUT
       port_no: 1
-      max_len: MAX
     - action: OUTPUT
       port_no: 2
-      max_len: MAX
     - action: OUTPUT
       port_no: 3
-      max_len: MAX
 ----
 
 ==== Drop an Empty Unbuffered Packet (i.e. a pointless operation).

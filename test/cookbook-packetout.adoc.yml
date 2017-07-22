@@ -19,7 +19,6 @@ msg:
 #   actions:
 #     - action: OUTPUT
 #       port_no: 1
-#       max_len: MAX
 type:            PACKET_OUT
 xid:             0x00000000
 version:         0x04
@@ -39,13 +38,10 @@ msg:
 #   actions:
 #     - action: OUTPUT
 #       port_no: 1
-#       max_len: MAX
 #     - action: OUTPUT
 #       port_no: 2
-#       max_len: MAX
 #     - action: OUTPUT
 #       port_no: 3
-#       max_len: MAX
 type:            PACKET_OUT
 xid:             0x00000000
 version:         0x04

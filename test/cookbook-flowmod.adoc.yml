@@ -55,7 +55,6 @@ msg:
 #       actions:
 #         - action: OUTPUT
 #           port_no: CONTROLLER
-#           max_len: MAX
 type:            FLOW_MOD
 xid:             0x00000000
 version:         0x04

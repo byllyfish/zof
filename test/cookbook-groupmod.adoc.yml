@@ -14,7 +14,6 @@
 #         value: '00:01:02:03:04:05'
 #       - action: OUTPUT
 #         port_no: 1
-#         max_len: MAX
 type:            GROUP_MOD
 xid:             0x00000000
 version:         0x04
@@ -46,11 +45,9 @@ msg:
 #     - actions:
 #       - action: OUTPUT
 #         port_no: 1
-#         max_len: MAX
 #     - actions: 
 #       - action: OUTPUT
 #         port_no: 2
-#         max_len: MAX
 type:            GROUP_MOD
 xid:             0x00000000
 version:         0x04

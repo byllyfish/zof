@@ -19,7 +19,6 @@ msg:
         value: '00:01:02:03:04:05'
       - action: OUTPUT
         port_no: 1
-        max_len: MAX
 ----
 
 ==== Add an All Group
@@ -35,10 +34,8 @@ msg:
     - actions:
       - action: OUTPUT
         port_no: 1
-        max_len: MAX
     - actions: 
       - action: OUTPUT
         port_no: 2
-        max_len: MAX
 ----
 
