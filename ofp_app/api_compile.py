@@ -22,8 +22,7 @@ def compile(msg):
     controller = Controller.singleton()
     if isinstance(msg, str):
         return CompiledMessage(controller, msg)
-    else:
-        return CompiledObject(controller, msg)
+    return CompiledObject(controller, msg)
 
 
 class CompiledMessage(object):

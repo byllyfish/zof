@@ -51,7 +51,7 @@ class Connection(object):
         # Construct the cmd used to launch oftr subprocess.
         cmd = '%s %s %s %s' % (oftr_prefix, oftr_path, oftr_subcmd, oftr_args)
         self._oftr_cmd = shlex.split(cmd)
-        assert len(self._oftr_cmd) > 0
+        assert self._oftr_cmd
 
     async def connect(self):
         """Set up connection to the oftr driver.

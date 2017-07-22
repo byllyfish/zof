@@ -162,8 +162,7 @@ def _help_brief(handler):
     if parser and parser.description:
         # Return first line of parser description.
         return parser.description.strip().split('\n', 1)[0]
-    else:
-        return 'No help.'
+    return 'No help.'
 
 
 def _help_args():
@@ -193,8 +192,7 @@ def _show_help(cmd_name):
     if parser:
         parser.prog = cmd_name
         return parser.format_help()
-    else:
-        return ''
+    return ''
 
 
 def _ls_args():

@@ -105,7 +105,7 @@ class ControllerApp(object):
         """
         if isinstance(event, str):
             event = make_event(event=event.upper(), **kwds)
-        elif not isinstance(event, Event) or len(kwds) > 0:
+        elif not isinstance(event, Event) or kwds:
             raise ValueError('Invalid arguments to post_event')
         self.logger.debug('post_event %r', event)
         self.controller.post_event(event)

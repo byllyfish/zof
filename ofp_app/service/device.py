@@ -228,9 +228,8 @@ def port_up(event):
 async def _fetch_ports(reply):
     if reply.version == OPENFLOW_VERSION_1:
         return reply.msg.ports
-    else:
-        result = await portdesc.request()
-        return result.msg
+    result = await portdesc.request()
+    return result.msg
 
 
 async def _set_config():

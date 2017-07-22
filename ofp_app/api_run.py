@@ -14,7 +14,7 @@ def run(*, args=None):
     """Run event loop for ofp_app.
 
     Args:
-        args (Optional[argparse.Namespace]): Arguments derived from 
+        args (Optional[argparse.Namespace]): Arguments derived from
             ArgumentParser. If None, use `common_args` parser.
     """
     if args is None:

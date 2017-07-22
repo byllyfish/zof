@@ -101,7 +101,7 @@ def channel_down(event):
 
 @app.message(any, datapath_id=None)
 def other(event):
-    app.logger.info('Unhandled message: %r' % event)
+    app.logger.info('Unhandled message: %r', event)
     raise ValueError('Unexpected message: %r' % event)
 
 

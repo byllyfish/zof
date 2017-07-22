@@ -12,7 +12,7 @@ if _DEBUG:
 
 class Application(object):
     """The Application class represents a controller "app". Your app's
-    code registers for events and issues commands primarily via an 
+    code registers for events and issues commands primarily via an
     `Application` instance.
 
     Example:
@@ -47,7 +47,7 @@ class Application(object):
 
         # Construct internal ControllerApp object.
         app = ControllerApp(controller, name=name, ref=self, kill_on_exception=kill_on_exception, precedence=precedence, arg_parser=arg_parser)
-        
+
         self._app = app
         self.name = app.name
         self.logger = app.logger
@@ -66,7 +66,7 @@ class Application(object):
     @property
     def phase(self):
         return self._app.controller.phase
-        
+
     @property
     def apps(self):
         return [app.ref for app in self._app.controller.apps]

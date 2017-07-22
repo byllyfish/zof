@@ -107,5 +107,6 @@ def _run_pending(loop, pending_timeout, logger):
 
 
 def _running_tasks(loop):
+    # pylint: disable=protected-access
     tasks = asyncio.Task.all_tasks(loop)
     return [t for t in tasks if not t._state in ('FINISHED', 'CANCELLED')]

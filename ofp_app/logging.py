@@ -21,7 +21,7 @@ def init_logging(loglevel, logfile=EXT_STDERR):
         - a stderr handler (only if the root logger has no other handlers)
         - a file handler if specified
 
-    When a logfile is specified, the stderr handler will only log critical 
+    When a logfile is specified, the stderr handler will only log critical
     events.
 
     This routine enables asyncio debug mode if `loglevel` is 'debug'.

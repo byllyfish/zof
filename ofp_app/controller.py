@@ -65,7 +65,7 @@ class Controller(object):
 
         Returns exit status.
         """
-        if len(self.apps) == 0:
+        if not self.apps:
             LOGGER.warning('No apps are loaded.')
 
         self.args = make_objectview(args)
@@ -610,12 +610,12 @@ def _make_scope_key(conn_id):
 
 def _prepare_versions(listen_versions, supported_versions):
     """Return listen versions."""
-    assert len(supported_versions) > 0
+    assert supported_versions
     if not listen_versions:
         return supported_versions
     # Check if any desired versions are unsupported.
     unsupported = set(listen_versions) - set(supported_versions)
-    if len(unsupported) > 0:
+    if unsupported:
         raise ValueError("Unsupported OpenFlow versions: %r" % unsupported)
     return listen_versions
 
@@ -631,7 +631,7 @@ def _sanitize_rpc(event):
 
 def _negative_signal_number(signame):
     """Return negative number to represent signal named `signame`.
-    
+
     If signame is unknown, return -99.
     """
     try:
