@@ -9,7 +9,6 @@
 import ofp_app
 from ofp_app.pktview import pktview_from_list
 
-
 app = ofp_app.Application('layer2')
 
 # The forwarding table is a dictionary that maps:
@@ -21,7 +20,8 @@ app.forwarding_table = {}
 @app.message('channel_up')
 def channel_up(event):
     """Set up datapath when switch connects."""
-    app.logger.info('%s Connected from %s (version %d)', event.datapath_id, event.endpoint, event.version)
+    app.logger.info('%s Connected from %s (version %d)', event.datapath_id,
+                    event.endpoint, event.version)
     app.logger.info('%s Remove all flows', event.datapath_id)
 
     delete_flows.send()
@@ -180,7 +180,6 @@ packet_flood = ofp_app.compile('''
         max_len: MAX
     data: $data
 ''')
-
 
 if __name__ == '__main__':
     ofp_app.run()

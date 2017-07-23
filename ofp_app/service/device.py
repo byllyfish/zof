@@ -57,7 +57,6 @@ class Device(object):
         return self.__dict__
 
 
-
 class Port(object):
     """Concrete class to represent a switch port.
     """

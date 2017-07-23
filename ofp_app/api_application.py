@@ -3,7 +3,6 @@ from .controller import Controller
 from .controllerapp import ControllerApp
 from .logging import init_logging
 
-
 # Enable logging before the first Application is created.
 _DEBUG = os.environ.get('OFP_APP_DEBUG')
 if _DEBUG:
@@ -40,13 +39,24 @@ class Application(object):
         logger (Logger): App's logger.
     """
 
-    def __init__(self, name, *, exception_fatal=False, precedence=100, arg_parser=None):
+    def __init__(self,
+                 name,
+                 *,
+                 exception_fatal=False,
+                 precedence=100,
+                 arg_parser=None):
         controller = Controller.singleton()
         if controller.find_app(name):
             raise ValueError('App named "%s" already exists.' % name)
 
         # Construct internal ControllerApp object.
-        app = ControllerApp(controller, name=name, ref=self, exception_fatal=exception_fatal, precedence=precedence, arg_parser=arg_parser)
+        app = ControllerApp(
+            controller,
+            name=name,
+            ref=self,
+            exception_fatal=exception_fatal,
+            precedence=precedence,
+            arg_parser=arg_parser)
 
         self._app = app
         self.name = app.name
@@ -76,7 +86,6 @@ class Application(object):
         # TODO(bfish): Implement later...
         #return list(self._app.handlers)
         raise NotImplementedError('Not implemeted yet')
-
 
     # Decorators
 
@@ -113,5 +122,6 @@ class Application(object):
 
     async def close(self, *, conn_id=0, datapath_id=None):
         """Close an OpenFlow connection."""
-        result = await self.rpc_call('OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
+        result = await self.rpc_call(
+            'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
         return result.count

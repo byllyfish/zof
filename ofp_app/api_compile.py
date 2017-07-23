@@ -56,7 +56,8 @@ class CompiledMessage(object):
             kwds (dict): Template argument values.
         """
         xid = kwds.setdefault('xid', self._controller.next_xid())
-        return self._controller.write(self._complete(kwds, _task_locals()), xid)
+        return self._controller.write(
+            self._complete(kwds, _task_locals()), xid)
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.
@@ -141,7 +142,8 @@ class CompiledObject(object):
             kwds (dict): Template argument values.
         """
         xid = kwds.setdefault('xid', self._controller.next_xid())
-        return self._controller.write(self._complete(kwds, _task_locals()), xid)
+        return self._controller.write(
+            self._complete(kwds, _task_locals()), xid)
 
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.

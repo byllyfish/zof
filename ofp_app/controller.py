@@ -108,7 +108,8 @@ class Controller(object):
             self._conn = Connection(oftr_options={
                 'path': self.args('x_oftr_path'),
                 'args': self.args('x_oftr_args'),
-                'prefix': self.args('x_oftr_prefix')})
+                'prefix': self.args('x_oftr_prefix')
+            })
             await self._conn.connect()
 
             self._event_queue = asyncio.Queue()

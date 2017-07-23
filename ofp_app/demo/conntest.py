@@ -1,7 +1,6 @@
 import asyncio
 import ofp_app
 
-
 app = ofp_app.Application('conntest', exception_fatal=True)
 
 

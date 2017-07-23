@@ -4,7 +4,6 @@ import re
 import aiohttp.web as web
 from .objectview import to_json, from_json
 
-
 MIMETYPE_JSON = 'application/json'
 MIMETYPE_TEXT = 'text/plain'
 
