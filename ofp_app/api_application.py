@@ -71,6 +71,12 @@ class Application(object):
     def apps(self):
         return [app.ref for app in self._app.controller.apps]
 
+    @property
+    def handlers(self):
+        # TODO(bfish): Implement later...
+        #return list(self._app.handlers)
+        raise NotImplementedError('Not implemeted yet')
+
 
     # Decorators
 
@@ -79,7 +85,7 @@ class Application(object):
         """
 
         def _wrap(func):
-            return self._app.subscribe(func, 'message', subtype, kwds)
+            return self._app.register(func, 'message', subtype, kwds)
 
         return _wrap
 
@@ -88,7 +94,7 @@ class Application(object):
         """
 
         def _wrap(func):
-            return self._app.subscribe(func, 'event', subtype, kwds)
+            return self._app.register(func, 'event', subtype, kwds)
 
         return _wrap
 

@@ -124,29 +124,18 @@ class ControllerApp(object):
         return self.controller.ensure_future(
             coroutine, app=self, task_locals=task_locals)
 
-    def subscribe(self, callback, type_, subtype, options):
-        """Function used to subscribe a handler."""
+    def register(self, callback, type_, subtype, options):
+        """Function used to register a handler."""
+        if self.controller.phase != 'INIT':
+            raise RuntimeError('Controller not in INIT phase')
         handler = make_handler(callback, type_, subtype, options)
         if not handler.verify():
-            self.logger.error('Failed to subscribe %s', handler)
+            self.logger.error('Failed to register %s', handler)
             return None
         handlers = self.handlers.setdefault(handler.type, [])
         handlers.append(handler)
-        self.logger.debug('Subscribe %s', handler)
+        self.logger.debug('Register handler %s', handler)
         return callback
-
-    def unsubscribe(self, callback):
-        """Function used to unsubscribe a handler.
-
-        Currently, this function is completely unused. It may be removed in
-        later versions.
-        """
-        for key in self.handlers:
-            for handler in self.handlers[key]:
-                if handler.callback is callback:
-                    self.logger.debug('Unsubscribe %s', handler)
-                    self.handlers[key].remove(handler)
-                    return
 
     def __repr__(self):
         evt_count = len(self.handlers.get('event', []))

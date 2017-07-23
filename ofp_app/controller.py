@@ -27,6 +27,7 @@ class Controller(object):
     Attributes:
         apps (List[ControllerApp]): List of apps ordered by precedence.
         args (argparse.Namespace): Arguments parsed by argparse module.
+        phase (str): Lifecycle phase.
     """
 
     _singleton = None
@@ -46,6 +47,7 @@ class Controller(object):
     def __init__(self):
         self.apps = []
         self.args = None
+        self.phase = 'INIT'
         self._conn = None
         self._xid = _MIN_XID
         self._reqs = {}
@@ -53,12 +55,11 @@ class Controller(object):
         self._supported_versions = []
         self._tls_id = 0
         self._tasks = defaultdict(list)
-        self._phase = 'INIT'
         self._exit_status = 1
 
     def find_app(self, name):
         """Find application object by name."""
-        return any(True for app in self.apps if app.name == name)
+        return any(app for app in self.apps if app.name == name)
 
     def run_loop(self, *, args):
         """Main entry point for running a controller.
@@ -421,10 +422,10 @@ class Controller(object):
 
             INIT -> PRESTART -> START -> STOP -> POSTSTOP.
         """
-        LOGGER.debug('Change phase from "%s" to "%s"', self._phase, phase)
-        if self._phase != 'PRESTART':
-            self._cancel_tasks(self._phase)
-        self._phase = phase
+        LOGGER.debug('Change phase from "%s" to "%s"', self.phase, phase)
+        if self.phase != 'PRESTART':
+            self._cancel_tasks(self.phase)
+        self.phase = phase
         event = make_event(event=phase)
         if phase in ('STOP', 'POSTSTOP'):
             self._dispatch_event(event)
@@ -465,7 +466,7 @@ class Controller(object):
         if conn_id:
             scope_key = _make_scope_key(conn_id)
         else:
-            scope_key = self._phase
+            scope_key = self.phase
         self._tasks[scope_key].append(task)
         task.ofp_task_app = app
         task.ofp_task_scope = scope_key
