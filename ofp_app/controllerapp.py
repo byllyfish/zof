@@ -38,9 +38,9 @@ class ControllerApp(object):
                  *,
                  name,
                  ref,
-                 exception_fatal=False,
-                 precedence=1000,
-                 arg_parser=None):
+                 exception_fatal,
+                 precedence,
+                 arg_parser):
         self.name = name
         self.ref = ref
         self.precedence = precedence
@@ -57,7 +57,7 @@ class ControllerApp(object):
         self.controller = controller
         # Insert app into controller's list sorted by precedence.
         controller.apps.append(self)
-        controller.apps.sort(key=attrgetter('precedence'))
+        controller.apps.sort(key=attrgetter('precedence'), reverse=True)
 
     def handle_event(self, event, handler_type):
         """Handle event."""

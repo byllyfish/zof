@@ -8,10 +8,10 @@ class TestApi(unittest.TestCase):
         Controller.destroy()
 
     def test_ofp_app(self):
-        app1 = Application('app1', exception_fatal=True, precedence=5001)
+        app1 = Application('app1', exception_fatal=True, precedence=12)
         self.assertEqual(app1.name, 'app1')
 
-        app2 = Application('app2', precedence=12)
+        app2 = Application('app2', precedence=5001)
         self.assertEqual(app2.name, 'app2')
 
         self.assertEqual(app1.apps, app2.apps)
