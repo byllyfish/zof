@@ -256,21 +256,21 @@ def _log_args():
 async def log_cmd(event):
     """Show recent log messages."""
     if event.args.f:
-        _console_handler.write('Type CTRL-C to stop logging.')
+        _CONSOLE_HANDLER.write('Type CTRL-C to stop logging.')
     # Print out lines from tail buffer.
-    for line in _tail_handler.lines():
-        _console_handler.write(line)
+    for line in _TAIL_HANDLER.lines():
+        _CONSOLE_HANDLER.write(line)
     if event.args.f:
         # Temporarily change console log handler's level to use the root log level.
-        console_level = _console_handler.level
-        _console_handler.setLevel('NOTSET')
+        console_level = _CONSOLE_HANDLER.level
+        _CONSOLE_HANDLER.setLevel('NOTSET')
         try:
             # Wait for cancellation.
             while True:
                 await asyncio.sleep(60)
         finally:
             # Change console log handler's level back.
-            _console_handler.setLevel(console_level)
+            _CONSOLE_HANDLER.setLevel(console_level)
 
 
 @app.command('exit', brief='Exit command shell.')
@@ -349,8 +349,8 @@ class PatchedConsoleHandler(logging.Handler):
         return handler
 
 
-_tail_handler = TailBufferedHandler.install()
-_console_handler = PatchedConsoleHandler.install()
+_TAIL_HANDLER = TailBufferedHandler.install()
+_CONSOLE_HANDLER = PatchedConsoleHandler.install()
 
 if __name__ == '__main__':
     ofp_app.run()
