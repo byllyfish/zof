@@ -1,7 +1,6 @@
 import unittest
 import asyncio
 import ofp_app
-from ofp_app.controller import Controller
 
 
 class SimulatorTestCase(unittest.TestCase):
