@@ -10,7 +10,7 @@ class TestApi(unittest.TestCase):
 
 
     def test_ofp_app(self):
-        app1 = Application('app1', kill_on_exception=True, precedence=5001)
+        app1 = Application('app1', exception_fatal=True, precedence=5001)
         self.assertEqual(app1.name, 'app1')
 
         app2 = Application('app2', precedence=12)

@@ -31,7 +31,7 @@ class Application(object):
     Args:
         name (str): Name of the app.
         precedence (int): Precedence for app event dispatch.
-        kill_on_exception (bool|str): If true, abort app when a handler raises
+        exception_fatal (bool|str): If true, abort app when a handler raises
           an exception. When the value is a string, it's treated as the name of
           the exception logger `ofp_app.<exc_log>`.
 
@@ -40,13 +40,13 @@ class Application(object):
         logger (Logger): App's logger.
     """
 
-    def __init__(self, name, *, kill_on_exception=False, precedence=100, arg_parser=None):
+    def __init__(self, name, *, exception_fatal=False, precedence=100, arg_parser=None):
         controller = Controller.singleton()
         if controller.find_app(name):
             raise ValueError('App named "%s" already exists.' % name)
 
         # Construct internal ControllerApp object.
-        app = ControllerApp(controller, name=name, ref=self, kill_on_exception=kill_on_exception, precedence=precedence, arg_parser=arg_parser)
+        app = ControllerApp(controller, name=name, ref=self, exception_fatal=exception_fatal, precedence=precedence, arg_parser=arg_parser)
 
         self._app = app
         self.name = app.name

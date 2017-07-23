@@ -18,7 +18,7 @@ class ControllerApp(object):
         ref (Application): Externally visible ref to this object.
         precedence (int): App precedence.
         arg_parser (ArgumentParser): Argument parser for this app.
-        kill_on_exception (bool|str): Terminate immediately if app raises
+        exception_fatal (bool|str): Terminate immediately if app raises
             exception.
         controller (Controller): App's parent controller object.
         logger (Logger): App's logger.
@@ -27,7 +27,7 @@ class ControllerApp(object):
         controller (Controller): Parent controller object.
         name (str): App name.
         ref (Application): Externally visible ref to this object.
-        kill_on_exception (bool): Terminate immediately if app raises exception.
+        exception_fatal (bool): Terminate immediately if app raises exception.
         precedence (int): App precedence.
         arg_parser (ArgumentParser): Argument parser for this app.
     """
@@ -38,14 +38,14 @@ class ControllerApp(object):
                  *,
                  name,
                  ref,
-                 kill_on_exception=False,
+                 exception_fatal=False,
                  precedence=1000,
                  arg_parser=None):
         self.name = name
         self.ref = ref
         self.precedence = precedence
         self.handlers = {}
-        self.kill_on_exception = kill_on_exception
+        self.exception_fatal = exception_fatal
         self.arg_parser = arg_parser
         self.set_controller(controller)
 
@@ -74,18 +74,18 @@ class ControllerApp(object):
 
     def handle_exception(self, event, handler_type):
         """Handle exception."""
-        fatal_str = 'Fatal ' if self.kill_on_exception else ''
+        fatal_str = 'Fatal ' if self.exception_fatal else ''
         self.logger.critical(
             '%sException caught while handling "%s": %r',
             fatal_str,
             handler_type,
             event,
             exc_info=True)
-        if self.kill_on_exception:
-            # If the value of `kill_on_exception` is a string, find the logger
+        if self.exception_fatal:
+            # If the value of `exception_fatal` is a string, find the logger
             # with this name and log the critical exception here also.
-            if isinstance(self.kill_on_exception, str):
-                logger = logging.getLogger(self.kill_on_exception)
+            if isinstance(self.exception_fatal, str):
+                logger = logging.getLogger(self.exception_fatal)
                 logger.critical(
                     '%sException caught while handling "%s": %r',
                     fatal_str,

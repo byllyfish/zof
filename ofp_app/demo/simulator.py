@@ -27,7 +27,7 @@ def arg_parser():
     return parser
 
 
-app = ofp_app.Application('simulator', kill_on_exception=True, arg_parser=arg_parser())
+app = ofp_app.Application('simulator', exception_fatal=True, arg_parser=arg_parser())
 app.tls_id = 0
 app.sims = []
 app.conn_to_sim = {}
