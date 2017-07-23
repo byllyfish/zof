@@ -10,5 +10,6 @@ doc/sphinx/_build/
 demos/
 *.egg-info/
 .eggs/
+.mypy_cache/
 
 dist/
