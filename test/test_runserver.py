@@ -5,7 +5,6 @@ from ofp_app.run_server import run_server
 
 
 class RunServerTestCase(unittest.TestCase):
-
     def test_stopping_task(self):
         """Verify with task that calls stop.
         """

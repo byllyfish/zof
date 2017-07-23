@@ -4,10 +4,8 @@ from ofp_app.controller import Controller
 
 
 class TestApi(unittest.TestCase):
-
     def tearDown(self):
         Controller.destroy()
-
 
     def test_ofp_app(self):
         app1 = Application('app1', exception_fatal=True, precedence=5001)
@@ -20,7 +18,6 @@ class TestApi(unittest.TestCase):
 
         # Test that apps are sorted by precedence.
         self.assertEqual(app1.apps, [app2, app1])
-
 
     def test_duplicate_name(self):
         # Do not allow two apps to have the same name.

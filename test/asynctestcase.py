@@ -7,12 +7,15 @@ import unittest
 # Test timeout in seconds
 _TIMEOUT = 10.0
 
+
 # Method decorator for async tests.
 def _wrap_async(func):
     """ Method decorator for async tests. """
+
     def _wrap(self):
         task = asyncio.wait_for(func(self), _TIMEOUT)
         AsyncTestCase.loop.run_until_complete(task)
+
     return _wrap
 
 

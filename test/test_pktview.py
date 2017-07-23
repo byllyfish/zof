@@ -4,17 +4,13 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 
 
 class PktViewTestCase(unittest.TestCase):
-
     def test_init(self):
-        pkt = make_pktview(a = 1, b = 2)
+        pkt = make_pktview(a=1, b=2)
         self.assertEqual(pkt.a, 1)
         self.assertEqual(pkt.b, 2)
 
     def test_basic(self):
-        data = [
-            dict(field='A', value='a'),
-            dict(field='B', value=2)
-        ]
+        data = [dict(field='A', value='a'), dict(field='B', value=2)]
         pkt = pktview_from_list(data)
         self.assertEqual(pkt.a, 'a')
         self.assertEqual(pkt.b, 2)
@@ -36,11 +32,16 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(pkt, {'a': '5/255'})
 
     def test_to_list(self):
-        data = dict(a = 'a', b = 2, c='ddd')
+        data = dict(a='a', b=2, c='ddd')
         fields = pktview_to_list(data)
         fields.sort(key=_by_field)
-        self.assertEqual(fields, [dict(field='A', value='a'), dict(field='B', value=2), dict(field='C', value='ddd')])
-
+        self.assertEqual(
+            fields, [
+                dict(
+                    field='A', value='a'), dict(
+                        field='B', value=2), dict(
+                            field='C', value='ddd')
+            ])
 
     def test_alias_attr(self):
         pkt = make_pktview()
@@ -104,7 +105,8 @@ class PktViewTestCase(unittest.TestCase):
         pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
         items = list(pkt.items())
         items.sort()
-        self.assertEqual(items, [('eth_type', 0x0800), ('ipv4_src', '1.2.3.4')])
+        self.assertEqual(items,
+                         [('eth_type', 0x0800), ('ipv4_src', '1.2.3.4')])
 
     def test_pktview_from_ofctl(self):
         data = dict(dl_type=0x0800, nw_proto=6, tp_dst=80)
@@ -113,16 +115,32 @@ class PktViewTestCase(unittest.TestCase):
 
         data = dict(dl_dst='ab:cd:00:00:00:00/ff:ff:00:00:00:00')
         pkt = pktview_from_ofctl(data)
-        self.assertEqual(pkt, {'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'})
+        self.assertEqual(pkt,
+                         {'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'})
         items = pktview_to_list(pkt)
-        self.assertEqual(items, [{'value': 'ab:cd:00:00:00:00', 'field': 'ETH_DST', 'mask': 'ff:ff:00:00:00:00'}])
+        self.assertEqual(items, [{
+            'value': 'ab:cd:00:00:00:00',
+            'field': 'ETH_DST',
+            'mask': 'ff:ff:00:00:00:00'
+        }])
 
     def test_convert_slash_notation(self):
-        self.assertEqual(convert_slash_notation('ETH_SRC', '0e:dc:00:00:00:00/ff:ff:00:00:00:00'), ('0e:dc:00:00:00:00', 'ff:ff:00:00:00:00'))
-        self.assertEqual(convert_slash_notation('IPV4_SRC', '1.2.3.4/255.255.0.0'), (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
-        self.assertEqual(convert_slash_notation('IPV4_SRC', '1.2.3.4/16'), (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
-        self.assertEqual(convert_slash_notation('IPV6_SRC', '2001::1/ffff::'), (IPv6Address('2001::1'), IPv6Address('ffff::')))
-        self.assertEqual(convert_slash_notation('IPV6_SRC', '2001::1/16'), (IPv6Address('2001::1'), IPv6Address('ffff::')))
+        self.assertEqual(
+            convert_slash_notation('ETH_SRC',
+                                   '0e:dc:00:00:00:00/ff:ff:00:00:00:00'),
+            ('0e:dc:00:00:00:00', 'ff:ff:00:00:00:00'))
+        self.assertEqual(
+            convert_slash_notation('IPV4_SRC', '1.2.3.4/255.255.0.0'),
+            (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
+        self.assertEqual(
+            convert_slash_notation('IPV4_SRC', '1.2.3.4/16'),
+            (IPv4Address('1.2.3.4'), IPv4Address('255.255.0.0')))
+        self.assertEqual(
+            convert_slash_notation('IPV6_SRC', '2001::1/ffff::'),
+            (IPv6Address('2001::1'), IPv6Address('ffff::')))
+        self.assertEqual(
+            convert_slash_notation('IPV6_SRC', '2001::1/16'),
+            (IPv6Address('2001::1'), IPv6Address('ffff::')))
 
     def test_description(self):
         pkt = make_pktview(ip_proto=6, eth_type=0x0800)
@@ -133,6 +151,7 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(pkt.get_description(), 'ETH:25')
         pkt = make_pktview(eth_type=0x0800)
         self.assertEqual(pkt.get_description(), 'IPv4:None')
+
 
 def _by_field(item):
     return item['field']

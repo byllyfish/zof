@@ -3,12 +3,10 @@ from ofp_app.handler import make_handler
 from ofp_app.objectview import make_objectview
 from ofp_app.event import make_event
 
-
 NO_HELP = 'No help available'
 
 
 class HandlerTestCase(unittest.TestCase):
-
     def test_func(self):
         h = make_handler(func, 'message', 'FEATURES_REQUEST')
         self.assertTrue(h.verify())
@@ -36,15 +34,15 @@ class HandlerTestCase(unittest.TestCase):
         h = make_handler(bad_func, 'message', 'FEATURES_REQUEST')
         self.assertFalse(h.verify())
         self.assertEqual('message', h.type)
-        self.assertEqual('FEATURES_REQUEST', h.subtype)        
+        self.assertEqual('FEATURES_REQUEST', h.subtype)
         self.assertEqual(NO_HELP, h.help_brief())
-        self.assertEqual(NO_HELP, h.help())    
+        self.assertEqual(NO_HELP, h.help())
 
     def test_any_subtype(self):
         h = make_handler(func, 'message', any)
         self.assertTrue(h.verify())
         self.assertEqual('message', h.type)
-        self.assertEqual(any, h.subtype)        
+        self.assertEqual(any, h.subtype)
         self.assertEqual('Brief line.', h.help_brief())
         self.assertEqual('Brief line.\n\nThis is a test func.', h.help())
 
@@ -53,7 +51,7 @@ class HandlerTestCase(unittest.TestCase):
         self.assertFalse(h.verify())
 
     def test_message_filter(self):
-        h1 = make_handler(func, 'message', 'PACKET_IN', {'cookie':123})
+        h1 = make_handler(func, 'message', 'PACKET_IN', {'cookie': 123})
         self.assertTrue(h1.verify())
 
         h2 = make_handler(func, 'message', 'PACKET_IN', {'x': 9})
@@ -112,10 +110,10 @@ class HandlerTestCase(unittest.TestCase):
         self.assertTrue(h.match(evt))
 
     def test_event_filter(self):
-        h1 = make_handler(func, 'event', 'SIGNAL', {'signal':'SIGHUP'})
+        h1 = make_handler(func, 'event', 'SIGNAL', {'signal': 'SIGHUP'})
         self.assertTrue(h1.verify())
 
-        h2 = make_handler(func, 'event', 'SIGNAL', { 'x': 3})
+        h2 = make_handler(func, 'event', 'SIGNAL', {'x': 3})
         self.assertTrue(h2.verify())
 
         evt = make_event(event='SIGNAL', signal='SIGTERM')
@@ -134,6 +132,7 @@ def func(event):
     """
     pass
 
+
 def func_nodoc(event):
     pass
 
@@ -144,6 +143,7 @@ async def async_func(event):
     This is an async func.
     """
     pass
+
 
 def bad_func():
     # Func doesn't have __doc__.

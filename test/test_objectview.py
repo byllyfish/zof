@@ -9,7 +9,6 @@ def _test_dict():
 
 
 class ObjectViewTestCase(unittest.TestCase):
-
     def setUp(self):
         self.obj = ObjectView(_test_dict())
 
@@ -23,7 +22,8 @@ class ObjectViewTestCase(unittest.TestCase):
         with self.assertRaisesRegex(AttributeError, 'c'):
             print(self.obj.c)
         # Nested dictionaries aren't wrapped.
-        with self.assertRaisesRegex(AttributeError, "'dict' object has no attribute 'y'"):
+        with self.assertRaisesRegex(AttributeError,
+                                    "'dict' object has no attribute 'y'"):
             print(self.obj.z.y)
 
     def test_special_property(self):
@@ -56,7 +56,8 @@ class ObjectViewTestCase(unittest.TestCase):
         self.assertTrue('b' in self.obj)
         self.assertTrue('c' not in self.obj)
         self.assertFalse('zz' in self.obj)
-        with self.assertRaisesRegex(TypeError, 'attribute name must be string'):
+        with self.assertRaisesRegex(TypeError,
+                                    'attribute name must be string'):
             self.assertFalse(1 in self.obj)
 
     def test_len(self):
@@ -113,14 +114,14 @@ class ObjectViewTestCase(unittest.TestCase):
         self.assertTrue(_test_dict() == self.obj)
         self.assertEqual(self.obj, ObjectView(_test_dict()))
         self.assertTrue(self.obj == ObjectView(_test_dict()))
-        
+
     def test_neq(self):
         self.assertNotEqual(self.obj, {})
         self.assertFalse(self.obj != _test_dict())
         self.assertFalse(_test_dict() != self.obj)
         self.assertNotEqual(self.obj, ObjectView({}))
         self.assertFalse(self.obj != ObjectView(_test_dict()))
-    
+
     def test_bool(self):
         self.assertTrue(self.obj)
 
@@ -141,25 +142,29 @@ class ObjectViewTestCase(unittest.TestCase):
 
     def test_from_json(self):
         o = from_json(b'{"a":1}')
-        self.assertEqual(o, {'a':1})
+        self.assertEqual(o, {'a': 1})
 
     def test_ip_address(self):
-        o = ObjectView(dict(a=[ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address('2001::1')]))
+        o = ObjectView(
+            dict(a=[
+                ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
+                    '2001::1')
+            ]))
         s = to_json(o)
         self.assertEqual(s, '{"a":["10.1.2.3","2001::1"]}')
 
     def test_argparse_namespace(self):
-        ns = argparse.Namespace(b = 3)
+        ns = argparse.Namespace(b=3)
         o = ObjectView(dict(a=ns))
         s = to_json(o)
         self.assertEqual(s, '{"a":{"b":3}}')
 
     def test_make_objectview(self):
-        d = dict(a = 1, b = 2)
+        d = dict(a=1, b=2)
         o = make_objectview(d)
         self.assertEqual(o, d)
 
-        d = dict(a = dict(b=5), b = [dict(c=6), dict(c=7)])
+        d = dict(a=dict(b=5), b=[dict(c=6), dict(c=7)])
         o = make_objectview(d)
         self.assertEqual(o.a.b, 5)
         self.assertEqual(o.b[1].c, 7)

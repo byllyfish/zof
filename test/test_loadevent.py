@@ -4,17 +4,18 @@ from ofp_app.objectview import to_json
 
 
 class LoadEventTestCase(unittest.TestCase):
-
     def test_empty(self):
         # Loading empty bytes is an error.
         event = load_event(b'')
         self.assertEqual('EXCEPTION', event.event)
-        self.assertEqual('Expecting value: line 1 column 1 (char 0)', event.reason)
+        self.assertEqual('Expecting value: line 1 column 1 (char 0)',
+                         event.reason)
 
         # Loading only white space is an error.
         event = load_event(b'  ')
         self.assertEqual('EXCEPTION', event.event)
-        self.assertEqual('Expecting value: line 1 column 3 (char 2)', event.reason)
+        self.assertEqual('Expecting value: line 1 column 3 (char 2)',
+                         event.reason)
 
     def test_empty_dict(self):
         # Test empty event as bytes.
@@ -44,7 +45,9 @@ class LoadEventTestCase(unittest.TestCase):
         # Test that truncated input is detected.
         event = load_event(b'{ ')
         self.assertEqual('EXCEPTION', event.event)
-        self.assertEqual('Expecting property name enclosed in double quotes: line 1 column 3 (char 2)', event.reason)
+        self.assertEqual(
+            'Expecting property name enclosed in double quotes: line 1 column 3 (char 2)',
+            event.reason)
 
     def test_other_value(self):
         # Test that non-mapping objects still work.
@@ -54,7 +57,8 @@ class LoadEventTestCase(unittest.TestCase):
 
     def test_utf8(self):
         # Test that Unicode/UTF-8 works.
-        data = load_event(b'{"x":"\xe2\x82\xac\xf0\x90\x8c\x82\xf4\x8f\xbf\xbd"}')
+        data = load_event(
+            b'{"x":"\xe2\x82\xac\xf0\x90\x8c\x82\xf4\x8f\xbf\xbd"}')
         self.assertIsInstance(data, Event)
         self.assertEqual(data, {'x': '\u20AC\U00010302\U0010fffd'})
 
@@ -65,11 +69,13 @@ class LoadEventTestCase(unittest.TestCase):
         # Non-hex data should raise an exception.
         event = load_event(b'{"data":"nonhex"}')
         self.assertEqual('EXCEPTION', event.event)
-        self.assertTrue(event.reason.startswith('non-hexadecimal number found'))
+        self.assertTrue(
+            event.reason.startswith('non-hexadecimal number found'))
 
     def test_event_pkt(self):
         # Test that `_pkt` lists are converted to dictionaries.
-        event = load_event(b'{"data": "ff", "_pkt": [{"field":"a", "value":1}]}')
+        event = load_event(
+            b'{"data": "ff", "_pkt": [{"field":"a", "value":1}]}')
         self.assertEqual(event.pkt, {'a': 1})
         self.assertFalse("_pkt" in event)
         # _pkt requires the `data` value, otherwise it's not translated
@@ -88,4 +94,3 @@ class LoadEventTestCase(unittest.TestCase):
         event = load_event(b'{"foo":"bar"}')
         s = to_json(event)
         self.assertEqual(s, '{"foo":"bar"}')
-

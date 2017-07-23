@@ -1,4 +1,3 @@
-
 import re
 import os
 import difflib
@@ -62,12 +61,10 @@ class CookbookTestCase(AsyncTestCase):
             diff = _compare(result, golden_filename)
             for line in diff:
                 print(line, end='')
-            self.assertFalse(diff)        
-
+            self.assertFalse(diff)
 
     def _write(self, data):
         self.conn.write(bytes(data, 'utf-8'), delimiter=b'\n---\n')
-
 
     async def _read_msg(self):
         result = []
@@ -77,7 +74,7 @@ class CookbookTestCase(AsyncTestCase):
                 break
             if line == b'---' or not line.rstrip():
                 continue
-            result.append(line.decode('utf-8')+'\n')
+            result.append(line.decode('utf-8') + '\n')
         return result
 
 

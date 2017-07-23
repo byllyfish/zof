@@ -3,7 +3,6 @@ from ofp_app.ofctl import convert_from_ofctl
 
 
 class TestOfctl(unittest.TestCase):
-
     def test_tcpv4(self):
         ofctl = {
             'dl_src': '00:00:00:00:00:01',
@@ -27,7 +26,7 @@ class TestOfctl(unittest.TestCase):
             'tcp_src': 1001,
             'tcp_dst': 1002,
             'other_field': 'other_value'
-            })
+        })
 
     def test_nw_src_dup(self):
         # Test duplicate field (nw_src = ipv4_src)
@@ -51,35 +50,21 @@ class TestOfctl(unittest.TestCase):
             'eth_dst': '00:00:00:00:00:02',
             'eth_type': 0x0800,
             'vlan_vid': 0x1123
-            })
+        })
 
     def test_vlan_zero(self):
-        ofctl = {
-            'dl_vlan': '0x0',
-        }
+        ofctl = {'dl_vlan': '0x0', }
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result, {
-            'vlan_vid': 0
-            })        
+        self.assertEqual(result, {'vlan_vid': 0})
 
     def test_tp_src(self):
         # If ip_proto is not specified, default to 'tcp'
-        ofctl = {
-            'tp_src': 80,
-            'tp_dst': 81
-        }
+        ofctl = {'tp_src': 80, 'tp_dst': 81}
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result, {
-            'tcp_src': 80,
-            'tcp_dst': 81
-            })
+        self.assertEqual(result, {'tcp_src': 80, 'tcp_dst': 81})
 
     def test_tp_fail(self):
         # If ip_proto is not supported, raise ValueError.
-        ofctl = {
-            'nw_proto': 2,
-            'tp_src': 80,
-            'tp_dst': 81
-        }
+        ofctl = {'nw_proto': 2, 'tp_src': 80, 'tp_dst': 81}
         with self.assertRaises(ValueError):
             convert_from_ofctl(ofctl)

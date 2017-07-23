@@ -1,8 +1,8 @@
 import unittest
 from ofp_app.event import make_event, Event
 
-class MakeEventTestCase(unittest.TestCase):
 
+class MakeEventTestCase(unittest.TestCase):
     def test_empty(self):
         with self.assertRaises(ValueError):
             event = make_event()
@@ -13,7 +13,7 @@ class MakeEventTestCase(unittest.TestCase):
         self.assertEqual(obj.event, 'test')
 
     def test_dict_member(self):
-        obj = make_event(event='test', options={'a':5})
+        obj = make_event(event='test', options={'a': 5})
         self.assertIsInstance(obj, Event)
         self.assertEqual(obj.event, 'test')
         self.assertIsInstance(obj.options, Event)
@@ -24,12 +24,12 @@ class MakeEventTestCase(unittest.TestCase):
         obj = make_event(event='test', params=make_event(event='inner', a=6))
         self.assertIsInstance(obj, Event)
         self.assertEqual(obj.event, 'test')
-        self.assertEqual(obj.params, {'event':'inner', 'a':6})
+        self.assertEqual(obj.params, {'event': 'inner', 'a': 6})
         self.assertEqual(obj.params.event, 'inner')
         self.assertEqual(obj.params.a, 6)
 
     def test_dict2_member(self):
-        obj = make_event(options={'a':{'b':{'c':7}}}, event='test')
+        obj = make_event(options={'a': {'b': {'c': 7}}}, event='test')
         self.assertIsInstance(obj, Event)
         self.assertEqual(obj.event, 'test')
         self.assertIsInstance(obj.options, Event)

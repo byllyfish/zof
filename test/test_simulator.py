@@ -5,9 +5,8 @@ from ofp_app.controller import Controller
 
 
 class SimulatorTestCase(unittest.TestCase):
-
     def test_simulator(self):
-        import  ofp_app.demo.simulator as sim
+        import ofp_app.demo.simulator as sim
         import ofp_app.service.device as _
         from ofp_app.logging import init_logging
 
