@@ -33,6 +33,7 @@ class Application(object):
         exception_fatal (bool|str): If true, abort app when a handler raises
           an exception. When the value is a string, it's treated as the name of
           the exception logger `ofp_app.<exc_log>`.
+        arg_parser (argparse.ArgumentParser): App's argument parser.
 
     Attributes:
         name (str): App name.
@@ -44,7 +45,8 @@ class Application(object):
                  *,
                  exception_fatal=False,
                  precedence=100,
-                 arg_parser=None):
+                 arg_parser=None,
+                 has_datapath_id=True):
         controller = Controller.singleton()
         if controller.find_app(name):
             raise ValueError('App named "%s" already exists.' % name)
@@ -56,7 +58,8 @@ class Application(object):
             ref=self,
             exception_fatal=exception_fatal,
             precedence=precedence,
-            arg_parser=arg_parser)
+            arg_parser=arg_parser,
+            has_datapath_id=has_datapath_id)
 
         self._app = app
         self.name = app.name

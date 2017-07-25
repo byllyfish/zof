@@ -30,6 +30,8 @@ class ControllerApp(object):
         exception_fatal (bool): Terminate immediately if app raises exception.
         precedence (int): App precedence.
         arg_parser (ArgumentParser): Argument parser for this app.
+        has_datapath_id (bool): If False, this app only handles messages 
+            without a datapath_id.
     """
     _curr_app_id = 0
 
@@ -40,13 +42,15 @@ class ControllerApp(object):
                  ref,
                  exception_fatal,
                  precedence,
-                 arg_parser):
+                 arg_parser,
+                 has_datapath_id):
         self.name = name
         self.ref = ref
         self.precedence = precedence
         self.handlers = {}
         self.exception_fatal = exception_fatal
         self.arg_parser = arg_parser
+        self._has_datapath_id = has_datapath_id
         self.set_controller(controller)
 
         self.logger = logging.getLogger('%s.%s' % (__package__, self.name))
@@ -128,6 +132,8 @@ class ControllerApp(object):
         """Function used to register a handler."""
         if self.controller.phase != 'INIT':
             raise RuntimeError('Controller not in INIT phase')
+        if type_ == 'message' and not self._has_datapath_id and 'datapath_id' not in options:
+            options['datapath_id'] = None
         handler = make_handler(callback, type_, subtype, options)
         if not handler.verify():
             self.logger.error('Failed to register %s', handler)

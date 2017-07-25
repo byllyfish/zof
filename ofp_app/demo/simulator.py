@@ -27,7 +27,7 @@ def arg_parser():
 
 
 app = ofp_app.Application(
-    'simulator', exception_fatal=True, arg_parser=arg_parser())
+    'simulator', exception_fatal=True, arg_parser=arg_parser(), has_datapath_id=False)
 app.tls_id = 0
 app.sims = []
 app.conn_to_sim = {}
@@ -65,41 +65,41 @@ def start(_):
         app.ensure_future(sim.start())
 
 
-@app.message('channel_up', datapath_id=None)
-@app.message('flow_mod', datapath_id=None)
+@app.message('channel_up')
+@app.message('flow_mod')
 def ignore(_):
     return
 
 
-@app.message('features_request', datapath_id=None)
+@app.message('features_request')
 def features_request(event):
     app.connect_count += 1
     app.conn_to_sim[event.conn_id].features_request(event)
 
 
-@app.message('barrier_request', datapath_id=None)
+@app.message('barrier_request')
 def barrier_request(event):
     app.conn_to_sim[event.conn_id].barrier_request(event)
 
 
-@app.message('request.port_desc', datapath_id=None)
+@app.message('request.port_desc')
 def request_portdesc(event):
     app.conn_to_sim[event.conn_id].request_portdesc(event)
 
 
-@app.message('request.desc', datapath_id=None)
+@app.message('request.desc')
 def request_desc(event):
     app.conn_to_sim[event.conn_id].request_desc(event)
 
 
-@app.message('channel_down', datapath_id=None)
+@app.message('channel_down')
 def channel_down(event):
     sim = app.conn_to_sim.pop(event.conn_id, None)
     if sim:
         app.sims.remove(sim)
 
 
-@app.message(any, datapath_id=None)
+@app.message(any)
 def other(event):
     app.logger.info('Unhandled message: %r', event)
     raise ValueError('Unexpected message: %r' % event)
