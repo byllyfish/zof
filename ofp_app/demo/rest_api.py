@@ -7,7 +7,7 @@ app = ofp_app.Application('webserver')
 app.http_endpoint = '127.0.0.1:8080'
 
 web = HttpServer(logger=app.logger)
-
+#web.define_var('dpid', _parse_dpid)
 
 @app.event('start')
 async def start(_):
@@ -19,43 +19,43 @@ async def stop(_):
     await web.stop()
 
 
-@web.route(r'/stats/switches')
+@web.get_json('/stats/switches')
 def get_switches():
     return [d.datapath_id for d in get_devices()]
 
 
-@web.route(r'/stats/flow/{dpid:[0-9A-F:]+}')
+@web.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
 async def get_flows(dpid):
     result = await FLOW_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_flows(result.msg)
     return {dpid: result.msg}
 
 
-@web.route(r'/stats/groupdesc/{dpid:[0-9A-F:]+}')
+@web.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_groups(result.msg)
     return {dpid: result.msg}
 
 
-@web.route(r'/stats/port/{dpid}/{port_no}')
+@web.get_json('/stats/port/{dpid}/{port_no}')
 async def get_portstats(dpid, port_no):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
     return {dpid: result.msg}
 
 
-@web.route(r'/stats/portdesc/modify', method='POST')
-async def modify_portdesc(request):
-    dpid = _parse_dpid(request.dpid)
-    port_no = _parse_port(request.port_no)
+@web.post_json('/stats/portdesc/modify')
+async def modify_portdesc(post_data):
+    dpid = _parse_dpid(post_data.dpid)
+    port_no = _parse_port(post_data.port_no)
     port = get_device_port(dpid, port_no)
     PORTMOD_REQ.send(
         datapath_id=dpid,
         port_no=port_no,
         hw_addr=port.hw_addr,
-        config=request.config,
-        mask=request.mask)
+        config=post_data.config,
+        mask=post_data.mask)
     # FIXME(bfish): This code does not handle OpenFlow errors elicited from the PortMod
     # message. Any errors returned will only show up in the log. The barrier here is
     # just a cheap trick to verify that the portmod *should* have been acted on.

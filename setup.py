@@ -33,7 +33,7 @@ setup(
 
     description='OpenFlow App Framework',
     long_description=long_description,
-    keywords='openflow controller mininet',
+    keywords='openflow controller',
 
     # The project's main homepage and author.
     url='https://github.com/byllyfish/ofp_app',
@@ -42,7 +42,8 @@ setup(
 
     # Dependencies
     install_requires=[
-        'prompt_toolkit'
+        'prompt_toolkit',
+        'aiohttp>=2.2.2'
     ],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
