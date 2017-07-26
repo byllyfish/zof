@@ -108,7 +108,23 @@ def common_args(*, under_test=False):
     return parser
 
 
-def import_modules(modules):
+def import_extra_modules(*, under_test=False):
+    """Find the --x-modules argument and process it alone.
+    """
+    parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
+    parser = parser_class(add_help=False)
+    parser.add_argument(
+        '--x-modules',
+        metavar='MODULE,...',
+        action=_SplitCommaAction,
+        help='modules to import')
+
+    args, _ = parser.parse_known_args()
+    if args.x_modules:
+        _import_modules(args.x_modules)
+
+
+def _import_modules(modules):
     """Import modules."""
     try:
         for module in modules:

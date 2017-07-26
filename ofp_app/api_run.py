@@ -5,7 +5,7 @@ Environment Variables:
 """
 
 import sys
-from .api_args import common_args, import_modules
+from .api_args import common_args, import_extra_modules
 from .controller import Controller
 from .logging import init_logging
 
@@ -18,13 +18,12 @@ def run(*, args=None):
             ArgumentParser. If None, use `common_args` parser.
     """
     if args is None:
+        # Process --x-modules argument before calling common_args(). 
+        import_extra_modules()
         args = common_args().parse_args()
 
     if args.loglevel:
         init_logging(args.loglevel, args.logfile)
-
-    if args.x_modules:
-        import_modules(args.x_modules)
 
     if args.x_uvloop:
         import uvloop  # pylint: disable=import-error
