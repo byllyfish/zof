@@ -70,7 +70,7 @@ class ControllerApp(object):
                 if handler.match(event):
                     handler(event, self)
                     break
-        except _exc.StopPropagationException:
+        except (_exc.StopPropagationException, _exc.PreflightUnloadException):
             # Pass this exception up to controller.
             raise
         except Exception:  # pylint: disable=broad-except

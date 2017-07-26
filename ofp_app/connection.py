@@ -53,8 +53,23 @@ class Connection(object):
         self._oftr_cmd = shlex.split(cmd)
         assert self._oftr_cmd
 
+    @property
+    def pid(self):
+        """Return process ID for oftr process.
+
+        Raises:
+            RuntimeError if process is not running.
+        """
+        try:
+            return self._conn.pid
+        except:
+            raise RuntimeError('oftr process is not running')
+
     async def connect(self):
         """Set up connection to the oftr driver.
+
+        Returns:
+            (int) process id of oftr process
         """
         LOGGER.debug("Launch oftr %r", self._oftr_cmd)
 
@@ -71,6 +86,7 @@ class Connection(object):
             self._conn = proc
             self._input = proc.stdout
             self._output = proc.stdin
+            return proc.pid
 
         except (PermissionError, FileNotFoundError):
             LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)

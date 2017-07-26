@@ -9,6 +9,7 @@
 #       +-- ofp_app.ControlFlowException
 #             +-- ofp_app.StopPropagationException
 #             +-- ofp_app.ExitException
+#             +-- ofp_app.PreflightUnloadException
 
 
 class ControllerException(Exception):
@@ -88,3 +89,12 @@ class ExitException(ControlFlowException):
 
     def __str__(self):
         return '[ExitException exit_status=%d]' % self.exit_status
+
+
+class PreflightUnloadException(ControlFlowException):
+    """Exception class used by an app unload itself. This exception should
+    only be raised in a 'preflight' event handler.
+    """
+
+    def __str__(self):
+        return '[PreflightUnloadException]'

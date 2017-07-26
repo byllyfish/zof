@@ -28,6 +28,7 @@ class Controller(object):
         apps (List[ControllerApp]): List of apps ordered by precedence.
         args (argparse.Namespace): Arguments parsed by argparse module.
         phase (str): Lifecycle phase.
+        conn (Connection): oftr connection
     """
 
     _singleton = None
@@ -48,7 +49,7 @@ class Controller(object):
         self.apps = []
         self.args = None
         self.phase = 'INIT'
-        self._conn = None
+        self.conn = None
         self._xid = _MIN_XID
         self._reqs = {}
         self._event_queue = None
@@ -105,12 +106,14 @@ class Controller(object):
         """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
-            self._conn = Connection(oftr_options={
+            self._preflight()
+
+            self.conn = Connection(oftr_options={
                 'path': self.args('x_oftr_path'),
                 'args': self.args('x_oftr_args'),
                 'prefix': self.args('x_oftr_prefix')
             })
-            await self._conn.connect()
+            await self.conn.connect()
 
             self._event_queue = asyncio.Queue()
             self._set_phase('PRESTART')
@@ -123,12 +126,12 @@ class Controller(object):
 
             idle.cancel()
             self._set_phase('STOP')
-            await self._conn.disconnect()
+            await self.conn.disconnect()
 
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._run')
-            if self._conn:
-                self._conn.close(False)
+            if self.conn:
+                self.conn.close(False)
             asyncio.get_event_loop().stop()
 
         finally:
@@ -146,7 +149,7 @@ class Controller(object):
                 await asyncio.sleep(0)
         except _exc.ExitException as ex:
             self._exit_status = ex.exit_status
-            self._conn.close(True)
+            self.conn.close(True)
             asyncio.get_event_loop().stop()
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._event_loop')
@@ -162,7 +165,7 @@ class Controller(object):
         """
         LOGGER.debug('_read_loop entered')
         while True:
-            line = await self._conn.readline()
+            line = await self.conn.readline()
             if not line:
                 break
             self.post_event(load_event(line))
@@ -275,7 +278,7 @@ class Controller(object):
         If `xid` is specified, return a `_ReplyFuture` to await the response.
         Otherwise, return None.
         """
-        self._conn.write(dump_event(event))
+        self.conn.write(dump_event(event))
         if xid is None:
             return
 
@@ -432,6 +435,18 @@ class Controller(object):
             self._dispatch_event(event)
         elif self._event_queue:
             self.post_event(event)
+
+    def _preflight(self):
+        """Called at the end of the INIT phase.
+        """
+        event = make_event(event='PREFLIGHT')
+        for app in list(self.apps):
+            try:
+                app.handle_event(event, 'event')
+            except _exc.PreflightUnloadException:
+                self.apps.remove(app)
+            except Exception:
+                app.handle_exception(event, 'event')
 
     def next_xid(self):
         """Return next xid to use.
