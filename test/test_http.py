@@ -14,6 +14,11 @@ class HttpTestCase(AsyncTestCase):
         logger = logging.getLogger('ofp_app.test_http')
         web = HttpServer(logger=logger)
 
+        @web.get_text('/')
+        @web.get_text('/abc')
+        async def _get_root():
+            return 'Blah\n\u1E03lah'
+
         @web.get_json('/test/{var1}?{var2}')
         async def _get(var1, var2):
             return {'var1': var1, 'var2': var2}
@@ -26,6 +31,12 @@ class HttpTestCase(AsyncTestCase):
 
         client = HttpClient()
         await client.start()
+
+        data = await client.get_text('http://127.0.0.1:9010/')
+        self.assertEqual(data, 'Blah\n\u1E03lah')
+
+        data = await client.get_text('http://127.0.0.1:9010/abc')
+        self.assertEqual(data, 'Blah\n\u1E03lah')
 
         data = await client.get_json('http://127.0.0.1:9010/test/foo?var2=bar')
         self.assertEqual(data, {'var1': 'foo', 'var2':'bar'})

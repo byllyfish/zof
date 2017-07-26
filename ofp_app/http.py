@@ -64,11 +64,34 @@ class HttpServer:
         return _wrap
 
 
+    def get_text(self, path):
+        route_path, route_vars = _split_route(path)
+
+        def _wrap(func):
+            get = _route_get_text(route_vars, func)
+            self.web_app.router.add_get(route_path, get)
+            return func
+
+        return _wrap
+
+
+    def post_text(self, path):
+        route_path = route_vars = _split_route(path)
+
+        def _wrap(func):
+            post = _route_post_text(route_vars, func)
+            self.web_app.router.add_post(route_path, post)
+
+        return _wrap
+
+
 def _split_route(path):
     """Split path on '?' into route_path and route_vars.
 
     For example, given "/path/{foo}?{bar}", return ('/path/{foo}', ['bar'])
     """
+    if '?' not in path:
+        return path, []
     route_path, rest = path.split('?', maxsplit=1)
     route_vars = []
     for name in rest.split('&'):
@@ -82,8 +105,14 @@ def _split_route(path):
 def _route_get_json(route_vars, func):
     async def _get(request):
         kwds = _build_kwds(request, route_vars)
-        print(kwds)
         return await _respond_json(func, kwds)
+    return _get
+
+
+def _route_get_text(route_vars, func):
+    async def _get(request):
+        kwds = _build_kwds(request, route_vars)
+        return await _respond_text(func, kwds)
     return _get
 
 
@@ -92,6 +121,14 @@ def _route_post_json(route_vars, func):
         post_data = await request.json(loads=from_json)
         kwds = _build_kwds(request, route_vars, post_data)
         return await _respond_json(func, kwds)
+    return _post        
+
+
+def _route_post_text(route_vars, func):
+    async def _post(request):
+        post_data = await request.text()
+        kwds = _build_kwds(request, route_vars, post_data)
+        return await _respond_text(func, kwds)
     return _post        
 
 
@@ -111,6 +148,15 @@ async def _respond_json(func, kwds):
         result = func(**kwds)
     return web.json_response(result, dumps=to_json)    
 
+
+async def _respond_text(func, kwds):
+    if asyncio.iscoroutinefunction(func):
+        result = await func(**kwds)
+    else:
+        result = func(**kwds)
+    if isinstance(result, bytes):
+        return web.Response(body=result, content_type='text/plain')
+    return web.Response(text=result)
 
 
 class HttpClient:
@@ -147,4 +193,12 @@ class HttpClient:
     async def post_json(self, url, *, post_data):
         async with self._client.post(url, json=post_data) as response:
             return await response.json(loads=from_json)
+
+    async def get_text(self, url):
+        async with self._client.get(url) as response:
+            return await response.text()
+
+    async def post_text(self, url, *, post_data):
+        async with self._client.post(url, text=post_data) as response:
+            return await response.text()
 
