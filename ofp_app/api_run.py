@@ -5,7 +5,7 @@ Environment Variables:
 """
 
 import sys
-from .api_args import common_args, import_extra_modules
+from .api_args import common_args
 from .controller import Controller
 from .logging import init_logging
 
@@ -15,12 +15,10 @@ def run(*, args=None):
 
     Args:
         args (Optional[argparse.Namespace]): Arguments derived from
-            ArgumentParser. If None, use `common_args` parser.
+            ArgumentParser. If None, use `common_args` parser.    
     """
     if args is None:
-        # Process --x-modules argument before calling common_args(). 
-        import_extra_modules()
-        args = common_args().parse_args()
+        args = common_args(include_x_modules=True).parse_args()
 
     if args.loglevel:
         init_logging(args.loglevel, args.logfile)

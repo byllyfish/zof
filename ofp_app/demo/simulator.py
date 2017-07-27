@@ -4,9 +4,9 @@ import ofp_app
 from ofp_app.api_args import file_content
 
 
-def arg_parser():
+def _arg_parser():
     parser = argparse.ArgumentParser(
-        prog='simulator', description='Simulator Demo')
+        prog='simulator', description='Simulator Demo', add_help=False)
     parser.add_argument(
         '--sim-count',
         type=int,
@@ -27,7 +27,7 @@ def arg_parser():
 
 
 app = ofp_app.Application(
-    'simulator', exception_fatal=True, arg_parser=arg_parser(), has_datapath_id=False)
+    'simulator', exception_fatal=True, arg_parser=_arg_parser(), has_datapath_id=False)
 app.tls_id = 0
 app.sims = []
 app.conn_to_sim = {}
@@ -180,7 +180,7 @@ class Simulator(object):
 
 
 def main():
-    args = ofp_app.common_args()
+    args = ofp_app.common_args(include_x_modules=True)
     args.set_defaults(listen_endpoints=None)
     ofp_app.run(args=args.parse_args())
 

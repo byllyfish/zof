@@ -40,13 +40,17 @@ def _parent_args():
     ]
 
 
-def common_args(*, under_test=False):
+def common_args(*, under_test=False, include_x_modules=False):
     """Construct default ArgumentParser parent.
 
     Args:
         under_test (Boolean): When true, create an argument parser subclass
             that raises an exception instead of calling exit.
+        include_x_modules (Boolean): When true, include "--x-modules" argument.
     """
+    if include_x_modules:
+        _import_extra_modules()
+
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
     parser = parser_class(add_help=False, parents=_parent_args())
 
@@ -88,11 +92,6 @@ def common_args(*, under_test=False):
         help='private key')
 
     x_group = parser.add_argument_group('experimental')
-    x_group.add_argument(
-        '--x-modules',
-        metavar='MODULE,...',
-        action=_SplitCommaAction,
-        help='modules to import')
     x_group.add_argument('--x-uvloop', action='store_true', help='use uvloop')
     x_group.add_argument('--x-oftr-path', help='path to oftr executable')
     x_group.add_argument('--x-oftr-args', help='arguments passed to oftr')
@@ -105,10 +104,19 @@ def common_args(*, under_test=False):
         default=under_test,
         help='special test mode')
 
+    # --x-modules is included here for documentation purposes only. This arg
+    # is pre-processed by the `import_extra_modules()` function.
+    if include_x_modules:
+        x_group.add_argument(
+            '--x-modules',
+            metavar='MODULE,...',
+            action=_SplitCommaAction,
+            help='modules to import')
+
     return parser
 
 
-def import_extra_modules(*, under_test=False):
+def _import_extra_modules(*, under_test=False):
     """Find the --x-modules argument and process it alone.
     """
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
