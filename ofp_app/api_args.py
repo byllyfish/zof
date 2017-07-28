@@ -77,17 +77,17 @@ def common_args(*, under_test=False, include_x_modules=False):
         help='listen versions (1-6) separated by commas')
     listen_group.add_argument(
         '--listen-cert',
-        type=file_content,
+        type=file_contents_type,
         metavar='FILE',
         help='certificate chain')
     listen_group.add_argument(
         '--listen-cacert',
-        type=file_content,
+        type=file_contents_type,
         metavar='FILE',
         help='certificate authority')
     listen_group.add_argument(
         '--listen-privkey',
-        type=file_content,
+        type=file_contents_type,
         metavar='FILE',
         help='private key')
 
@@ -142,7 +142,7 @@ def _import_modules(modules):
         sys.exit(1)
 
 
-def file_content(filename):
+def file_contents_type(filename):
     """Return content of string as file."""
     with open(filename, encoding='utf-8') as afile:
         return afile.read()
