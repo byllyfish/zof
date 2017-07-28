@@ -35,15 +35,8 @@ class ControllerApp(object):
     """
     _curr_app_id = 0
 
-    def __init__(self,
-                 controller,
-                 *,
-                 name,
-                 ref,
-                 exception_fatal,
-                 precedence,
-                 arg_parser,
-                 has_datapath_id):
+    def __init__(self, controller, *, name, ref, exception_fatal, precedence,
+                 arg_parser, has_datapath_id):
         self.name = name
         self.ref = ref
         self.precedence = precedence

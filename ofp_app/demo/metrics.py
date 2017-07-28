@@ -2,25 +2,25 @@ import argparse
 import ofp_app
 from ofp_app import exception as _exc
 from ofp_app.http import HttpServer
+import ofp_app.service.device as dev
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
 from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
-import time
 
 
 def arg_parser():
     parser = argparse.ArgumentParser(prog='Metrics', description='Metric Demo')
     parser.add_argument(
-        '--metric-endpoint', help='HTTP endpoint for metric server')
+        '--metrics-endpoint', help='HTTP endpoint for metrics server')
     return parser
 
 
 app = ofp_app.Application('metrics', arg_parser=arg_parser())
-web = HttpServer(logger=app.logger)
+web = HttpServer()
 
 
 @app.event('preflight')
 def preflight(_):
-    if not app.args.metric_endpoint:
+    if not app.args.metrics_endpoint:
         # If we're not listening, unload the application.
         raise _exc.PreflightUnloadException()
 
@@ -29,13 +29,14 @@ def preflight(_):
 async def start(_):
     # Start a process collector for our oftr subprocess.
     ProcessCollector(namespace='oftr', pid=app.oftr_connection.pid)
-    if app.args.metric_endpoint:
-        await web.start(app.args.metric_endpoint)
+    await web.start(app.args.metrics_endpoint)
+    app.logger.info('Start listening on %s', app.args.metrics_endpoint)
 
 
 @app.event('stop')
 async def stop(_):
     await web.stop()
+    app.logger.info('Stop listening on %s', app.args.metrics_endpoint)
 
 
 @web.get_text('/')
@@ -47,11 +48,13 @@ async def metrics():
 
 @web.get_text('/metrics/ports?{target}')
 async def ports(target):
-    try:
-        stats = await _collect_port_stats(target)
-    except _exc.DeliveryException as ex:
-        return 'ERROR: %s' % str(ex)
-    return _dump_prometheus(stats)
+    met = PortMetrics()
+    if target and target.upper() != 'ALL':
+        await _collect_port_stats(target, met)
+    else:
+        for device in dev.get_devices():
+            await _collect_port_stats(device.datapath_id, met)
+    return _dump_prometheus(met.metrics())
 
 
 PORT_STATS = ofp_app.compile('''
@@ -60,25 +63,58 @@ msg:
   port_no: ANY
 ''')
 
-async def _collect_port_stats(target):
-    scrape_start = time.time()
-    tag_names = ['port']
-    tx_bytes = CounterMetricFamily('port_tx_bytes', 'bytes transmitted', None, tag_names)
-    rx_bytes = CounterMetricFamily('port_rx_bytes', 'bytes received', None, tag_names)
 
-    reply = await PORT_STATS.request(datapath_id=target)
+
+def _supported_counter(value):
+    return value != 0xffffffffffffffff
+
+
+class PortMetrics:
+    def __init__(self):
+        tag_names = ['port_no', 'instance']
+        self.tx_bytes = CounterMetricFamily('port_tx_bytes_total', 'bytes transmitted', None, tag_names)
+        self.rx_bytes = CounterMetricFamily('port_rx_bytes_total', 'bytes received', None, tag_names)
+        self.tx_packets = CounterMetricFamily('port_tx_packets_total', 'packets transmitted', None, tag_names)
+        self.rx_packets = CounterMetricFamily('port_rx_packets_total', 'packets received', None, tag_names)
+        self.tx_dropped = CounterMetricFamily('port_tx_dropped_total', 'packets dropped by TX', None, tag_names)
+        self.rx_dropped = CounterMetricFamily('port_rx_dropped_total', 'packets dropped by RX', None, tag_names)
+        self.rx_errors = CounterMetricFamily('port_rx_errors_total', 'receive errors', None, tag_names)
+        self.duration = CounterMetricFamily('port_duration_seconds_total', 'duration in seconds', None, tag_names)
+        # TODO(bfish): self.up = GaugeMetricFamily()
+
+    def metrics(self):
+        return vars(self).values()
+
+    def update(self, dpid, stat):
+        tags = [str(stat.port_no), dpid]
+        for counter, value in [(self.tx_bytes, stat.tx_bytes), 
+                               (self.rx_bytes, stat.rx_bytes), 
+                               (self.tx_packets, stat.tx_packets), 
+                               (self.rx_packets, stat.rx_packets),
+                               (self.tx_dropped, stat.tx_dropped),
+                               (self.rx_dropped, stat.rx_dropped),
+                               (self.rx_errors, stat.rx_errors)]:
+            if _supported_counter(value):
+                counter.add_metric(tags, value)
+        if stat.duration != '0':
+            self.duration.add_metric(tags, float(stat.duration))
+
+
+async def _collect_port_stats(dpid, metric):
+    try:
+        reply = await PORT_STATS.request(datapath_id=dpid)
+    except _exc.ControllerException as ex:
+        app.logger.warning('Unable to retrieve stats: %r', ex)
+        return
+
     for stat in reply.msg:
-        tags = [str(stat.port_no)]
-        tx_bytes.add_metric(tags, stat.tx_bytes)
-        rx_bytes.add_metric(tags, stat.rx_bytes)
-
-    scrape_duration = GaugeMetricFamily('scrape_duration_seconds', 'Time this scrape took, in seconds', time.time() - scrape_start)
-    return [tx_bytes, rx_bytes, scrape_duration]
+        metric.update(dpid, stat)
 
 
 class _MyCollector:
     def __init__(self, stats):
         self.stats = stats
+
     def collect(self):
         return self.stats
 
