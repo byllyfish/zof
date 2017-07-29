@@ -1,6 +1,16 @@
+"""
+
+Environment Variables:
+    OFP_APP_OFTR_PREFIX
+    OFP_APP_OFTR_PATH
+    OFP_APP_OFTR_ARGS
+
+"""
+
 import argparse
 import importlib
 import sys
+import os
 from .controller import Controller
 from .logging import EXT_STDERR
 
@@ -93,11 +103,11 @@ def common_args(*, under_test=False, include_x_modules=False):
 
     x_group = parser.add_argument_group('experimental')
     x_group.add_argument('--x-uvloop', action='store_true', help='use uvloop')
-    x_group.add_argument('--x-oftr-path', help='path to oftr executable')
-    x_group.add_argument('--x-oftr-args', help='arguments passed to oftr')
+    x_group.add_argument('--x-oftr-path', help='path to oftr executable', default=os.getenv('OFP_APP_OFTR_PATH'))
+    x_group.add_argument('--x-oftr-args', help='arguments passed to oftr', default=os.getenv('OFP_APP_OFTR_ARGS'))
     x_group.add_argument(
         '--x-oftr-prefix',
-        help='prefix used to launch oftr (valgrind, strace, catchsegv)')
+        help='prefix used to launch oftr (valgrind, strace, catchsegv)', default=os.getenv('OFP_APP_OFTR_PREFIX'))
     x_group.add_argument(
         '--x-under-test',
         action='store_true',
