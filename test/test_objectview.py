@@ -189,6 +189,6 @@ class ObjectViewTestCase(unittest.TestCase):
     def test_std_json(self):
         d = dict(c=5)
         o = make_objectview(d)
-        with self.assertRaisesRegex(TypeError, 'Object .+ is not JSON serializable'):
-            # python's standard json module does not support objectview.
+        with self.assertRaisesRegex(TypeError, 'is not JSON serializable'):
+            # python's standard json module does not support objectview. 
             json.dumps(o)
