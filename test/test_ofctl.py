@@ -53,9 +53,13 @@ class TestOfctl(unittest.TestCase):
         })
 
     def test_vlan_zero(self):
-        ofctl = {'dl_vlan': '0x0', }
+        ofctl = {'dl_vlan': '0x0'}
         result = convert_from_ofctl(ofctl)
         self.assertEqual(result, {'vlan_vid': 0})
+
+        ofctl = {'dl_vlan': 0x64}
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {'vlan_vid': 0x1064})
 
     def test_tp_src(self):
         # If ip_proto is not specified, default to 'tcp'
@@ -68,3 +72,10 @@ class TestOfctl(unittest.TestCase):
         ofctl = {'nw_proto': 2, 'tp_src': 80, 'tp_dst': 81}
         with self.assertRaises(ValueError):
             convert_from_ofctl(ofctl)
+
+    def test_empty(self):
+        result = convert_from_ofctl(None)
+        self.assertEqual(result, None)
+
+        result = convert_from_ofctl({})
+        self.assertEqual(result, {})

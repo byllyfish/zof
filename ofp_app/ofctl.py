@@ -7,7 +7,8 @@ def _convert_tp_src(_key, ofctl):
 
 
 def _convert_vlan(vlan):
-    vlan = int(vlan, 0)
+    if isinstance(vlan, str):
+        vlan = int(vlan, 0)
     if vlan > 0:
         vlan |= _OFPVID_PRESENT
     return vlan
@@ -31,6 +32,8 @@ _LEGACY_FIELDS = dict(
 
 def convert_from_ofctl(ofctl):
     """Convert ofctl legacy field names."""
+    if ofctl is None:
+        return None
     result = {}
     for key, value in ofctl.items():
         key = convert_ofctl_field(key, ofctl)
