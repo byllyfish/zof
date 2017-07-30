@@ -1,3 +1,12 @@
+
+
+try:
+    # For Python 2.x compatibility.
+    _BASESTRING = basestring
+except NameError:
+    _BASESTRING = str
+
+
 def _convert_tp_dst(_key, ofctl):
     return '%s_dst' % _ip_proto_name(ofctl)
 
@@ -7,7 +16,7 @@ def _convert_tp_src(_key, ofctl):
 
 
 def _convert_vlan(vlan):
-    if isinstance(vlan, str):
+    if isinstance(vlan, _BASESTRING):
         vlan = int(vlan, 0)
     if vlan > 0:
         vlan |= _OFPVID_PRESENT
