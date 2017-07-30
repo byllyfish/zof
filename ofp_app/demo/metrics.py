@@ -48,10 +48,16 @@ async def metrics():
 
 @web.get_text('/metrics/ports?{target}')
 async def ports(target):
-    met = PortMetrics()
-    if target and target.upper() != 'ALL':
+    if target:
+        met = PortMetrics()
         await _collect_port_stats(target, met)
     else:
+        # FIXME(bfish): Collecting stats from multiple datapaths serially is
+        # problematic. A slow responder could hold up collection. If we allow
+        # parallelism, we must enforce a strict timeout to limit the scrape
+        # duration. The advantage of collecting them all is that we don't
+        # have to worry about service discovery.
+        met = PortMetrics(include_instance=True)
         for device in dev.get_devices():
             await _collect_port_stats(device.datapath_id, met)
     return _dump_prometheus(met.metrics())
@@ -70,23 +76,30 @@ def _supported_counter(value):
 
 
 class PortMetrics:
-    def __init__(self):
-        tag_names = ['port_no', 'instance']
-        self.tx_bytes = CounterMetricFamily('port_tx_bytes_total', 'bytes transmitted', None, tag_names)
-        self.rx_bytes = CounterMetricFamily('port_rx_bytes_total', 'bytes received', None, tag_names)
-        self.tx_packets = CounterMetricFamily('port_tx_packets_total', 'packets transmitted', None, tag_names)
-        self.rx_packets = CounterMetricFamily('port_rx_packets_total', 'packets received', None, tag_names)
-        self.tx_dropped = CounterMetricFamily('port_tx_dropped_total', 'packets dropped by TX', None, tag_names)
-        self.rx_dropped = CounterMetricFamily('port_rx_dropped_total', 'packets dropped by RX', None, tag_names)
-        self.rx_errors = CounterMetricFamily('port_rx_errors_total', 'receive errors', None, tag_names)
-        self.duration = CounterMetricFamily('port_duration_seconds_total', 'duration in seconds', None, tag_names)
+    def __init__(self, include_instance=False):
+        self.include_instance = include_instance
+        if include_instance:
+            labels = ['port_no', 'instance']
+        else:
+            labels = ['port_no']
+        self.tx_bytes = CounterMetricFamily('port_tx_bytes_total', 'bytes transmitted', None, labels)
+        self.rx_bytes = CounterMetricFamily('port_rx_bytes_total', 'bytes received', None, labels)
+        self.tx_packets = CounterMetricFamily('port_tx_packets_total', 'packets transmitted', None, labels)
+        self.rx_packets = CounterMetricFamily('port_rx_packets_total', 'packets received', None, labels)
+        self.tx_dropped = CounterMetricFamily('port_tx_dropped_total', 'packets dropped by TX', None, labels)
+        self.rx_dropped = CounterMetricFamily('port_rx_dropped_total', 'packets dropped by RX', None, labels)
+        self.rx_errors = CounterMetricFamily('port_rx_errors_total', 'receive errors', None, labels)
+        self.duration = CounterMetricFamily('port_duration_seconds_total', 'duration in seconds', None, labels)
         # TODO(bfish): self.up = GaugeMetricFamily()
 
     def metrics(self):
-        return vars(self).values()
+        return [self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets, self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration]
 
     def update(self, dpid, stat):
-        tags = [str(stat.port_no), dpid]
+        if self.include_instance:
+            labels = [str(stat.port_no), dpid]
+        else:
+            labels = [str(stat.port_no)]
         for counter, value in [(self.tx_bytes, stat.tx_bytes), 
                                (self.rx_bytes, stat.rx_bytes), 
                                (self.tx_packets, stat.tx_packets), 
@@ -95,9 +108,9 @@ class PortMetrics:
                                (self.rx_dropped, stat.rx_dropped),
                                (self.rx_errors, stat.rx_errors)]:
             if _supported_counter(value):
-                counter.add_metric(tags, value)
+                counter.add_metric(labels, value)
         if stat.duration != '0':
-            self.duration.add_metric(tags, float(stat.duration))
+            self.duration.add_metric(labels, float(stat.duration))
 
 
 async def _collect_port_stats(dpid, metric):
