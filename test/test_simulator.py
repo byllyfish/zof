@@ -24,6 +24,10 @@ class SimulatorTestCase(unittest.TestCase):
                 app.logger.info('all devices up')
                 app.post_event('EXIT', exit_status=0)
 
+        @app.event('device_down')
+        def device_down(_):
+            pass
+
         @app.event(any)
         def any_event(event):
             app.logger.info(event)

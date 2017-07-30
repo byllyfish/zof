@@ -153,6 +153,6 @@ def _import_modules(modules):
 
 
 def file_contents_type(filename):
-    """Return content of string as file."""
+    """Return contents of file."""
     with open(filename, encoding='utf-8') as afile:
         return afile.read()
