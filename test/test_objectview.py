@@ -1,6 +1,7 @@
 import unittest
 import ipaddress
 import argparse
+import json
 from ofp_app.objectview import ObjectView, to_json, from_json, make_objectview
 
 
@@ -178,3 +179,16 @@ class ObjectViewTestCase(unittest.TestCase):
         o = make_objectview(args)
         self.assertEqual(o.x, 1)
         self.assertEqual(o.y, '2')
+
+    def test_format(self):
+        d = dict(x=dict(a=1))
+        o = make_objectview(d)
+        s = '{:2s}'.format(o)
+        self.assertEqual(s, '{\n  "x": {\n    "a": 1\n  }\n}')
+
+    def test_std_json(self):
+        d = dict(c=5)
+        o = make_objectview(d)
+        with self.assertRaisesRegex(TypeError, 'Object .+ is not JSON serializable'):
+            # python's standard json module does not support objectview.
+            json.dumps(o)

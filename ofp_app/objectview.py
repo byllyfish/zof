@@ -91,11 +91,20 @@ class ObjectView(object):
         return repr(self.__dict__)
 
     def __str__(self):
-        """Return JSON representation."""
+        """Return compact JSON representation."""
         return to_json(self.__dict__)
 
+    def __format__(self, format_spec):
+        """Return formatted JSON representation.
+
+        '4s' means JSON with 4-space indent.
+        """
+        if len(format_spec) == 2 and format_spec[1] == 's':
+            indent = int(format_spec[0])
+            return json.dumps(self, ensure_ascii=False, default=_json_serialize, indent=indent)
+        raise ValueError('ObjectView does not support format_spec: %s' % format_spec)
+
     # TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
-    # Implement __format__?
 
 
 def to_json(obj):
@@ -120,12 +129,10 @@ def from_json(text, object_hook=ObjectView):
 def _json_serialize(obj):
     if isinstance(obj, bytes):
         return obj.hex()
-    if isinstance(obj, ObjectView):
-        return obj.__dict__
+    if isinstance(obj, (ObjectView, argparse.Namespace)):
+        return vars(obj)
     if isinstance(obj, (IPv4Address, IPv6Address)):
         return str(obj)
-    if isinstance(obj, argparse.Namespace):
-        return vars(obj)
     try:
         return obj.__getstate__()
     except AttributeError:
