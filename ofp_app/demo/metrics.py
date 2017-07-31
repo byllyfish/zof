@@ -28,7 +28,7 @@ def preflight(_):
 @app.event('start')
 async def start(_):
     # Start a process collector for our oftr subprocess.
-    ProcessCollector(namespace='oftr', pid=app.oftr_connection.pid)
+    ProcessCollector(namespace='oftr', pid=lambda: app.oftr_connection.pid)
     await web.start(app.args.metrics_endpoint)
     app.logger.info('Start listening on %s', app.args.metrics_endpoint)
 

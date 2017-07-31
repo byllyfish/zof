@@ -43,7 +43,8 @@ setup(
     # Dependencies
     install_requires=[
         'prompt_toolkit',
-        'aiohttp>=2.2.2'
+        'aiohttp>=2.2.2',
+        'prometheus_client'
     ],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers

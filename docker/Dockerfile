@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN set -ex
+RUN set -ex \
     && buildDeps=' \
         git \
     ' \
@@ -16,6 +16,6 @@ RUN set -ex
     && apt-get purge -y --auto-remove $buildDeps \
     && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 6653
+EXPOSE 6653 9299
 
 CMD ["python3", "-m", "ofp_app.demo.layer2"]
