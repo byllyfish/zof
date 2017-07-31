@@ -1,18 +1,20 @@
 FROM ubuntu:16.04
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FFBE06FBB4EDC679174DD2CCD5AA2ED445128570 \
+RUN set -ex
+    && buildDeps=' \
+        git \
+    ' \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FFBE06FBB4EDC679174DD2CCD5AA2ED445128570 \
     && echo "deb http://ppa.launchpad.net/byllyfish/oftr/ubuntu xenial main" >> /etc/apt/sources.list \
     && apt-get update && apt-get install -y --no-install-recommends \
-        curl \
+        $buildDeps \
         oftr \
         python3 \
         python3-pip \
         python3-setuptools \
-    && rm -rf /var/lib/apt/lists/* \
-    && cd /root \
-    && curl -L https://github.com/byllyfish/ofp_app/archive/master.tar.gz | tar -xvz \
-    && mv ofp_app-master ofp_app \
-    && pip3 install ./ofp_app
+    && pip3 install git+https://github.com/byllyfish/ofp_app.git \
+    && apt-get purge -y --auto-remove $buildDeps \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 6653
 
