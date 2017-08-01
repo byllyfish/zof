@@ -206,8 +206,8 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":%d,"method":"OFP.DESCRIPTION"}' % id_val
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":%d,"result":{"api_version":' %
-                          id_val)
+        self.assertPrefix(result,
+                          b'{"id":%d,"result":{"api_version":' % id_val)
         await self._still_alive()
 
     async def test_ofp_send_invalid(self):

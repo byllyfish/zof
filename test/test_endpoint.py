@@ -3,7 +3,6 @@ from ofp_app.endpoint import Endpoint
 
 
 class EndpointTestCase(unittest.TestCase):
-
     def test_ipv4(self):
         endpt = Endpoint('127.0.0.1:80')
         self.assertEqual(str(endpt), '127.0.0.1:80')
