@@ -4,7 +4,7 @@ from ofp_app import exception as _exc
 from ofp_app.http import HttpServer
 import ofp_app.service.device as dev
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
-from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
+from prometheus_client.core import CounterMetricFamily
 
 
 def arg_parser():
