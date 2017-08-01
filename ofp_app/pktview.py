@@ -5,9 +5,6 @@ from .ofctl import convert_from_ofctl
 # Reserved payload field.
 PAYLOAD = 'payload'
 
-#pylint: skip-file
-# The presence of the pktview_alias function causes pylint to crash(?).
-
 
 def pktview_alias(name, converter=(lambda x: x)):
     """Construct property that aliases specified attribute.
@@ -37,6 +34,7 @@ def pktview_alias(name, converter=(lambda x: x)):
 
 def _description(pkt):
     """Return description of packet."""
+    # pylint: disable=too-many-return-statements,too-many-branches
     eth_type = pkt('eth_type')
     if eth_type == 0x0806:
         arp_op = pkt('arp_op')
@@ -102,10 +100,10 @@ class PktView(ObjectView):
 
     def get_protocol(self, protocol):
         """Check if pkt is of specified type and return `self`.
-        
-        Return None if pkt does not match specified protocol name. This API is 
+
+        Return None if pkt does not match specified protocol name. This API is
         intended to be similar to RYU's. The implementation is not intended to
-        exhaustively check every field; the oftr tool is reponsible for 
+        exhaustively check every field; the oftr tool is reponsible for
         populating all necessary protocol fields.
         """
         return self if PktView.PROTO_FIELD[protocol.upper()] in self else None
@@ -192,7 +190,7 @@ def convert_slash_notation(fname, value):
         # ip_interface handles IP prefix notation "/nn"
         addr = ipaddress.ip_interface(value)
         return (addr.ip, addr.netmask)
-    except ValueError as ex:
+    except ValueError:
         if not fname.startswith('IPV6_'):
             raise
 
