@@ -70,7 +70,6 @@ msg:
 ''')
 
 
-
 def _supported_counter(value):
     return value != 0xffffffffffffffff
 
@@ -82,27 +81,38 @@ class PortMetrics:
             labels = ['port_no', 'instance']
         else:
             labels = ['port_no']
-        self.tx_bytes = CounterMetricFamily('port_tx_bytes_total', 'bytes transmitted', None, labels)
-        self.rx_bytes = CounterMetricFamily('port_rx_bytes_total', 'bytes received', None, labels)
-        self.tx_packets = CounterMetricFamily('port_tx_packets_total', 'packets transmitted', None, labels)
-        self.rx_packets = CounterMetricFamily('port_rx_packets_total', 'packets received', None, labels)
-        self.tx_dropped = CounterMetricFamily('port_tx_dropped_total', 'packets dropped by TX', None, labels)
-        self.rx_dropped = CounterMetricFamily('port_rx_dropped_total', 'packets dropped by RX', None, labels)
-        self.rx_errors = CounterMetricFamily('port_rx_errors_total', 'receive errors', None, labels)
-        self.duration = CounterMetricFamily('port_duration_seconds_total', 'duration in seconds', None, labels)
+        self.tx_bytes = CounterMetricFamily('port_tx_bytes_total',
+                                            'bytes transmitted', None, labels)
+        self.rx_bytes = CounterMetricFamily('port_rx_bytes_total',
+                                            'bytes received', None, labels)
+        self.tx_packets = CounterMetricFamily(
+            'port_tx_packets_total', 'packets transmitted', None, labels)
+        self.rx_packets = CounterMetricFamily('port_rx_packets_total',
+                                              'packets received', None, labels)
+        self.tx_dropped = CounterMetricFamily(
+            'port_tx_dropped_total', 'packets dropped by TX', None, labels)
+        self.rx_dropped = CounterMetricFamily(
+            'port_rx_dropped_total', 'packets dropped by RX', None, labels)
+        self.rx_errors = CounterMetricFamily('port_rx_errors_total',
+                                             'receive errors', None, labels)
+        self.duration = CounterMetricFamily(
+            'port_duration_seconds_total', 'duration in seconds', None, labels)
         # TODO(bfish): self.up = GaugeMetricFamily()
 
     def metrics(self):
-        return [self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets, self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration]
+        return [
+            self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets,
+            self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration
+        ]
 
     def update(self, dpid, stat):
         if self.include_instance:
             labels = [str(stat.port_no), dpid]
         else:
             labels = [str(stat.port_no)]
-        for counter, value in [(self.tx_bytes, stat.tx_bytes), 
-                               (self.rx_bytes, stat.rx_bytes), 
-                               (self.tx_packets, stat.tx_packets), 
+        for counter, value in [(self.tx_bytes, stat.tx_bytes),
+                               (self.rx_bytes, stat.rx_bytes),
+                               (self.tx_packets, stat.tx_packets),
                                (self.rx_packets, stat.rx_packets),
                                (self.tx_dropped, stat.tx_dropped),
                                (self.rx_dropped, stat.rx_dropped),

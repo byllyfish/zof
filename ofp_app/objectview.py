@@ -101,8 +101,13 @@ class ObjectView(object):
         """
         if len(format_spec) == 2 and format_spec[1] == 's':
             indent = int(format_spec[0])
-            return json.dumps(self, ensure_ascii=False, default=_json_serialize, indent=indent)
-        raise ValueError('ObjectView does not support format_spec: %s' % format_spec)
+            return json.dumps(
+                self,
+                ensure_ascii=False,
+                default=_json_serialize,
+                indent=indent)
+        raise ValueError('ObjectView does not support format_spec: %s' %
+                         format_spec)
 
     # TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
 

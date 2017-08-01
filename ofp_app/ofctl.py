@@ -1,5 +1,3 @@
-
-
 try:
     # For Python 2.x compatibility.
     _BASESTRING = basestring

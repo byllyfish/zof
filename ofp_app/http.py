@@ -33,7 +33,8 @@ class HttpServer:
             self.web_handler, self.endpoint.host, self.endpoint.port)
 
         if self.logger:
-            self.logger.info('HttpServer: Start listening on %s', self.endpoint)
+            self.logger.info('HttpServer: Start listening on %s',
+                             self.endpoint)
 
     async def stop(self):
         self.web_server.close()
@@ -163,7 +164,8 @@ async def _respond_text(func, kwds):
     else:
         status = 200
     if isinstance(result, bytes):
-        return web.Response(body=result, status=status, content_type='text/plain')
+        return web.Response(
+            body=result, status=status, content_type='text/plain')
     return web.Response(text=result, status=status)
 
 
