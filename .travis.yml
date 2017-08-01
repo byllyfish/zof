@@ -18,6 +18,9 @@ script:
       codecov
     fi
   # Run pylint
+  - pip install pylint
+  - pylint --version
+  - pylint ofp_app || echo "pylint issues detected!"
   # pylint ofp_app
   # Create source package.
   - python setup.py sdist

@@ -1,6 +1,6 @@
 [MESSAGES CONTROL]
 
-disable=missing-docstring,locally-disabled,fixme,file-ignored
+disable=missing-docstring,locally-disabled,fixme
 
 # yapf produces bad-continuation's on overlong `with` statements.
 #disable=bad-continuation,line-too-long
@@ -13,7 +13,7 @@ max-attributes=15
 
 #spelling-dict=en_US
 
-
+ignored-classes=PktView
 
 # docparams messages.
 accept-no-param-doc=no
