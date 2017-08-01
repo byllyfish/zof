@@ -171,7 +171,7 @@ async def _respond_text(func, kwds):
 
 class HttpClient:
     """Simple async web client.
-    
+
     Usage:
         client = HttpClient()
         await client.start()

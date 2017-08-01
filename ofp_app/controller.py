@@ -445,7 +445,7 @@ class Controller(object):
                 app.handle_event(event, 'event')
             except _exc.PreflightUnloadException:
                 self.apps.remove(app)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 app.handle_exception(event, 'event')
 
     def next_xid(self):

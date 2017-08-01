@@ -15,7 +15,7 @@ def run(*, args=None):
 
     Args:
         args (Optional[argparse.Namespace]): Arguments derived from
-            ArgumentParser. If None, use `common_args` parser.    
+            ArgumentParser. If None, use `common_args` parser.
     """
     if args is None:
         args = common_args(include_x_modules=True).parse_args()

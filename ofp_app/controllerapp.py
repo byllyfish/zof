@@ -30,7 +30,7 @@ class ControllerApp(object):
         exception_fatal (bool): Terminate immediately if app raises exception.
         precedence (int): App precedence.
         arg_parser (ArgumentParser): Argument parser for this app.
-        has_datapath_id (bool): If False, this app only handles messages 
+        has_datapath_id (bool): If False, this app only handles messages
             without a datapath_id.
     """
     _curr_app_id = 0
