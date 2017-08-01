@@ -42,9 +42,12 @@ setup(
 
     # Dependencies
     install_requires=[
-        'prompt_toolkit',
+        # Imported by http submodule. Required for metrics demo.
         'aiohttp>=2.2.2',
-        'prometheus_client'
+        # Required for metrics demo.
+        'prometheus_client',
+        # Required for command_shell demo.
+        'prompt_toolkit'
     ],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
