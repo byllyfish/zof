@@ -187,7 +187,7 @@ class Controller(object):
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._start')
             self.post_event(make_event(event='STARTFAIL'))
-            self.post_event(make_event(event='EXIT'))
+            self.post_event(make_event(event='EXIT', exit_status=11))
 
     async def _get_description(self):
         """Check the api version used by oftr.
