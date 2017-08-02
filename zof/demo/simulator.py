@@ -18,12 +18,12 @@ def _arg_parser():
         default=0,
         help='Seconds to run simulation')
     parser.add_argument(
-        '--sim-cert', type=file_contents_type, help='Simulator certificate')
+        '--sim-cert', type=file_contents_type(), help='Simulator certificate')
     parser.add_argument(
-        '--sim-privkey', type=file_contents_type, help='Simulator private key')
+        '--sim-privkey', type=file_contents_type(), help='Simulator private key')
     parser.add_argument(
         '--sim-cacert',
-        type=file_contents_type,
+        type=file_contents_type(),
         help='Simulator CA certificate')
     return parser
 

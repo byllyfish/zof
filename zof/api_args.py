@@ -72,17 +72,17 @@ def common_args(*, under_test=False, include_x_modules=False):
         help='listen versions (1-6) separated by commas')
     listen_group.add_argument(
         '--listen-cert',
-        type=file_contents_type,
+        type=file_contents_type(),
         metavar='FILE',
         help='certificate chain')
     listen_group.add_argument(
         '--listen-cacert',
-        type=file_contents_type,
+        type=file_contents_type(),
         metavar='FILE',
         help='certificate authority')
     listen_group.add_argument(
         '--listen-privkey',
-        type=file_contents_type,
+        type=file_contents_type(),
         metavar='FILE',
         help='private key')
 
@@ -144,10 +144,13 @@ def _import_modules(modules):
         sys.exit(1)
 
 
-def file_contents_type(value):
+def file_contents_type(name='file_contents_type', *, encoding='utf-8'):
     """Return contents of file."""
-    with open(value, encoding='utf-8') as afile:
-        return afile.read()
+    def _parse(value):
+        with open(value, encoding=encoding) as afile:
+            return afile.read()
+    _parse.__name__ = name
+    return _parse
 
 
 def csv_list_type(name='csv_list_type', *, item_type=str):
