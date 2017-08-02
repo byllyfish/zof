@@ -13,19 +13,19 @@ script:
   - |
     if [ "$TRAVIS_PYTHON_VERSION" = "3.5.2" ]; then 
       pip install codecov
-      coverage run --source ofp_app -m unittest test/*.py
+      coverage run --source zof -m unittest test/*.py
       test/integration_tests.sh --coverage
       codecov
     fi
   # Run pylint
   - pip install pylint
   - pylint --version
-  - pylint ofp_app || echo "pylint issues detected!"
-  # pylint ofp_app
+  - pylint zof || echo "pylint issues detected!"
+  # pylint zof
   # Create source package.
   - python setup.py sdist
   # Run unit tests again from source package.
-  - cd dist ; tar xvfz ofp_app-*.tar.gz ; cd ofp_app-* ; python setup.py test
+  - cd dist ; tar xvfz zof-*.tar.gz ; cd zof-* ; python setup.py test
 
 before_install:
   # Install oftr from launchpad.

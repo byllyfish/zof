@@ -1,11 +1,11 @@
-OFP_APP: OpenFlow App Framework
+zof: OpenFlow App Framework
 ================================
 
-`ofp_app` is a Python framework for creating asyncio-based applications that control 
-the network using the OpenFlow protocol. `ofp_app` uses a separate *oftr* process to 
+`zof` is a Python framework for creating asyncio-based applications that control 
+the network using the OpenFlow protocol. `zof` uses a separate *oftr* process to 
 terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
-.. figure:: doc/sphinx/_static/img/ofp_app_architecture.png
+.. figure:: doc/sphinx/_static/img/zof_architecture.png
     :align: center
     :alt: Architecture diagram
     
@@ -30,16 +30,16 @@ Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constan
             - action: OUTPUT
               port_no: ALL
 
-The basic building block of ofp_app is an `app`. An `app` is associated with various message and event handlers.
-You create an app object using the `ofp_app` function. Then, you associate handlers using the app's `message` decorator.
+The basic building block of zof is an `app`. An `app` is associated with various message and event handlers.
+You create an app object using the `zof` function. Then, you associate handlers using the app's `message` decorator.
 
 ::
 
-    from ofp_app import ofp_app, ofp_run
+    import zof
 
-    app = ofp_app('app_name_here')
+    app = zof.Application('app_name_here')
 
-    @app.message('packet_in', cookie=123)
+    @app.message('packet_in')
     def packet_in(event):
         app.logger.info('packet_in message %r', event)
 
@@ -48,9 +48,9 @@ You create an app object using the `ofp_app` function. Then, you associate handl
         app.logger.info('other message %r', event)
 
     if __name__ == '__main__':
-        ofp_run()
+        zof.run()
 
-This app handles 'PACKET_IN' messages with a cookie value of 123 using the packet_in function. All other messages including other 'PACKET_IN' messages are dispatched to the `other` function.
+This app handles 'PACKET_IN' messages using the packet_in function. All other messages are dispatched to the `other` function.
 
 An OpenFlow application may be composed of multiple "app modules".  The framework includes built-in "system modules" that you can build upon.
 
@@ -74,10 +74,10 @@ Install - Linux
     sudo apt-get update
     sudo apt-get install oftr
 
-    # Create virtual environment and install latest ofp_app.
+    # Create virtual environment and install latest zof.
     python3.5 -m venv myenv
     source myenv/bin/activate
-    pip install git+https://github.com/byllyfish/ofp_app.git
+    pip install git+https://github.com/byllyfish/zof.git
 
 
 Demos
@@ -85,13 +85,13 @@ Demos
 
 To run the controller demo::
 
-    python -m ofp_app.demo.l2_demo --help
+    python -m zof.demo.layer2 --help
 
 
 .. (TODO) To run the agent simulator demo::
 
-    python -m ofp_app.demo.agent_simulator --help
+    python -m zof.demo.agent_simulator --help
 
 .. (TODO) To run the command line tool demo::
 
-    python -m ofp_app.demo.ofctl --help
+    python -m zof.demo.ofctl --help
