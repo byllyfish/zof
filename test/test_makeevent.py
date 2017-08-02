@@ -1,5 +1,5 @@
 import unittest
-from ofp_app.event import make_event, Event
+from zof.event import make_event, Event
 
 
 class MakeEventTestCase(unittest.TestCase):

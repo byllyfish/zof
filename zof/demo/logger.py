@@ -1,7 +1,7 @@
 import asyncio
-import ofp_app
+import zof
 
-app = ofp_app.Application('logger', precedence=0)
+app = zof.Application('logger', precedence=0)
 
 app.logger.info('phase = %r', app.phase)
 
@@ -29,4 +29,4 @@ async def logger(event):
 
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

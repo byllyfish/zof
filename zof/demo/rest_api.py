@@ -1,9 +1,9 @@
-import ofp_app
+import zof
 from ..http import HttpServer
 from ..service.device import get_devices, get_device_port
 from ..pktview import pktview_from_list
 
-app = ofp_app.Application('webserver')
+app = zof.Application('webserver')
 app.http_endpoint = '127.0.0.1:8080'
 
 web = HttpServer(logger=app.logger)
@@ -64,7 +64,7 @@ async def modify_portdesc(post_data):
     return result.msg
 
 
-FLOW_REQ = ofp_app.compile('''
+FLOW_REQ = zof.compile('''
     type: REQUEST.FLOW
     msg:
         table_id: ALL
@@ -75,17 +75,17 @@ FLOW_REQ = ofp_app.compile('''
         match: []
 ''')
 
-GROUPDESC_REQ = ofp_app.compile('''
+GROUPDESC_REQ = zof.compile('''
     type: REQUEST.GROUP_DESC
 ''')
 
-PORTSTATS_REQ = ofp_app.compile('''
+PORTSTATS_REQ = zof.compile('''
     type: REQUEST.PORT_STATS
     msg:
         port_no: $port_no
 ''')
 
-PORTMOD_REQ = ofp_app.compile('''
+PORTMOD_REQ = zof.compile('''
     type: PORT_MOD
     msg:
         port_no: $port_no
@@ -94,7 +94,7 @@ PORTMOD_REQ = ofp_app.compile('''
         mask: [$mask]
 ''')
 
-BARRIER_REQ = ofp_app.compile('''
+BARRIER_REQ = zof.compile('''
     type: BARRIER_REQUEST
 ''')
 
@@ -163,4 +163,4 @@ def _translate_action(action):
 
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

@@ -1,7 +1,7 @@
 import asyncio
 import time
 from unittest import skipIf
-from ofp_app.connection import Connection
+from zof.connection import Connection
 
 if __package__:
     from .asynctestcase import AsyncTestCase

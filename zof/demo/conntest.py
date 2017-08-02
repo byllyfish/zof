@@ -1,7 +1,7 @@
 import asyncio
-import ofp_app
+import zof
 
-app = ofp_app.Application('conntest', exception_fatal=True)
+app = zof.Application('conntest', exception_fatal=True)
 
 
 @app.event('start')
@@ -20,4 +20,4 @@ async def start(_):
 
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

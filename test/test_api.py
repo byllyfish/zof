@@ -1,13 +1,13 @@
 import unittest
-from ofp_app import Application
-from ofp_app.controller import Controller
+from zof import Application
+from zof.controller import Controller
 
 
 class TestApi(unittest.TestCase):
     def tearDown(self):
         Controller.destroy()
 
-    def test_ofp_app(self):
+    def test_zof(self):
         app1 = Application('app1', exception_fatal=True, precedence=12)
         self.assertEqual(app1.name, 'app1')
 

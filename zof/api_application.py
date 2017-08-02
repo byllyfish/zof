@@ -4,7 +4,7 @@ from .controllerapp import ControllerApp
 from .logging import init_logging
 
 # Enable logging before the first Application is created.
-_DEBUG = os.environ.get('OFP_APP_DEBUG')
+_DEBUG = os.environ.get('zof_DEBUG')
 if _DEBUG:
     init_logging('info' if _DEBUG.lower() == 'info' else 'debug')
 
@@ -16,23 +16,23 @@ class Application(object):
 
     Example:
 
-        import ofp_app
+        import zof
 
-        app = ofp_app.Application('appname')
+        app = zof.Application('appname')
 
         @app.message(any)
         def any_message(event):
             print(event)
 
         if __name__ == '__main__':
-            ofp_app.run()
+            zof.run()
 
     Args:
         name (str): Name of the app.
         precedence (int): Precedence for app event dispatch.
         exception_fatal (bool|str): If true, abort app when a handler raises
           an exception. When the value is a string, it's treated as the name of
-          the exception logger `ofp_app.<exc_log>`.
+          the exception logger `zof.<exc_log>`.
         arg_parser (argparse.ArgumentParser): App's argument parser.
 
     Attributes:

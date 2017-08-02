@@ -2,7 +2,7 @@ import unittest
 import ipaddress
 import argparse
 import json
-from ofp_app.objectview import ObjectView, to_json, from_json, make_objectview
+from zof.objectview import ObjectView, to_json, from_json, make_objectview
 
 
 def _test_dict():

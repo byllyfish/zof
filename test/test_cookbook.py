@@ -2,7 +2,7 @@ import re
 import os
 import difflib
 from glob import glob
-from ofp_app.connection import Connection
+from zof.connection import Connection
 
 if __package__:
     from .asynctestcase import AsyncTestCase

@@ -1,6 +1,6 @@
 import unittest
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from ofp_app.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias, pktview_from_ofctl, convert_slash_notation
+from zof.pktview import make_pktview, pktview_from_list, pktview_to_list, PktView, pktview_alias, pktview_from_ofctl, convert_slash_notation
 
 
 class PktViewTestCase(unittest.TestCase):

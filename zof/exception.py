@@ -1,15 +1,15 @@
-# ofp_app uses the following Exception hierarchy:
+# zof uses the following Exception hierarchy:
 #
 #     Exception (built into Python)
-#       +-- ofp_app.ControllerException
-#       |     +-- ofp_app.TimeoutException
-#       |     +-- ofp_app.RPCException
-#       |     +-- ofp_app.ErrorException
-#       |     +-- ofp_app.DeliveryException
-#       +-- ofp_app.ControlFlowException
-#             +-- ofp_app.StopPropagationException
-#             +-- ofp_app.ExitException
-#             +-- ofp_app.PreflightUnloadException
+#       +-- zof.ControllerException
+#       |     +-- zof.TimeoutException
+#       |     +-- zof.RPCException
+#       |     +-- zof.ErrorException
+#       |     +-- zof.DeliveryException
+#       +-- zof.ControlFlowException
+#             +-- zof.StopPropagationException
+#             +-- zof.ExitException
+#             +-- zof.PreflightUnloadException
 
 
 class ControllerException(Exception):
@@ -68,7 +68,7 @@ class DeliveryException(ControllerException):
 
 
 class ControlFlowException(Exception):
-    """Base class for control flow exceptions used in ofp_app."""
+    """Base class for control flow exceptions used in zof."""
 
 
 class StopPropagationException(ControlFlowException):

@@ -1,5 +1,5 @@
 import unittest
-from ofp_app.endpoint import Endpoint
+from zof.endpoint import Endpoint
 
 
 class EndpointTestCase(unittest.TestCase):

@@ -1,8 +1,8 @@
 import argparse
-import ofp_app
-from ofp_app import exception as _exc
-from ofp_app.http import HttpServer
-import ofp_app.service.device as dev
+import zof
+from zof import exception as _exc
+from zof.http import HttpServer
+import zof.service.device as dev
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
 from prometheus_client.core import CounterMetricFamily
 
@@ -14,7 +14,7 @@ def arg_parser():
     return parser
 
 
-app = ofp_app.Application('metrics', arg_parser=arg_parser())
+app = zof.Application('metrics', arg_parser=arg_parser())
 web = HttpServer()
 
 
@@ -63,7 +63,7 @@ async def ports(target):
     return _dump_prometheus(met.metrics())
 
 
-PORT_STATS = ofp_app.compile('''
+PORT_STATS = zof.compile('''
 type: REQUEST.PORT_STATS
 msg:
   port_no: ANY
@@ -149,4 +149,4 @@ def _dump_prometheus(stats):
 
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

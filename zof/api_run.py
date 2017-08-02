@@ -1,7 +1,7 @@
 """
 Environment Variables:
 
-    OFP_APP_DEBUG            Debug mode.
+    zof_DEBUG            Debug mode.
 """
 
 import sys
@@ -11,7 +11,7 @@ from .logging import init_logging
 
 
 def run(*, args=None):
-    """Run event loop for ofp_app.
+    """Run event loop for zof.
 
     Args:
         args (Optional[argparse.Namespace]): Arguments derived from

@@ -1,7 +1,7 @@
 import unittest
-from ofp_app.handler import make_handler
-from ofp_app.objectview import make_objectview
-from ofp_app.event import make_event
+from zof.handler import make_handler
+from zof.objectview import make_objectview
+from zof.event import make_event
 
 NO_HELP = 'No help available'
 

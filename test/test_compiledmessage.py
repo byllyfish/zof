@@ -1,6 +1,6 @@
 import unittest
-from ofp_app.api_compile import CompiledMessage
-from ofp_app.objectview import ObjectView
+from zof.api_compile import CompiledMessage
+from zof.objectview import ObjectView
 
 
 class CompiledMessageTestCase(unittest.TestCase):

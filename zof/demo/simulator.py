@@ -1,7 +1,7 @@
 import argparse
 import asyncio
-import ofp_app
-from ofp_app.api_args import file_contents_type
+import zof
+from zof.api_args import file_contents_type
 
 
 def _arg_parser():
@@ -28,7 +28,7 @@ def _arg_parser():
     return parser
 
 
-app = ofp_app.Application(
+app = zof.Application(
     'simulator',
     exception_fatal=True,
     arg_parser=_arg_parser(),
@@ -135,11 +135,11 @@ class Simulator(object):
                 'ports': self._portdescs() if event.version < 4 else []
             }
         }
-        ofp_app.compile(msg).send()
+        zof.compile(msg).send()
 
     def barrier_request(self, event):
         msg = {'type': 'BARRIER_REPLY', 'xid': event.xid}
-        ofp_app.compile(msg).send()
+        zof.compile(msg).send()
 
     def request_portdesc(self, event):
         msg = {
@@ -147,7 +147,7 @@ class Simulator(object):
             'xid': event.xid,
             'msg': self._portdescs()
         }
-        ofp_app.compile(msg).send()
+        zof.compile(msg).send()
 
     def request_desc(self, event):  # pylint: disable=no-self-use
         msg = {
@@ -161,7 +161,7 @@ class Simulator(object):
                 'dp_desc': ''
             }
         }
-        ofp_app.compile(msg).send()
+        zof.compile(msg).send()
 
     def _portdescs(self):
         return [self._portdesc(i) for i in range(1, 5)]
@@ -185,9 +185,9 @@ class Simulator(object):
 
 
 def main():
-    args = ofp_app.common_args(include_x_modules=True)
+    args = zof.common_args(include_x_modules=True)
     args.set_defaults(listen_endpoints=None)
-    ofp_app.run(args=args.parse_args())
+    zof.run(args=args.parse_args())
 
 
 if __name__ == '__main__':

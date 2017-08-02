@@ -6,10 +6,10 @@
 
 """
 
-import ofp_app
-from ofp_app.pktview import pktview_from_list
+import zof
+from zof.pktview import pktview_from_list
 
-app = ofp_app.Application('layer2')
+app = zof.Application('layer2')
 
 # The forwarding table is a dictionary that maps:
 #   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }
@@ -110,7 +110,7 @@ def _describe_pkt(pkt):
     return pkt.get_description()
 
 
-delete_flows = ofp_app.compile('''
+delete_flows = zof.compile('''
   # Delete flows in table 0.
   type: FLOW_MOD
   msg:
@@ -118,11 +118,11 @@ delete_flows = ofp_app.compile('''
     table_id: 0
 ''')
 
-barrier = ofp_app.compile('''
+barrier = zof.compile('''
   type: BARRIER_REQUEST
 ''')
 
-table_miss_flow = ofp_app.compile('''
+table_miss_flow = zof.compile('''
   # Add permanent table miss flow entry to table 0
   type: FLOW_MOD
   msg:
@@ -137,7 +137,7 @@ table_miss_flow = ofp_app.compile('''
             max_len: NO_BUFFER
 ''')
 
-learn_mac_flow = ofp_app.compile('''
+learn_mac_flow = zof.compile('''
   type: FLOW_MOD
   msg:
     table_id: 0
@@ -160,7 +160,7 @@ learn_mac_flow = ofp_app.compile('''
             max_len: MAX
 ''')
 
-packet_out = ofp_app.compile('''
+packet_out = zof.compile('''
   type: PACKET_OUT
   msg:
     actions: 
@@ -170,7 +170,7 @@ packet_out = ofp_app.compile('''
     data: $data
 ''')
 
-packet_flood = ofp_app.compile('''
+packet_flood = zof.compile('''
   type: PACKET_OUT
   msg:
     in_port: $in_port
@@ -182,4 +182,4 @@ packet_flood = ofp_app.compile('''
 ''')
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

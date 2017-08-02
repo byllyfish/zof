@@ -1,5 +1,5 @@
 import unittest
-from ofp_app.event import dump_event, Event
+from zof.event import dump_event, Event
 
 
 class DumpEventTestCase(unittest.TestCase):

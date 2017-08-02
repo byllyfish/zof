@@ -4,7 +4,7 @@ import sys
 if sys.version_info[:3] < (3, 5, 1):
     import platform
     raise NotImplementedError(
-        'Python %s is not supported by the ofp_app framework. Python 3.5.1 or later required.'
+        'Python %s is not supported by the zof framework. Python 3.5.1 or later required.'
         % platform.python_version())
 
 # pylint: disable=wrong-import-position, redefined-builtin

@@ -13,7 +13,7 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
-import ofp_app
+import zof
 from ..event import make_event
 from ..exception import ControlFlowException
 from ..logging import DEFAULT_FORMATTER, STDERR_HANDLER
@@ -42,7 +42,7 @@ class _ArgumentParser(argparse.ArgumentParser):
         super().exit(status, message)
 
 
-app = ofp_app.Application('command_shell')
+app = zof.Application('command_shell')
 app.foreground_task = None
 app.command_prompt = '> '
 app.commands = {}
@@ -353,4 +353,4 @@ _TAIL_HANDLER = TailBufferedHandler.install()
 _CONSOLE_HANDLER = PatchedConsoleHandler.install()
 
 if __name__ == '__main__':
-    ofp_app.run()
+    zof.run()

@@ -1,16 +1,16 @@
 from .asynctestcase import AsyncTestCase
-from ofp_app.http import HttpServer, HttpClient, ClientResponseError
+from zof.http import HttpServer, HttpClient, ClientResponseError
 import aiohttp
 
 import logging
-from ofp_app.logging import init_logging
+from zof.logging import init_logging
 
 init_logging('info')
 
 
 class HttpTestCase(AsyncTestCase):
     async def test_http_server(self):
-        logger = logging.getLogger('ofp_app.test_http')
+        logger = logging.getLogger('zof.test_http')
         web = HttpServer(logger=logger)
 
         @web.get_text('/')

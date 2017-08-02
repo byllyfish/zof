@@ -1,9 +1,9 @@
 """
 
 Environment Variables:
-    OFP_APP_OFTR_PREFIX
-    OFP_APP_OFTR_PATH
-    OFP_APP_OFTR_ARGS
+    zof_OFTR_PREFIX
+    zof_OFTR_PATH
+    zof_OFTR_ARGS
 
 """
 
@@ -106,15 +106,15 @@ def common_args(*, under_test=False, include_x_modules=False):
     x_group.add_argument(
         '--x-oftr-path',
         help='path to oftr executable',
-        default=os.getenv('OFP_APP_OFTR_PATH'))
+        default=os.getenv('zof_OFTR_PATH'))
     x_group.add_argument(
         '--x-oftr-args',
         help='arguments passed to oftr',
-        default=os.getenv('OFP_APP_OFTR_ARGS'))
+        default=os.getenv('zof_OFTR_ARGS'))
     x_group.add_argument(
         '--x-oftr-prefix',
         help='prefix used to launch oftr (valgrind, strace, catchsegv)',
-        default=os.getenv('OFP_APP_OFTR_PREFIX'))
+        default=os.getenv('zof_OFTR_PREFIX'))
     x_group.add_argument(
         '--x-under-test',
         action='store_true',
