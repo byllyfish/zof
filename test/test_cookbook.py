@@ -3,12 +3,8 @@ import os
 import difflib
 from glob import glob
 from zof.connection import Connection
+from .asynctestcase import AsyncTestCase
 
-if __package__:
-    from .asynctestcase import AsyncTestCase
-else:
-    # For `setup.py test` to work; it loads tests differently.
-    from asynctestcase import AsyncTestCase
 
 _UPDATE_GOLDEN = False
 
