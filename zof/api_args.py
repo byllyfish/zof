@@ -1,9 +1,9 @@
 """
 
 Environment Variables:
-    zof_OFTR_PREFIX
-    zof_OFTR_PATH
-    zof_OFTR_ARGS
+    ZOF_OFTR_PREFIX
+    ZOF_OFTR_PATH
+    ZOF_OFTR_ARGS
 
 """
 
@@ -17,21 +17,6 @@ from .logging import EXT_STDERR
 DEFAULT_ENDPOINTS = [6633, 6653]
 DEFAULT_LOGFILE = EXT_STDERR
 DEFAULT_LOGLEVEL = 'info'
-
-
-class _SplitCommaAction(argparse.Action):
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not None:
-            raise ValueError('nargs not allowed')
-        super().__init__(option_strings, dest, **kwargs)
-        self._count = 0
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        self._count += 1
-        if self._count > 1:
-            raise argparse.ArgumentError(self, 'Option present more than once')
-        values = [s.strip() for s in values.split(',')]
-        setattr(namespace, self.dest, values)
 
 
 class _ArgParserTest(argparse.ArgumentParser):
@@ -76,14 +61,14 @@ def common_args(*, under_test=False, include_x_modules=False):
     listen_group = parser.add_argument_group('listen arguments')
     listen_group.add_argument(
         '--listen-endpoints',
+        type=csv_list_type('endpoint'),
         metavar='ENDPOINT,...',
-        action=_SplitCommaAction,
         help='listen endpoints separated by commas',
         default=DEFAULT_ENDPOINTS)
     listen_group.add_argument(
         '--listen-versions',
+        type=csv_list_type('version', item_type=int),
         metavar='VERSION,...',
-        action=_SplitCommaAction,
         help='listen versions (1-6) separated by commas')
     listen_group.add_argument(
         '--listen-cert',
@@ -106,15 +91,15 @@ def common_args(*, under_test=False, include_x_modules=False):
     x_group.add_argument(
         '--x-oftr-path',
         help='path to oftr executable',
-        default=os.getenv('zof_OFTR_PATH'))
+        default=os.getenv('ZOF_OFTR_PATH'))
     x_group.add_argument(
         '--x-oftr-args',
         help='arguments passed to oftr',
-        default=os.getenv('zof_OFTR_ARGS'))
+        default=os.getenv('ZOF_OFTR_ARGS'))
     x_group.add_argument(
         '--x-oftr-prefix',
         help='prefix used to launch oftr (valgrind, strace, catchsegv)',
-        default=os.getenv('zof_OFTR_PREFIX'))
+        default=os.getenv('ZOF_OFTR_PREFIX'))
     x_group.add_argument(
         '--x-under-test',
         action='store_true',
@@ -126,8 +111,8 @@ def common_args(*, under_test=False, include_x_modules=False):
     if include_x_modules:
         x_group.add_argument(
             '--x-modules',
+            type=csv_list_type('module'),
             metavar='MODULE,...',
-            action=_SplitCommaAction,
             help='modules to import')
 
     return parser
@@ -140,8 +125,8 @@ def _import_extra_modules(*, under_test=False):
     parser = parser_class(add_help=False)
     parser.add_argument(
         '--x-modules',
+        type=csv_list_type('module'),
         metavar='MODULE,...',
-        action=_SplitCommaAction,
         help='modules to import')
 
     args, _ = parser.parse_known_args()
@@ -159,7 +144,15 @@ def _import_modules(modules):
         sys.exit(1)
 
 
-def file_contents_type(filename):
+def file_contents_type(value):
     """Return contents of file."""
-    with open(filename, encoding='utf-8') as afile:
+    with open(value, encoding='utf-8') as afile:
         return afile.read()
+
+
+def csv_list_type(name='csv_list_type', *, item_type=str):
+    """Return list of comma-separated values."""
+    def _parse(value):
+        return [item_type(s.strip()) for s in value.split(',')]
+    _parse.__name__ = name
+    return _parse
