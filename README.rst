@@ -1,9 +1,10 @@
-zof: OpenFlow App Framework
+zof: OpenFlow Micro-Framework
 ================================
 
-`zof` is a Python framework for creating asyncio-based applications that control 
-the network using the OpenFlow protocol. `zof` uses a separate *oftr* process to 
-terminate OpenFlow connections and translate OpenFlow messages to JSON.
+*zof* is a Python framework for creating asyncio-based applications that control 
+the network using the OpenFlow protocol. *zof* supports OpenFlow versions 1.0 - 1.4, with partial support for 1.5.
+
+*zof* uses a separate *oftr* process to terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
 .. figure:: doc/sphinx/_static/img/zof_architecture.png
     :align: center
@@ -11,10 +12,9 @@ terminate OpenFlow connections and translate OpenFlow messages to JSON.
     
     Architecture: The oftr process translates OpenFlow to JSON.
 
-There is no built-in OpenFlow API. You construct OpenFlow messages via YAML strings or Python dictionaries. 
-Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constants such as 'NO_BUFFER' appear as strings.
+You construct OpenFlow messages via YAML strings or Python dictionaries. Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constants such as 'NO_BUFFER' appear as strings.
 
-::
+.. code:: yaml
 
     type: FLOW_MOD
     msg:
@@ -28,34 +28,41 @@ Incoming OpenFlow messages are generic Python objects.  Special OpenFlow constan
         - instruction: APPLY_ACTIONS
           actions:
             - action: OUTPUT
-              port_no: ALL
+              port_no: 2
 
-The basic building block of zof is an `app`. An `app` is associated with various message and event handlers.
-You create an app object using the `zof` function. Then, you associate handlers using the app's `message` decorator.
+The basic building block of zof is an *app*. An *app* is associated with various message and event handlers.
+You create an app object using the ``zof.Application`` class. Then, you associate handlers using the app's `message` decorator.
 
-::
+.. code:: python
 
     import zof
 
-    app = zof.Application('app_name_here')
+    APP = zof.Application('app_name_here')
 
-    @app.message('packet_in')
+    @APP.message('packet_in')
     def packet_in(event):
-        app.logger.info('packet_in message %r', event)
+        APP.logger.info('packet_in message %r', event)
 
-    @app.message(any)
+    @APP.message(any)
     def other(event):
-        app.logger.info('other message %r', event)
+        APP.logger.info('other message %r', event)
 
     if __name__ == '__main__':
         zof.run()
 
-This app handles 'PACKET_IN' messages using the packet_in function. All other messages are dispatched to the `other` function.
-
-An OpenFlow application may be composed of multiple "app modules".  The framework includes built-in "system modules" that you can build upon.
+Place the above text in a file named `demo.py` and run it with `python demo.py`. This app handles OpenFlow 'PACKET_IN' messages using the packet_in function. All other messages are dispatched to the `other` function. The app does not do anything; it just logs events.
 
 .. (TODO) image of command line 
 
+Supported Features
+------------------
+
+- OpenFlow versions 1.0 - 1.4 (with partial support for 1.5)
+- Nicira fields
+- SSL connections
+- Auxiliary OpenFlow connections over TCP and UDP.
+- Limited packet parsing and generation: ARP, LLDP, IPv4, IPv6, UDP, TCP, ICMPv4, ICMPv6
+- App's can simulate switches; Supports both sides of OpenFlow protocol.
 
 Requirements
 ------------
@@ -67,7 +74,7 @@ Requirements
 Install - Linux
 ---------------
 
-::
+.. code:: bash
 
     # Install /usr/bin/oftr dependency.
     sudo add-apt-repository ppa:byllyfish/oftr
@@ -83,10 +90,13 @@ Install - Linux
 Demos
 -----
 
-To run the controller demo::
+To run the built-in layer2 controller demo::
 
     python -m zof.demo.layer2 --help
 
+To compose the demo.py program with the layer2 demo:
+
+    python demo.py --x-modules=zof.demo.layer2
 
 .. (TODO) To run the agent simulator demo::
 
