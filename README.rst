@@ -2,7 +2,47 @@ zof: OpenFlow Micro-Framework
 ================================
 
 *zof* is a Python framework for creating asyncio-based applications that control 
-the network using the OpenFlow protocol. *zof* supports OpenFlow versions 1.0 - 1.4, with partial support for 1.5.
+the network using the OpenFlow protocol.
+
+Supported Features
+------------------
+
+- OpenFlow versions 1.0 - 1.4 (with partial support for 1.5)
+- SSL connections
+- Auxiliary OpenFlow connections over TCP and UDP
+- Limited packet parsing and generation: ARP, LLDP, IPv4, IPv6, UDP, TCP, ICMPv4, ICMPv6
+- App's can simulate switches; Supports both sides of the OpenFlow protocol
+
+Requirements
+------------
+
+- Python 3.5.1 or later
+- oftr command line tool
+
+Install - Linux
+---------------
+
+.. code:: bash
+
+    # Install /usr/bin/oftr dependency.
+    sudo add-apt-repository ppa:byllyfish/oftr
+    sudo apt-get update
+    sudo apt-get install oftr
+
+    # Create virtual environment and install latest zof.
+    python3.5 -m venv myenv
+    source myenv/bin/activate
+    pip install git+https://github.com/byllyfish/zof.git
+
+Demos
+-----
+
+To run the layer2 controller demo::
+
+    python -m zof.demo.layer2
+
+Architecture
+------------
 
 *zof* uses a separate *oftr* process to terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
@@ -52,56 +92,6 @@ You create an app object using the ``zof.Application`` class. Then, you associat
 
 Place the above text in a file named `demo.py` and run it with `python demo.py`. This app handles OpenFlow 'PACKET_IN' messages using the packet_in function. All other messages are dispatched to the `other` function. The app does not do anything; it just logs events.
 
-.. (TODO) image of command line 
-
-Supported Features
-------------------
-
-- OpenFlow versions 1.0 - 1.4 (with partial support for 1.5)
-- Nicira fields
-- SSL connections
-- Auxiliary OpenFlow connections over TCP and UDP.
-- Limited packet parsing and generation: ARP, LLDP, IPv4, IPv6, UDP, TCP, ICMPv4, ICMPv6
-- App's can simulate switches; Supports both sides of OpenFlow protocol.
-
-Requirements
-------------
-
-- Python 3.5.1 or later
-- oftr command line tool
-
-
-Install - Linux
----------------
-
-.. code:: bash
-
-    # Install /usr/bin/oftr dependency.
-    sudo add-apt-repository ppa:byllyfish/oftr
-    sudo apt-get update
-    sudo apt-get install oftr
-
-    # Create virtual environment and install latest zof.
-    python3.5 -m venv myenv
-    source myenv/bin/activate
-    pip install git+https://github.com/byllyfish/zof.git
-
-
-Demos
------
-
-To run the built-in layer2 controller demo::
-
-    python -m zof.demo.layer2 --help
-
-To compose the demo.py program with the layer2 demo:
+To compose the demo.py program with the layer2 demo::
 
     python demo.py --x-modules=zof.demo.layer2
-
-.. (TODO) To run the agent simulator demo::
-
-    python -m zof.demo.agent_simulator --help
-
-.. (TODO) To run the command line tool demo::
-
-    python -m zof.demo.ofctl --help
