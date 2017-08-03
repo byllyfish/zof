@@ -1,5 +1,7 @@
 zof: OpenFlow Micro-Framework
-================================
+=============================
+
+|MIT licensed| |Build Status| |codecov.io|
 
 *zof* is a Python framework for creating asyncio-based applications that control 
 the network using the OpenFlow protocol.
@@ -95,3 +97,11 @@ Place the above text in a file named `demo.py` and run it with `python demo.py`.
 To compose the demo.py program with the layer2 demo::
 
     python demo.py --x-modules=zof.demo.layer2
+
+
+.. |MIT licensed| image:: https://img.shields.io/badge/license-MIT-blue.svg
+   :target: https://raw.githubusercontent.com/byllyfish/ofp_app/master/LICENSE.txt
+.. |Build Status| image:: https://travis-ci.org/byllyfish/ofp_app.svg?branch=master
+   :target: https://travis-ci.org/byllyfish/ofp_app
+.. |codecov.io| image:: https://codecov.io/gh/byllyfish/ofp_app/coverage.svg?branch=master
+   :target: https://codecov.io/gh/byllyfish/ofp_app?branch=master
