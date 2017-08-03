@@ -16,6 +16,7 @@ params:
   conn_id: $conn_id
   %s"""
 
+
 # pylint: disable=redefined-builtin
 def compile(msg):
     """Compile an OpenFlow message template."""

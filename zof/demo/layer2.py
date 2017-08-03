@@ -163,7 +163,7 @@ learn_mac_flow = zof.compile('''
 packet_out = zof.compile('''
   type: PACKET_OUT
   msg:
-    actions: 
+    actions:
       - action: OUTPUT
         port_no: $out_port
         max_len: MAX
@@ -174,7 +174,7 @@ packet_flood = zof.compile('''
   type: PACKET_OUT
   msg:
     in_port: $in_port
-    actions: 
+    actions:
       - action: OUTPUT
         port_no: ALL
         max_len: MAX

@@ -10,7 +10,6 @@ Events Produced:
     port_modified
 """
 
-import asyncio
 from collections import OrderedDict
 import zof
 from ..event import make_event
@@ -105,21 +104,6 @@ class Port(object):
         return 'PORT_DOWN' not in self.config
 
 
-# TODO(bfish): remove stat polling
-# @app.event('start')
-async def poll_portstats(_event):
-    while True:
-        for device in DEVICES.values():
-            if device.ports:
-                reply = await PORT_STATS.request(
-                    datapath_id=device.datapath_id)
-                for stat in reply.msg:
-                    device.ports[stat.port_no].stats = stat
-                    del stat['port_no']
-                    # app.logger.info(stat)
-        await asyncio.sleep(10.0)
-
-
 @app.message('channel_up')
 def channel_up(event):
     app.logger.debug('channel_up: conn_id=%d', event.conn_id)
@@ -166,9 +150,6 @@ async def features_reply(event):
     device.n_buffers = event.msg.n_buffers
     device.ports = OrderedDict((i.port_no, Port(i))
                                for i in await _fetch_ports(event))
-
-    # if device.n_buffers > 0:
-    #    await _set_config()
 
     d = await desc.request()
     device.dp_desc = d.msg.dp_desc
@@ -229,12 +210,6 @@ async def _fetch_ports(reply):
         return reply.msg.ports
     result = await portdesc.request()
     return result.msg
-
-
-async def _set_config():
-    SET_CONFIG.send()
-    # app.logger.info('_set_config %r', result)
-    return await BARRIER.request()
 
 
 async def _fetch_desc():

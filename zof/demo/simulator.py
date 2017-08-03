@@ -20,7 +20,9 @@ def _arg_parser():
     parser.add_argument(
         '--sim-cert', type=file_contents_type(), help='Simulator certificate')
     parser.add_argument(
-        '--sim-privkey', type=file_contents_type(), help='Simulator private key')
+        '--sim-privkey',
+        type=file_contents_type(),
+        help='Simulator private key')
     parser.add_argument(
         '--sim-cacert',
         type=file_contents_type(),
