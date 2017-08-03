@@ -7,7 +7,7 @@ OFP_APP: OpenFlow App Framework
 the network using the OpenFlow protocol. `ofp_app` uses a separate *oftr* process to 
 terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
-.. figure:: _static/img/ofp_app_architecture.png
+.. figure:: _static/img/zof_architecture.png
     :align: center
     :alt: Architecture diagram
     

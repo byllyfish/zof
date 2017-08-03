@@ -1,4 +1,4 @@
-.. _events
+.. _events:
 
 Built-in Events
 ===============

@@ -10,22 +10,9 @@ if _DEBUG:
 
 
 class Application(object):
-    """The Application class represents a controller "app". Your app's
-    code registers for events and issues commands primarily via an
-    `Application` instance.
+    """The *zof.Application* class represents a controller *app*.
 
-    Example:
-
-        import zof
-
-        app = zof.Application('appname')
-
-        @app.message(any)
-        def any_message(event):
-            print(event)
-
-        if __name__ == '__main__':
-            zof.run()
+    Your app's code registers handlers for events via an *Application* instance.
 
     Args:
         name (str): Name of the app.

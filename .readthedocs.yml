@@ -1,0 +1,6 @@
+python:
+  version: 3.5
+
+formats:
+  - pdf
+  - epub
