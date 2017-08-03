@@ -66,7 +66,7 @@ def start(_):
     if app.args.sim_timeout:
         app.ensure_future(_exit_timeout(app.args.sim_timeout))
     for i in range(app.args.sim_count):
-        sim = Simulator(hex(i + 1))  #'ff:ff:00:00:00:00:00:01')
+        sim = Simulator(hex(i + 1))  # 'ff:ff:00:00:00:00:00:01')
         app.ensure_future(sim.start())
 
 

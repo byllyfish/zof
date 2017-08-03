@@ -17,11 +17,12 @@ script:
       test/integration_tests.sh --coverage
       codecov
     fi
-  # Run pylint
-  - pip install pylint
+  # Run pylint, flake8, and rstcheck tests
+  - pip install pylint flake8 rstcheck
   - pylint --version
   - pylint zof || echo "pylint issues detected!"
-  # pylint zof
+  - flake8 --max-line-length=100 zof || echo "flake8 issues detected!"
+  - rstcheck *.rst doc/sphinx/*.rst || echo "rstcheck issues detected!"
   # Create source package.
   - python setup.py sdist
   # Run unit tests again from source package.

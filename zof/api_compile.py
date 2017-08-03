@@ -151,11 +151,11 @@ class CompiledObject(object):
         kwds.setdefault('datapath_id', task_locals['datapath_id'])
         kwds.setdefault('conn_id', task_locals['conn_id'])
 
-        if not 'datapath_id' in self._obj:
+        if 'datapath_id' not in self._obj:
             self._obj['datapath_id'] = kwds['datapath_id']
-        if not 'xid' in self._obj:
+        if 'xid' not in self._obj:
             self._obj['xid'] = kwds['xid']
-        if not 'conn_id' in self._obj and kwds['conn_id'] is not None:
+        if 'conn_id' not in self._obj and kwds['conn_id'] is not None:
             self._obj['conn_id'] = kwds['conn_id']
 
         if self._obj['datapath_id'] is None and self._obj.get(
@@ -181,7 +181,7 @@ class MyTemplate(string.Template):
     def args(self):
         """Return set of template arguments."""
         result = set()
-        #pylint: disable=no-member
+        # pylint: disable=no-member
         for m in self.pattern.finditer(self.template):
             named = m.group('named') or m.group('braced')
             if named:

@@ -149,9 +149,9 @@ def all_command_handlers():
     return list(app.commands.values())
 
 
-#=================#
+# =============== #
 # C O M M A N D S #
-#=================#
+# =============== #
 
 
 def _help_brief(handler):

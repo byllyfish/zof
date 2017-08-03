@@ -1,5 +1,3 @@
-__version__ = '0.1.0'
-
 import sys
 if sys.version_info[:3] < (3, 5, 1):
     import platform
@@ -8,7 +6,9 @@ if sys.version_info[:3] < (3, 5, 1):
         % platform.python_version())
 
 # pylint: disable=wrong-import-position, redefined-builtin
-from .api_application import Application
-from .api_run import run
-from .api_args import common_args
-from .api_compile import compile
+from .api_application import Application  # noqa: E402,F401
+from .api_run import run  # noqa: E402,F401
+from .api_args import common_args  # noqa: E402,F401
+from .api_compile import compile  # noqa: E402,F401
+
+__version__ = '0.1.0'

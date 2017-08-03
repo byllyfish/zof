@@ -106,7 +106,7 @@ class Port(object):
 
 
 # TODO(bfish): remove stat polling
-#@app.event('start')
+# @app.event('start')
 async def poll_portstats(_event):
     while True:
         for device in DEVICES.values():
@@ -116,7 +116,7 @@ async def poll_portstats(_event):
                 for stat in reply.msg:
                     device.ports[stat.port_no].stats = stat
                     del stat['port_no']
-                    #app.logger.info(stat)
+                    # app.logger.info(stat)
         await asyncio.sleep(10.0)
 
 
@@ -160,14 +160,14 @@ async def features_reply(event):
         return
 
     app.logger.debug('features_reply %r', event)
-    #print('get_config', await GET_CONFIG.request(datapath_id=event.datapath_id))
+    # print('get_config', await GET_CONFIG.request(datapath_id=event.datapath_id))
 
     device = app.devices[event.datapath_id]
     device.n_buffers = event.msg.n_buffers
     device.ports = OrderedDict((i.port_no, Port(i))
                                for i in await _fetch_ports(event))
 
-    #if device.n_buffers > 0:
+    # if device.n_buffers > 0:
     #    await _set_config()
 
     d = await desc.request()
@@ -176,7 +176,7 @@ async def features_reply(event):
     device.hw_desc = d.msg.hw_desc
     device.sw_desc = d.msg.sw_desc
     device.serial_num = d.msg.serial_num
-    #app.logger.info('desc %r', desc)
+    # app.logger.info('desc %r', desc)
 
     device.device_up = True
     app.logger.info('DEVICE_UP %s (%s) "%s %s" [version=%d]',
@@ -233,7 +233,7 @@ async def _fetch_ports(reply):
 
 async def _set_config():
     SET_CONFIG.send()
-    #app.logger.info('_set_config %r', result)
+    # app.logger.info('_set_config %r', result)
     return await BARRIER.request()
 
 
