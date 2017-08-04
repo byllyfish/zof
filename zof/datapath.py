@@ -7,18 +7,18 @@ class DatapathList:
     def __init__(self):
         self._datapaths = OrderedDict()
 
-    def add_datapath(self, *, datapath_id, conn_id, endpoint):
-        dpid_key = normalize_dpid_key(datapath_id)
-        datapath = Datapath(datapath_id, conn_id, endpoint)
+    def add_datapath(self, *, datapath_id, conn_id):
+        dpid_key = normalize_datapath_id(datapath_id)
+        datapath = Datapath(datapath_id, conn_id)
         self._datapaths[dpid_key] = datapath
         return datapath
 
     def get_datapath(self, *, datapath_id):
-        dpid_key = normalize_dpid_key(datapath_id)
+        dpid_key = normalize_datapath_id(datapath_id)
         return self._datapaths[dpid_key]
 
     def delete_datapath(self, *, datapath_id):
-        dpid_key = normalize_dpid_key(datapath_id)
+        dpid_key = normalize_datapath_id(datapath_id)
         datapath = self._datapaths.pop(dpid_key)
         return datapath
 
@@ -32,10 +32,9 @@ class DatapathList:
 class Datapath:
     """Represents a datapath."""
 
-    def __init__(self, datapath_id, conn_id, endpoint):
+    def __init__(self, datapath_id, conn_id):
         self.datapath_id = datapath_id
         self.conn_id = conn_id
-        self.endpoint = endpoint
         self.ports = OrderedDict()
 
     def add_port(self, *, port_no):
@@ -88,7 +87,7 @@ class Port:
         return self.datapath.datapath_id
 
 
-def normalize_dpid_key(datapath_id):
+def normalize_datapath_id(datapath_id):
     """Normalize datapath_id value."""
     if isinstance(datapath_id, int):
         return datapath_id
@@ -106,5 +105,5 @@ def normalize_port_no(port_no):
             # Convert decimal and hexadecimal port number strings.
             return int(port_no, 0)
         except ValueError:
-            return port_no
+            return port_no.upper()
     raise ValueError('Invalid port_no: %r' % port_no)
