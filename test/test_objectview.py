@@ -185,6 +185,8 @@ class ObjectViewTestCase(unittest.TestCase):
         o = make_objectview(d)
         s = '{:2s}'.format(o)
         self.assertEqual(s, '{\n  "x": {\n    "a": 1\n  }\n}')
+        with self.assertRaisesRegex(ValueError, 'does not support format_spec'):
+            '{:4d}'.format(o)
 
     def test_std_json(self):
         d = dict(c=5)

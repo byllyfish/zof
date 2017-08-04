@@ -135,9 +135,3 @@ class ControllerApp(object):
         handlers.append(handler)
         self.logger.debug('Register handler %s', handler)
         return callback
-
-    def __repr__(self):
-        evt_count = len(self.handlers.get('event', []))
-        msg_count = len(self.handlers.get('message', []))
-        return '<ControllerApp name="%s" precedence=%d evt=%d msg=%d>' % (
-            self.name, self.precedence, evt_count, msg_count)

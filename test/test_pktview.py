@@ -31,6 +31,9 @@ class PktViewTestCase(unittest.TestCase):
         pkt = pktview_from_list(data, slash_notation=True)
         self.assertEqual(pkt, {'a': '5/255'})
 
+        with self.assertRaises(ValueError):
+            pktview_from_list([{'field':'PAYLOAD', 'value':'1234'}])
+
     def test_to_list(self):
         data = dict(a='a', b=2, c='ddd')
         fields = pktview_to_list(data)
@@ -42,6 +45,10 @@ class PktViewTestCase(unittest.TestCase):
                         field='B', value=2), dict(
                             field='C', value='ddd')
             ])
+
+        with self.assertRaisesRegex(ValueError, r'len\(tuple\) != 2'):
+            pktview_to_list({'a': (1, 2, 3)})
+
 
     def test_alias_attr(self):
         pkt = make_pktview()
@@ -142,15 +149,43 @@ class PktViewTestCase(unittest.TestCase):
             convert_slash_notation('IPV6_SRC', '2001::1/16'),
             (IPv6Address('2001::1'), IPv6Address('ffff::')))
 
+        addr = IPv4Address('1.2.3.4')
+        self.assertIs(convert_slash_notation('IPV4_SRC', addr), addr)
+
+        with self.assertRaises(ValueError):
+            convert_slash_notation('IPV4_SRC', '1.2.3.4/64')
+
     def test_description(self):
         pkt = make_pktview(ip_proto=6, eth_type=0x0800)
         self.assertEqual(pkt.get_description(), 'TCPv4')
+        pkt = make_pktview(ip_proto=1, eth_type=0x0800)
+        self.assertEqual(pkt.get_description(), 'ICMPv4')
+        pkt = make_pktview(ip_proto=2, eth_type=0x0800)
+        self.assertEqual(pkt.get_description(), 'IGMPv4')
+        pkt = make_pktview(ip_proto=17, eth_type=0x0800)
+        self.assertEqual(pkt.get_description(), 'UDPv4')
+        pkt = make_pktview(ip_proto=76, eth_type=0x0800)
+        self.assertEqual(pkt.get_description(), 'IPv4:76')
         pkt = make_pktview(ip_proto=6, eth_type=0x86dd)
         self.assertEqual(pkt.get_description(), 'TCPv6')
+        pkt = make_pktview(ip_proto=58, eth_type=0x86dd)
+        self.assertEqual(pkt.get_description(), 'ICMPv6')
+        pkt = make_pktview(ip_proto=17, eth_type=0x86dd)
+        self.assertEqual(pkt.get_description(), 'UDPv6')
         pkt = make_pktview(eth_type=25)
         self.assertEqual(pkt.get_description(), 'ETH:25')
         pkt = make_pktview(eth_type=0x0800)
         self.assertEqual(pkt.get_description(), 'IPv4:None')
+        pkt = make_pktview(ip_proto=79, eth_type=0x86dd)
+        self.assertEqual(pkt.get_description(), 'IPv6:79')
+        pkt = make_pktview(eth_type=0x0806, arp_op=1)
+        self.assertEqual(pkt.get_description(), 'ARP:REQ')
+        pkt = make_pktview(eth_type=0x0806, arp_op=2)
+        self.assertEqual(pkt.get_description(), 'ARP:REPLY')
+        pkt = make_pktview(eth_type=0x0806, arp_op=3)
+        self.assertEqual(pkt.get_description(), 'ARP:3')
+        pkt = make_pktview(eth_type=0x88cc)
+        self.assertEqual(pkt.get_description(), 'LLDP')
 
 
 def _by_field(item):

@@ -52,9 +52,6 @@ def _description(pkt):
         if ip_proto == 6:
             return 'TCPv4'
         if ip_proto == 17:
-            udp_dst = pkt('udp_dst')
-            if udp_dst == 67:
-                return 'DHCPv4'
             return 'UDPv4'
         return 'IPv4:%s' % ip_proto
     if eth_type == 0x86dd:
