@@ -22,6 +22,7 @@ script:
   - pylint --version
   - pylint zof || echo "pylint issues detected!"
   - flake8 --max-line-length=100 zof || echo "flake8 issues detected!"
+  - flake8 --max-line-length=160 test || echo "flake8 issues detected in tests!"
   - rstcheck *.rst doc/sphinx/*.rst || echo "rstcheck issues detected!"
   # Create source package.
   - python setup.py sdist
