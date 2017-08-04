@@ -15,7 +15,7 @@ import zof
 from ..event import make_event
 
 
-app = zof.Application('service.device', precedence=10)
+app = zof.Application('service.device', precedence=1000000)
 app.devices = OrderedDict()
 
 set_config = zof.compile('''

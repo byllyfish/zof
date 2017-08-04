@@ -8,18 +8,32 @@ class DatapathList:
         self._datapaths = OrderedDict()
 
     def add_datapath(self, *, datapath_id, conn_id):
+        """Add datapath to list.
+
+        Implementation is idempotent when arguments are identical.
+
+        Returns:
+            Datapath: datapath object
+        """
         dpid_key = normalize_datapath_id(datapath_id)
-        datapath = Datapath(datapath_id, conn_id)
-        self._datapaths[dpid_key] = datapath
+        datapath = self._datapaths.get(dpid_key)
+        if datapath is None:
+            datapath = Datapath(datapath_id, conn_id)
+            self._datapaths[dpid_key] = datapath
+        elif datapath.conn_id != conn_id:
+            raise ValueError('Datapath already exists: %r' % datapath)
         return datapath
 
-    def get_datapath(self, *, datapath_id):
-        dpid_key = normalize_datapath_id(datapath_id)
-        return self._datapaths[dpid_key]
-
     def delete_datapath(self, *, datapath_id):
+        """Remove datapath from list.
+
+        Returns None if datapath is not found.
+
+        Returns:
+            Datapath: just removed datapath object (or None)
+        """
         dpid_key = normalize_datapath_id(datapath_id)
-        datapath = self._datapaths.pop(dpid_key)
+        datapath = self._datapaths.pop(dpid_key, None)
         return datapath
 
     def __len__(self):
@@ -27,6 +41,10 @@ class DatapathList:
 
     def __iter__(self):
         return iter(self._datapaths.values())
+
+    def __getitem__(self, datapath_id):
+        dpid_key = normalize_datapath_id(datapath_id)
+        return self._datapaths[dpid_key]
 
 
 class Datapath:
@@ -40,25 +58,28 @@ class Datapath:
     def add_port(self, *, port_no):
         """Add port to datapath.
 
+        Implementation is idempotent when arguments are identical.
+
         Returns:
             Port: port object
         """
         port_no = normalize_port_no(port_no)
-        port = Port(port_no, datapath=self)
-        self.ports[port_no] = port
+        port = self.ports.get(port_no)
+        if port is None:
+            port = Port(port_no, datapath=self)
+            self.ports[port_no] = port
         return port
-
-    def get_port(self, *, port_no):
-        """Return existing port.
-        """
-        port_no = normalize_port_no(port_no)
-        return self.ports[port_no]
 
     def delete_port(self, *, port_no):
         """Remove port from datapath.
+
+        Returns None if port is not found.
+
+        Returns:
+            Port: just removed port object (or None)
         """
         port_no = normalize_port_no(port_no)
-        port = self.ports.pop(port_no)
+        port = self.ports.pop(port_no, None)
         return port
 
     def __getstate__(self):
@@ -67,8 +88,16 @@ class Datapath:
     def __len__(self):
         return len(self.ports)
 
+    def __bool__(self):
+        # Make sure empty datapath is still true.
+        return True
+
     def __iter__(self):
         return iter(self.ports.values())
+
+    def __getitem__(self, port_no):
+        port_no = normalize_port_no(port_no)
+        return self.ports[port_no]
 
 
 class Port:
@@ -78,6 +107,7 @@ class Port:
         self.datapath = datapath
         self.port_no = port_no
         self.state = []
+        self.config = []
 
     def __getstate__(self):
         return self.__dict__
@@ -85,6 +115,16 @@ class Port:
     @property
     def datapath_id(self):
         return self.datapath.datapath_id
+
+    @property
+    def up(self):
+        "Return true if port is up."
+        return 'LINK_DOWN' not in self.state
+
+    @property 
+    def admin_down(self):
+        "Return true if port is administratively configured down."
+        return 'PORT_DOWN' in self.config
 
 
 def normalize_datapath_id(datapath_id):
