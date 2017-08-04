@@ -1,6 +1,5 @@
 from .asynctestcase import AsyncTestCase
 from zof.http import HttpServer, HttpClient, ClientResponseError
-import aiohttp
 
 import logging
 from zof.logging import init_logging

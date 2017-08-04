@@ -75,7 +75,7 @@ class ConnectionTestCase(AsyncTestCase):
         )
 
     async def test_rpc_hex_id(self):
-        # If we write a valid JSON-RPC method with a hexadecimal ID, we should 
+        # If we write a valid JSON-RPC method with a hexadecimal ID, we should
         # get a result back.
         msg = b'{"id":"0x1234","method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
@@ -147,7 +147,7 @@ class ConnectionTestCase(AsyncTestCase):
     # Test invalid input.
 
     async def test_rpc_invalid_json(self):
-        # If we write an invalid message, we should get back an error with a 
+        # If we write an invalid message, we should get back an error with a
         # id=null.
         msg = b'{invalid'
         self.conn.write(msg)
