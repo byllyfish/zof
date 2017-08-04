@@ -5,7 +5,6 @@ from glob import glob
 from zof.connection import Connection
 from .asynctestcase import AsyncTestCase
 
-
 _UPDATE_GOLDEN = False
 
 HERE = os.path.abspath(os.path.dirname(__file__))

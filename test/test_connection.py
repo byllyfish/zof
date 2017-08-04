@@ -4,7 +4,6 @@ from unittest import skipIf
 from zof.connection import Connection
 from .asynctestcase import AsyncTestCase
 
-
 # Max message size is 1MB.
 MSG_LIMIT = 2**20
 

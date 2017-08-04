@@ -49,14 +49,14 @@ class HttpTestCase(AsyncTestCase):
 
         data = await client.post_json(
             'http://127.0.0.1:9010/test/a?var2=3&var3=4', post_data={'x': 1})
-        self.assertEqual(
-            data,
-            {'var1': 'a',
-             'var2': '3',
-             'var3': '4',
-             'post_data': {
-                 'x': 1
-             }})
+        self.assertEqual(data, {
+            'var1': 'a',
+            'var2': '3',
+            'var3': '4',
+            'post_data': {
+                'x': 1
+            }
+        })
 
         # "/test" fails because {var1} is required.
         with self.assertRaises(ClientResponseError):
