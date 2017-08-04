@@ -64,6 +64,12 @@ class ObjectViewTestCase(unittest.TestCase):
     def test_len(self):
         self.assertEqual(len(self.obj), 3)
 
+    def test_bool(self):
+        self.assertTrue(self.obj)
+        empty = ObjectView({})
+        self.assertTrue(empty)
+        self.assertEqual(len(empty), 0)
+
     def test_iteration(self):
         count = 0
         for key in self.obj:

@@ -43,6 +43,10 @@ class ObjectView(object):
         """Make sure len(obj) works."""
         return len(self.__dict__)
 
+    def __bool__(self):
+        """Make sure empty object is still true."""
+        return True
+
     def __iter__(self):
         """Make sure iteration works."""
         return iter(self.__dict__)
