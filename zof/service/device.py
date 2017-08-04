@@ -14,7 +14,6 @@ from collections import OrderedDict
 import zof
 from ..event import make_event
 
-OPENFLOW_VERSION_1 = 0
 
 app = zof.Application('service.device', precedence=10)
 app.devices = OrderedDict()
@@ -206,7 +205,7 @@ def port_up(event):
 
 
 async def _fetch_ports(reply):
-    if reply.version == OPENFLOW_VERSION_1:
+    if reply.version == 1:
         return reply.msg.ports
     result = await portdesc.request()
     return result.msg
