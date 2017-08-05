@@ -133,70 +133,64 @@ class ObjectViewTestCase(unittest.TestCase):
         self.assertTrue(self.obj)
 
     def test_str(self):
-        o = ObjectView(dict(q=[1, 2, 3]))
-        s = str(o)
-        self.assertEqual(s, '{"q":[1,2,3]}')
+        obj = ObjectView(dict(q=[1, 2, 3]))
+        self.assertEqual(str(obj), '{"q":[1,2,3]}')
 
     def test_repr(self):
-        o = ObjectView(dict(q=[1, 2, 3]))
-        s = repr(o)
-        self.assertEqual(s, "{'q': [1, 2, 3]}")
+        obj = ObjectView(dict(q=[1, 2, 3]))
+        self.assertEqual(repr(obj), "{'q': [1, 2, 3]}")
 
     def test_to_json(self):
-        o = ObjectView(dict(q=[1, 2, 3]))
-        s = to_json(o)
-        self.assertEqual(s, '{"q":[1,2,3]}')
+        obj = ObjectView(dict(q=[1, 2, 3]))
+        self.assertEqual(to_json(obj), '{"q":[1,2,3]}')
 
     def test_from_json(self):
-        o = from_json(b'{"a":1}')
-        self.assertEqual(o, {'a': 1})
+        obj = from_json(b'{"a":1}')
+        self.assertEqual(obj, {'a': 1})
 
     def test_ip_address(self):
-        o = ObjectView(
+        obj = ObjectView(
             dict(a=[
                 ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
                     '2001::1')
             ]))
-        s = to_json(o)
-        self.assertEqual(s, '{"a":["10.1.2.3","2001::1"]}')
+        self.assertEqual(to_json(obj), '{"a":["10.1.2.3","2001::1"]}')
 
     def test_argparse_namespace(self):
-        ns = argparse.Namespace(b=3)
-        o = ObjectView(dict(a=ns))
-        s = to_json(o)
-        self.assertEqual(s, '{"a":{"b":3}}')
+        args = argparse.Namespace(b=3)
+        obj = ObjectView(dict(a=args))
+        self.assertEqual(to_json(obj), '{"a":{"b":3}}')
 
     def test_make_objectview(self):
-        d = dict(a=1, b=2)
-        o = make_objectview(d)
-        self.assertEqual(o, d)
+        data = dict(a=1, b=2)
+        obj = make_objectview(data)
+        self.assertEqual(obj, data)
 
-        d = dict(a=dict(b=5), b=[dict(c=6), dict(c=7)])
-        o = make_objectview(d)
-        self.assertEqual(o.a.b, 5)
-        self.assertEqual(o.b[1].c, 7)
+        data = dict(a=dict(b=5), b=[dict(c=6), dict(c=7)])
+        obj = make_objectview(data)
+        self.assertEqual(obj.a.b, 5)
+        self.assertEqual(obj.b[1].c, 7)
 
         # Object is already an ObjectView
-        x = make_objectview(o)
-        self.assertTrue(x is o)
+        new_obj = make_objectview(obj)
+        self.assertIs(new_obj, obj)
 
     def test_make_objecview_argparse(self):
         args = argparse.Namespace(x=1, y='2')
-        o = make_objectview(args)
-        self.assertEqual(o.x, 1)
-        self.assertEqual(o.y, '2')
+        obj = make_objectview(args)
+        self.assertEqual(obj.x, 1)
+        self.assertEqual(obj.y, '2')
 
     def test_format(self):
-        d = dict(x=dict(a=1))
-        o = make_objectview(d)
-        s = '{:2s}'.format(o)
-        self.assertEqual(s, '{\n  "x": {\n    "a": 1\n  }\n}')
+        data = dict(x=dict(a=1))
+        obj = make_objectview(data)
+        self.assertEqual('{:2s}'.format(obj), '{\n  "x": {\n    "a": 1\n  }\n}')
         with self.assertRaisesRegex(ValueError, 'does not support format_spec'):
-            '{:4d}'.format(o)
+            '{:4d}'.format(obj)
 
     def test_std_json(self):
-        d = dict(c=5)
-        o = make_objectview(d)
+        data = dict(c=5)
+        obj = make_objectview(data)
         with self.assertRaisesRegex(TypeError, 'is not JSON serializable'):
             # python's standard json module does not support objectview.
-            json.dumps(o)
+            json.dumps(obj)

@@ -20,9 +20,8 @@ script:
   # Run pylint, flake8, and rstcheck tests
   - pip install pylint flake8 rstcheck
   - pylint --version
-  - pylint zof || echo "pylint issues detected!"
-  - flake8 --max-line-length=100 zof || echo "flake8 issues detected!"
-  - flake8 --max-line-length=160 test || echo "flake8 issues detected in tests!"
+  - pylint zof setup.py || echo "pylint issues detected!"
+  - flake8 --max-line-length=150 zof test || echo "flake8 issues detected!"
   - rstcheck *.rst doc/sphinx/*.rst || echo "rstcheck issues detected!"
   # Create source package.
   - python setup.py sdist

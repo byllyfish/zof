@@ -33,7 +33,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":1234,"method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result, b'{"id":1234,"result":{"api_version":"0.9","sw_desc":')
 
     async def test_rpc_no_id(self):
@@ -49,7 +49,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":7,"method":"OFP.SEND","params":{"version":4,"type":"FEATURES_REQUEST"}}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":7,"error":{"code":-65000,"message":"YAML:1:39: error: unable to locate connection; no conn_id or datapath_id'
         )
@@ -68,7 +68,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":8,"method":"OFP.SEND","params":{"datapath_id":"00:00:00:00:00:00:00:01","type":"FEATURES_REQUEST"}}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":8,"error":{"code":-65000,"message":"YAML:1:39: error: unable to locate datapath_id 00:00:00:00:00:00:00:01'
         )
@@ -79,7 +79,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":"0x1234","method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result, b'{"id":4660,"result":{"api_version":"0.9","sw_desc":')
 
     # Test the connection transport limits.
@@ -100,7 +100,7 @@ class ConnectionTestCase(AsyncTestCase):
         junk = b'x' * (MSG_LIMIT - 1)
         self.conn.write(junk)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":null,"error":{"code":-32600,"message":"YAML:1:1: error: not a mapping\\nxxx'
         )
@@ -136,7 +136,7 @@ class ConnectionTestCase(AsyncTestCase):
 
         for _ in range(count):
             result = await self.conn.readline()
-            self.assertPrefix(
+            self.assert_prefix(
                 result,
                 b'{"id":null,"error":{"code":-32600,"message":"YAML:1:1: error: not a mapping\\nzzz'
             )
@@ -151,7 +151,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{invalid'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result,
+        self.assert_prefix(result,
                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
@@ -161,7 +161,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"jsonrpc":"3.0","id":"13","method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":13,"error":{"code":-32600,"message":"YAML:1:2: error: Unsupported jsonrpc version'
         )
@@ -171,7 +171,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":"abc","method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":null,"error":{"code":-32600,"message":"YAML:1:7: error: Invalid RPC ID'
         )
@@ -182,7 +182,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":null,"method":"OFP.DESCRIPTION"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":null,"result":{"api_version":')
+        self.assert_prefix(result, b'{"id":null,"result":{"api_version":')
         await self._still_alive()
 
     async def test_rpc_id_too_big(self):
@@ -190,7 +190,7 @@ class ConnectionTestCase(AsyncTestCase):
             msg = b'{"id":%d,"method":"OFP.DESCRIPTION"}' % id_val
             self.conn.write(msg)
             result = await self.conn.readline()
-            self.assertPrefix(
+            self.assert_prefix(
                 result,
                 b'{"id":null,"error":{"code":-32600,"message":"YAML:1:7: error: Invalid RPC ID'
             )
@@ -201,7 +201,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":%d,"method":"OFP.DESCRIPTION"}' % id_val
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result,
+        self.assert_prefix(result,
                           b'{"id":%d,"result":{"api_version":' % id_val)
         await self._still_alive()
 
@@ -210,7 +210,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"id":321,"method":"OFP.SEND","params":{"type":"foo"}}'
         self.conn.write(msg)
         result = await asyncio.wait_for(self.conn.readline(), 1.0)
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":321,"error":{"code":-32600,"message":"YAML:1:48: error: unknown value \\"foo\\" Did you mean \\"HELLO\\"?'
         )
@@ -243,7 +243,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"jsonrpc": "2.0", "method": "foobar", "id": "1"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(
+        self.assert_prefix(
             result,
             b'{"id":1,"error":{"code":-32601,"message":"YAML:1:30: error: unknown method'
         )
@@ -253,7 +253,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result,
+        self.assert_prefix(result,
                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
@@ -261,7 +261,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'{"jsonrpc": "2.0", "method": 1, "params": "bar"}'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result,
+        self.assert_prefix(result,
                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
@@ -269,7 +269,7 @@ class ConnectionTestCase(AsyncTestCase):
         msg = b'[1,2,3]'
         self.conn.write(msg)
         result = await self.conn.readline()
-        self.assertPrefix(result,
+        self.assert_prefix(result,
                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
@@ -279,7 +279,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(b'{"id":12300,"method":"OFP.DESCRIPTION"}')
         self.conn.close(write=True)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":12300,"result":{"api_version":')
+        self.assert_prefix(result, b'{"id":12300,"result":{"api_version":')
         await self._end_of_input()
 
     async def test_close_incomplete_write(self):
@@ -287,7 +287,7 @@ class ConnectionTestCase(AsyncTestCase):
             b'{"id":12300,"method":"OFP.DESCRIPTION"}', delimiter=None)
         self.conn.close(write=True)
         result = await self.conn.readline()
-        self.assertPrefix(result, b'')
+        self.assert_prefix(result, b'')
         await self._end_of_input()
 
     # Helper methods
@@ -299,8 +299,8 @@ class ConnectionTestCase(AsyncTestCase):
     async def _still_alive(self):
         self.conn.write(b'{"id":12300,"method":"OFP.DESCRIPTION"}')
         result = await self.conn.readline()
-        self.assertPrefix(result, b'{"id":12300,"result":{"api_version":')
+        self.assert_prefix(result, b'{"id":12300,"result":{"api_version":')
 
-    def assertPrefix(self, value, prefix):
+    def assert_prefix(self, value, prefix):
         if not value.startswith(prefix):
             self.fail('Prefix %s does not match: %s' % (prefix, value))
