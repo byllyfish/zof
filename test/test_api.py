@@ -21,6 +21,6 @@ class TestApi(unittest.TestCase):
 
     def test_duplicate_name(self):
         # Do not allow two apps to have the same name.
-        app3 = Application('app3')
+        Application('app3')
         with self.assertRaises(ValueError):
-            app4 = Application('app3')
+            Application('app3')

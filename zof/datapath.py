@@ -86,9 +86,9 @@ class Datapath:
     def add_ports(self, port_descs):
         """Add ports from OpenFlow Port descs.
 
-        This is an idempotent operation; it can be used to update existing 
+        This is an idempotent operation; it can be used to update existing
         ports from a port_status message.
-        
+
         Arguments:
             port_descs (List[ObjectView]): list of OpenFlow port desc's.
         """

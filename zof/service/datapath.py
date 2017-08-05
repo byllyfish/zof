@@ -1,7 +1,7 @@
 """
 This app retrieves a datapath's ports before issuing a CHANNEL_UP message.
 
-All apps are blocked from receiving a channel's messages until the datapath's 
+All apps are blocked from receiving a channel's messages until the datapath's
 ports are known.
 """
 

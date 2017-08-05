@@ -5,7 +5,7 @@ from zof.event import make_event, Event
 class MakeEventTestCase(unittest.TestCase):
     def test_empty(self):
         with self.assertRaises(ValueError):
-            event = make_event()
+            make_event()
 
     def test_event(self):
         obj = make_event(event='test')

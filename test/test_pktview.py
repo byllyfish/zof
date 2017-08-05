@@ -21,7 +21,7 @@ class PktViewTestCase(unittest.TestCase):
 
     def test_invalid_init(self):
         with self.assertRaises(ValueError):
-            pkt = pktview_from_list(dict(A='a'))
+            pktview_from_list(dict(A='a'))
 
     def test_from_list(self):
         data = [dict(field='A', value=5, mask=255)]
