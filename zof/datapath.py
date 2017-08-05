@@ -140,7 +140,7 @@ class Port:
         "Return true if port is up."
         return 'LINK_DOWN' not in self.state
 
-    @property 
+    @property
     def admin_down(self):
         "Return true if port is administratively configured down."
         return 'PORT_DOWN' in self.config

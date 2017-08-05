@@ -152,7 +152,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(msg)
         result = await self.conn.readline()
         self.assert_prefix(result,
-                          b'{"id":null,"error":{"code":-32600,"message":')
+                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
     async def test_rpc_incorrect_jsonrpc_version(self):
@@ -202,7 +202,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(msg)
         result = await self.conn.readline()
         self.assert_prefix(result,
-                          b'{"id":%d,"result":{"api_version":' % id_val)
+                           b'{"id":%d,"result":{"api_version":' % id_val)
         await self._still_alive()
 
     async def test_ofp_send_invalid(self):
@@ -254,7 +254,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(msg)
         result = await self.conn.readline()
         self.assert_prefix(result,
-                          b'{"id":null,"error":{"code":-32600,"message":')
+                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
     async def test_rpc_call_with_invalid_request_object(self):
@@ -262,7 +262,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(msg)
         result = await self.conn.readline()
         self.assert_prefix(result,
-                          b'{"id":null,"error":{"code":-32600,"message":')
+                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
     async def test_rpc_call_with_invalid_batch(self):
@@ -270,7 +270,7 @@ class ConnectionTestCase(AsyncTestCase):
         self.conn.write(msg)
         result = await self.conn.readline()
         self.assert_prefix(result,
-                          b'{"id":null,"error":{"code":-32600,"message":')
+                           b'{"id":null,"error":{"code":-32600,"message":')
         await self._still_alive()
 
     # Test close(write=True)

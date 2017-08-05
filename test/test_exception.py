@@ -4,7 +4,6 @@ import zof.exception as _exc
 
 
 class ExceptionTestCase(unittest.TestCase):
-
     def test_timeout(self):
         ex = _exc.TimeoutException(1, 5)
         self.assertEqual(ex.xid, 1)
@@ -13,7 +12,7 @@ class ExceptionTestCase(unittest.TestCase):
         self.assertEqual(str(ex), '[TimeoutException xid=1 timeout=5]')
 
     def test_rpc(self):
-        event = make_event(id=2, error={'message': 'm', 'code':1000})
+        event = make_event(id=2, error={'message': 'm', 'code': 1000})
         ex = _exc.RPCException(event)
         self.assertEqual(ex.xid, 2)
         self.assertEqual(ex.message, 'm')

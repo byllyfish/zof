@@ -14,7 +14,6 @@ from collections import OrderedDict
 import zof
 from ..event import make_event
 
-
 app = zof.Application('service.device', precedence=1000000)
 app.devices = OrderedDict()
 

@@ -27,7 +27,8 @@ PORTS_REQUEST = zof.compile('type: REQUEST.PORT_DESC')
 
 @APP.message('channel_up')
 def channel_up(event):
-    datapath = APP.datapaths.add_datapath(datapath_id=event.datapath_id, conn_id=event.conn_id)
+    datapath = APP.datapaths.add_datapath(
+        datapath_id=event.datapath_id, conn_id=event.conn_id)
     if READY_FLAG in datapath.user_data:
         return
     datapath.user_data[CHANNEL_UP_MSG] = event
@@ -54,7 +55,7 @@ def features_reply(event):
     else:
         datapath.add_ports(event.msg.ports)
         _post_channel_up(datapath)
-    
+
     raise _exc.StopPropagationException()
 
 
@@ -73,17 +74,19 @@ def port_status(event):
 
     raise _exc.StopPropagationException()
 
+
 @APP.message(any)
 def other_message(event):
     datapath = APP.datapaths[event.datapath_id]
     if READY_FLAG in datapath.user_data:
         return
-    
+
     raise _exc.StopPropagationException()
 
 
 async def _get_ports(datapath):
-    ports = await PORTS_REQUEST.request(datapath_id=datapath.datapath_id, conn_id=datapath.conn_id)
+    ports = await PORTS_REQUEST.request(
+        datapath_id=datapath.datapath_id, conn_id=datapath.conn_id)
     datapath.add_ports(ports.msg)
     _post_channel_up(datapath)
 

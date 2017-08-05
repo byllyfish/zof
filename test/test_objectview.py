@@ -129,9 +129,6 @@ class ObjectViewTestCase(unittest.TestCase):
         self.assertNotEqual(self.obj, ObjectView({}))
         self.assertFalse(self.obj != ObjectView(_test_dict()))
 
-    def test_bool(self):
-        self.assertTrue(self.obj)
-
     def test_str(self):
         obj = ObjectView(dict(q=[1, 2, 3]))
         self.assertEqual(str(obj), '{"q":[1,2,3]}')
@@ -184,8 +181,10 @@ class ObjectViewTestCase(unittest.TestCase):
     def test_format(self):
         data = dict(x=dict(a=1))
         obj = make_objectview(data)
-        self.assertEqual('{:2s}'.format(obj), '{\n  "x": {\n    "a": 1\n  }\n}')
-        with self.assertRaisesRegex(ValueError, 'does not support format_spec'):
+        self.assertEqual('{:2s}'.format(obj),
+                         '{\n  "x": {\n    "a": 1\n  }\n}')
+        with self.assertRaisesRegex(ValueError,
+                                    'does not support format_spec'):
             '{:4d}'.format(obj)
 
     def test_std_json(self):

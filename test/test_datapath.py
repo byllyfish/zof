@@ -10,11 +10,9 @@ class DatapathTestCase(unittest.TestCase):
         self.assertEqual(len(dpids), 0)
 
         dp1 = dpids.add_datapath(
-            datapath_id='00:00:00:00:00:00:00:01',
-            conn_id=1)
+            datapath_id='00:00:00:00:00:00:00:01', conn_id=1)
         dp2 = dpids.add_datapath(
-            datapath_id='00:00:00:00:00:00:00:02',
-            conn_id=2)
+            datapath_id='00:00:00:00:00:00:00:02', conn_id=2)
         self.assertTrue(dpids)
         self.assertEqual(len(dpids), 2)
         self.assertIs(dpids[0x01], dp1)
@@ -141,7 +139,7 @@ class DatapathTestCase(unittest.TestCase):
         self.assertEqual(dpid, 1)
 
         dpid = normalize_datapath_id('ff:ff:ff:ff:ff:ff:ff:ff')
-        self.assertEqual(dpid, 2**64-1)
+        self.assertEqual(dpid, 2**64 - 1)
 
         dpid = normalize_datapath_id(0x12345)
         self.assertEqual(dpid, 0x12345)

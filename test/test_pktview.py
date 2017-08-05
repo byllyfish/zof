@@ -32,7 +32,7 @@ class PktViewTestCase(unittest.TestCase):
         self.assertEqual(pkt, {'a': '5/255'})
 
         with self.assertRaises(ValueError):
-            pktview_from_list([{'field':'PAYLOAD', 'value':'1234'}])
+            pktview_from_list([{'field': 'PAYLOAD', 'value': '1234'}])
 
     def test_to_list(self):
         data = dict(a='a', b=2, c='ddd')
@@ -48,7 +48,6 @@ class PktViewTestCase(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, r'len\(tuple\) != 2'):
             pktview_to_list({'a': (1, 2, 3)})
-
 
     def test_alias_attr(self):
         pkt = make_pktview()
