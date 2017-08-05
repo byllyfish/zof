@@ -1,5 +1,7 @@
 FROM ubuntu:16.04
 
+MAINTAINER William W. Fisher "william.w.fisher@gmail.com"
+
 RUN set -ex \
     && buildDeps=' \
         git \
