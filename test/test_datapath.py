@@ -1,5 +1,6 @@
 import unittest
 from zof.datapath import DatapathList, Datapath, normalize_datapath_id, normalize_port_no
+from zof.objectview import make_objectview
 
 
 class DatapathTestCase(unittest.TestCase):
@@ -116,6 +117,24 @@ class DatapathTestCase(unittest.TestCase):
 
         result = dp1.delete_port(port_no=12345)
         self.assertIsNone(result)
+
+    def test_add_ports(self):
+        dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
+        port1_desc = make_objectview({
+            'port_no': 9,
+            'hw_addr': '00:00:00:00:00:01',
+            'name': 'Port 1',
+            'state': ['LINK_DOWN'],
+            'config': ['PORT_DOWN']
+        })
+        dp1.add_ports([port1_desc])
+
+        port1 = dp1[9]
+        self.assertEqual(port1.port_no, 9)
+        self.assertEqual(port1.hw_addr, '00:00:00:00:00:01')
+        self.assertEqual(port1.name, 'Port 1')
+        self.assertFalse(port1.up)
+        self.assertTrue(port1.admin_down)
 
     def test_normalize_datapath(self):
         dpid = normalize_datapath_id('00:00:00:00:00:00:00:01')

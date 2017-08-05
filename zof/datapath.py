@@ -54,6 +54,7 @@ class Datapath:
         self.datapath_id = datapath_id
         self.conn_id = conn_id
         self.ports = OrderedDict()
+        self.user_data = {}
 
     def add_port(self, *, port_no):
         """Add port to datapath.
@@ -82,6 +83,22 @@ class Datapath:
         port = self.ports.pop(port_no, None)
         return port
 
+    def add_ports(self, port_descs):
+        """Add ports from OpenFlow Port descs.
+
+        This is an idempotent operation; it can be used to update existing 
+        ports from a port_status message.
+        
+        Arguments:
+            port_descs (List[ObjectView]): list of OpenFlow port desc's.
+        """
+        for port_desc in port_descs:
+            port = self.add_port(port_no=port_desc.port_no)
+            port.hw_addr = port_desc.hw_addr
+            port.name = port_desc.name
+            port.state = port_desc.state
+            port.config = port_desc.config
+
     def __getstate__(self):
         return self.__dict__
 
@@ -106,6 +123,8 @@ class Port:
     def __init__(self, port_no, datapath):
         self.datapath = datapath
         self.port_no = port_no
+        self.hw_addr = None
+        self.name = None
         self.state = []
         self.config = []
 
