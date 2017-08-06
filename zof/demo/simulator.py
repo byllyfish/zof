@@ -55,12 +55,10 @@ def sim_timeout(_):
 @app.event('prestart')
 async def prestart(_):
     if app.args.sim_cert:
-        result = await app.rpc_call(
-            'OFP.ADD_IDENTITY',
+        app.tls_id = await zof.add_identity(
             cert=app.args.sim_cert,
             cacert=app.args.sim_cacert,
             privkey=app.args.sim_privkey)
-        app.tls_id = result.tls_id
 
 
 @app.event('start')

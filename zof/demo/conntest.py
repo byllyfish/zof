@@ -1,22 +1,21 @@
 import asyncio
 import zof
 
-app = zof.Application('conntest', exception_fatal=True)
+APP = zof.Application('conntest', exception_fatal=True)
 
 
-@app.event('start')
+@APP.event('start')
 async def start(_):
     while True:
         await asyncio.sleep(1)
         # Obtain a list of all connections.
-        conns = await app.rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
-        for conn in conns.stats:
+        conns = await zof.get_connections()
+        for conn in conns:
             # If the connection has an associated datapath_id, close it.
             if conn.datapath_id:
-                app.logger.info('close %d %s', conn.conn_id, conn.datapath_id)
-                result = await app.rpc_call(
-                    'OFP.CLOSE', datapath_id=conn.datapath_id)
-                assert result.count == 1
+                APP.logger.info('close %d %s', conn.conn_id, conn.datapath_id)
+                count = await zof.close(datapath_id=conn.datapath_id)
+                assert count == 1
 
 
 if __name__ == '__main__':

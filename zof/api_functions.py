@@ -59,3 +59,20 @@ async def close(*, conn_id=0, datapath_id=None):
     result = await _rpc_call(
         'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
     return result.count
+
+
+async def get_connections(*, conn_id=0):
+    """Get list of OpenFlow connections.
+    """
+    result = await _rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
+    return result.stats
+
+
+async def add_identity(*, cert, cacert, privkey):
+    """Add a TLS identity.
+
+    Returns:
+        int: tls_id
+    """
+    result = await _rpc_call('OFP.ADD_IDENTITY', cert=cert, cacert=cacert, privkey=privkey)
+    return result.tls_id

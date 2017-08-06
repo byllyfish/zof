@@ -54,7 +54,7 @@ def features_reply(event):
 
     datapath.user_data[FEATURES_REPLY_MSG] = event
     if event.version > 1:
-        APP.ensure_future(_get_ports(datapath))
+        zof.ensure_future(_get_ports(datapath), datapath_id=event.datapath_id)
     else:
         datapath.add_ports(event.msg.ports)
         _post_channel_up(datapath)
