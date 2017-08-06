@@ -4,6 +4,7 @@ import asyncio
 import logging
 import sys
 import functools
+import inspect
 from collections import defaultdict
 from .event import load_event, dump_event, make_event, Event
 from .objectview import make_objectview
@@ -260,13 +261,7 @@ class Controller(object):
             elif 'id' in event:
                 self._handle_rpc_reply(event)
             elif event.method == 'OFP.MESSAGE':
-                type_ = event.params.type
-                if not type_.startswith('CHANNEL_'):
-                    self._handle_message(event)
-                elif type_ == 'CHANNEL_ALERT':
-                    self._handle_alert(event)
-                else:
-                    self._handle_channel(event)
+                self._handle_message(event.params)
             else:
                 LOGGER.warning('Unhandled event: %r', event)
         except _exc.StopPropagationException:
@@ -331,6 +326,9 @@ class Controller(object):
 
     def _handle_internal_event(self, event):
         """Called when an internal event is received."""
+        if event.event == 'MESSAGE':
+            self._handle_message(event)
+            return
         # Immediately begin shutting down if there is an 'EXIT' event.
         if event.event == 'EXIT':
             raise _exc.ExitException(event('exit_status', default=0))
@@ -353,58 +351,58 @@ class Controller(object):
         if not known_xid:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
-    def _handle_message(self, event):
+    def _handle_message(self, message):
         """Called when a `OFP.MESSAGE` is received."""
-        params = event.params
-        if params.type == 'ERROR':
+        msg_type = message.type
+        if msg_type.startswith('CHANNEL_'):
+            self._handle_channel(message)
+            return
+        if msg_type == 'ERROR':
             except_class = _exc.ErrorException
         else:
             except_class = None
         # If the message does not have a datapath_id, don't attempt to handle
         # replies based on xid.
         known_xid = False
-        if 'datapath_id' in params:
-            known_xid = self._handle_xid(params, params.xid, except_class)
+        if 'datapath_id' in message:
+            known_xid = self._handle_xid(message, message.xid, except_class)
 
         if not known_xid:
             for app in self.apps:
-                app.handle_event(params, 'message')
+                app.handle_event(message, 'message')
             # Log all OpenFlow error messages not associated with requests.
-            if params.type == 'ERROR':
-                LOGGER.error('ERROR: %s', params)
+            if msg_type == 'ERROR':
+                LOGGER.error('ERROR: %s', message)
 
-    def _handle_channel(self, event):
+    def _handle_channel(self, message):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_*'."""
-        params = event.params
-        scope_key = _make_scope_key(params.conn_id)
-        # LOGGER.debug('_handle_channel: %s %s [conn_id=%s, version=%s]',
-        #             scope_key, params.type, params.conn_id, params.version)
-
-        if params.type == 'CHANNEL_DOWN':
+        if message.type == 'CHANNEL_ALERT':
+            self._handle_alert(message)
+            return
+        if message.type == 'CHANNEL_DOWN':
+            scope_key = _make_scope_key(message.conn_id)
             self._cancel_tasks(scope_key)
-
         for app in self.apps:
-            app.handle_event(params, 'message')
+            app.handle_event(message, 'message')
 
-    def _handle_alert(self, event):
+    def _handle_alert(self, message):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'."""
         # First check if this alert was sent in response to something we said.
-        params = event.params
-        if params.xid and self._handle_xid(params, params.xid,
-                                           _exc.DeliveryException):
+        if message.xid and self._handle_xid(message, message.xid,
+                                            _exc.DeliveryException):
             return
         # Otherwise, we need to report it.
-        data = params.data.hex()
+        data = message.data.hex()
         if len(data) > 100:
             data = '%s...' % data[:100]
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-            params.alert, data,
-            len(params.data), params.conn_id,
-            params('datapath_id'), params.xid)
+            message.alert, data,
+            len(message.data), message.conn_id,
+            message('datapath_id'), message.xid)
 
         for app in self.apps:
-            app.handle_event(params, 'message')
+            app.handle_event(message, 'message')
 
     async def _idle_task(self):
         """Task to check for requests that have timed out."""
@@ -461,7 +459,7 @@ class Controller(object):
         self._xid += 1
         return self._xid
 
-    def ensure_future(self, coroutine, *, app, task_locals):
+    def ensure_future(self, coroutine, *, app=None, datapath_id, conn_id):
         """Run an async coroutine, within the scope of a specific scope_key.
 
         This function automatically captures exceptions from the coroutine. It
@@ -473,10 +471,13 @@ class Controller(object):
             try:
                 await coroutine
             except asyncio.CancelledError:
-                app.logger.debug('ensure_future cancelled: %r', coroutine)
+                LOGGER.debug('ensure_future cancelled: %r', coroutine)
             except Exception:  # pylint: disable=broad-except
-                app.handle_exception(None, scope_key)
+                if app:
+                    app.handle_exception(None, scope_key)
 
+        assert inspect.isawaitable(coroutine)
+        task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
         task = asyncio.ensure_future(_capture_exception(coroutine))
         conn_id = task_locals.get('conn_id')
         if conn_id:

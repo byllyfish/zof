@@ -1,0 +1,61 @@
+import inspect
+from .controller import Controller
+from .service.datapath import APP as DATAPATH_APP
+from .event import Event, make_event
+
+
+def get_datapaths():
+    """Get list of currently connected datapaths.
+    """
+    return DATAPATH_APP.get_datapaths()
+
+
+def post_event(event, **kwds):
+    """Function used to send an internal event to all app modules.
+
+    Args:
+        event (str | Event): event type or event object
+        kwds (dict): keyword arguments for make_event
+    """
+    if isinstance(event, str):
+        event = make_event(event=event.upper(), **kwds)
+    elif not isinstance(event, Event) or kwds:
+        raise ValueError('Invalid arguments to post_event')
+    Controller.singleton().post_event(event)
+
+
+def ensure_future(coroutine, *, datapath_id=None, conn_id=None):
+    """Function used by an app to run an async coroutine, under a specific
+    scope.
+    """
+    return Controller.singleton().ensure_future(
+        coroutine, datapath_id=datapath_id, conn_id=conn_id)
+
+
+def _rpc_call(method, **params):
+    """Function used to send a RPC request and receive a response.
+
+    Returns:
+        asyncio.Future: future for RPC reply
+    """
+    return Controller.singleton().rpc_call(method, **params)
+
+
+async def connect(endpoint, *, options=(), versions=(), tls_id=0):
+    """Make an outgoing OpenFlow connection.
+    """
+    result = await _rpc_call(
+        'OFP.CONNECT',
+        endpoint=endpoint,
+        tls_id=tls_id,
+        options=options,
+        versions=versions)
+    return result.conn_id
+    
+
+async def close(*, conn_id=0, datapath_id=None):
+    """Close an OpenFlow connection.
+    """
+    result = await _rpc_call(
+        'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
+    return result.count

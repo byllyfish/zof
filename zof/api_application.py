@@ -30,17 +30,19 @@ class Application(object):
     def __init__(self,
                  name,
                  *,
+                 controller=None,
                  exception_fatal=False,
                  precedence=100,
                  arg_parser=None,
                  has_datapath_id=True):
-        controller = Controller.singleton()
+        if controller is None:
+            controller = Controller.singleton()
         if controller.find_app(name):
             raise ValueError('App named "%s" already exists.' % name)
 
         # Construct internal ControllerApp object.
         app = ControllerApp(
-            controller,
+            controller=controller,
             name=name,
             ref=self,
             exception_fatal=exception_fatal,
@@ -51,9 +53,6 @@ class Application(object):
         self._app = app
         self.name = app.name
         self.logger = app.logger
-        self.ensure_future = app.ensure_future
-        self.post_event = app.post_event
-        self.rpc_call = app.rpc_call
 
     @property
     def args(self):
@@ -100,22 +99,3 @@ class Application(object):
             return self._app.register(func, 'event', subtype, kwds)
 
         return _wrap
-
-    # RPC Functions
-
-    async def connect(self, endpoint, *, options=(), versions=(), tls_id=0):
-        """Make an outgoing OpenFlow connection.
-        """
-        result = await self.rpc_call(
-            'OFP.CONNECT',
-            endpoint=endpoint,
-            tls_id=tls_id,
-            options=options,
-            versions=versions)
-        return result.conn_id
-
-    async def close(self, *, conn_id=0, datapath_id=None):
-        """Close an OpenFlow connection."""
-        result = await self.rpc_call(
-            'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
-        return result.count

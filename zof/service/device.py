@@ -17,13 +17,6 @@ from ..event import make_event
 app = zof.Application('service.device', precedence=1000000)
 app.devices = OrderedDict()
 
-set_config = zof.compile('''
-  type: SET_CONFIG
-  msg:
-    flags: [FRAG_NORMAL]
-    miss_send_len: NO_BUFFER
-''')
-
 desc = zof.compile('type: REQUEST.DESC')
 
 portdesc = zof.compile('type: REQUEST.PORT_DESC')

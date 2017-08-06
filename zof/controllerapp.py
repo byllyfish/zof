@@ -35,7 +35,7 @@ class ControllerApp(object):
     """
     _curr_app_id = 0
 
-    def __init__(self, controller, *, name, ref, exception_fatal, precedence,
+    def __init__(self, *, controller, name, ref, exception_fatal, precedence,
                  arg_parser, has_datapath_id):
         self.name = name
         self.ref = ref
@@ -93,6 +93,7 @@ class ControllerApp(object):
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
 
+    '''
     def post_event(self, event, **kwds):
         """Function used to send an internal event to all app modules.
 
@@ -111,15 +112,13 @@ class ControllerApp(object):
         """Function used to send a RPC request and receive a response."""
         self.logger.debug('rpc_call %s', method)
         return self.controller.rpc_call(method, **params)
+    '''
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
-        """Function used by an app to run an async coroutine, under a specific
-        scope.
+        """Function used by an app to run an async handler.
         """
-        assert inspect.isawaitable(coroutine)
-        task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
         return self.controller.ensure_future(
-            coroutine, app=self, task_locals=task_locals)
+            coroutine, app=self, datapath_id=datapath_id, conn_id=conn_id)
 
     def register(self, callback, type_, subtype, options):
         """Function used to register a handler."""

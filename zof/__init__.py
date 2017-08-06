@@ -10,5 +10,6 @@ from .api_application import Application  # noqa: E402,F401
 from .api_run import run  # noqa: E402,F401
 from .api_args import common_args  # noqa: E402,F401
 from .api_compile import compile  # noqa: E402,F401
+from .api_functions import get_datapaths, post_event, ensure_future, connect, close
 
 __version__ = '0.1.0'

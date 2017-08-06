@@ -43,13 +43,13 @@ app.connect_count = 0
 
 async def _exit_timeout(timeout):
     await asyncio.sleep(timeout)
-    app.post_event('SIM_TIMEOUT')
+    zof.post_event('SIM_TIMEOUT')
 
 
 @app.event('sim_timeout')
 def sim_timeout(_):
     exit_status = 20 if app.connect_count < app.args.sim_count else 0
-    app.post_event('EXIT', exit_status=exit_status)
+    zof.post_event('EXIT', exit_status=exit_status)
 
 
 @app.event('prestart')
@@ -66,10 +66,10 @@ async def prestart(_):
 @app.event('start')
 def start(_):
     if app.args.sim_timeout:
-        app.ensure_future(_exit_timeout(app.args.sim_timeout))
+        zof.ensure_future(_exit_timeout(app.args.sim_timeout))
     for i in range(app.args.sim_count):
         sim = Simulator(hex(i + 1))  # 'ff:ff:00:00:00:00:00:01')
-        app.ensure_future(sim.start())
+        zof.ensure_future(sim.start())
 
 
 @app.message('channel_up')
@@ -120,7 +120,7 @@ class Simulator(object):
         app.sims.append(self)
 
     async def start(self):
-        conn_id = await app.connect(
+        conn_id = await zof.connect(
             '127.0.0.1:6653', versions=[4], tls_id=app.tls_id)
         app.conn_to_sim[conn_id] = self
 

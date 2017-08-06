@@ -1,8 +1,8 @@
 """
-This app retrieves a datapath's ports before issuing a CHANNEL_UP message.
+This app retrieves a datapath's ports.
 
-All apps are blocked from receiving a channel's messages until the datapath's
-ports are known.
+This is a guard app with high precedence. This app blocks other apps from 
+receiving channel_up messages until all of the datapath's ports are discovered.
 """
 
 import zof
@@ -14,6 +14,9 @@ class DatapathApp(zof.Application):
     def __init__(self):
         super().__init__('service.datapath', precedence=1000000000)
         self.datapaths = DatapathList()
+
+    def get_datapaths(self):
+        return [datapath for datapath in self.datapaths if READY_FLAG in datapath.user_data]
 
 
 APP = DatapathApp()
