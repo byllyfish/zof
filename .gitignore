@@ -4,6 +4,7 @@ __pycache__/
 *~
 *.log
 venv*/
+build/
 doc/tutorial/
 doc/reference/
 doc/sphinx/_build/
