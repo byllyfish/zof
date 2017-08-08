@@ -99,8 +99,8 @@ def _post_channel_up(datapath):
 
     channel_event = datapath.user_data.pop(CHANNEL_UP_MSG)
     channel_event.event = 'MESSAGE'
-    APP.post_event(channel_event)
+    zof.post_event(channel_event)
 
     features = datapath.user_data.pop(FEATURES_REPLY_MSG)
     features.event = 'MESSAGE'
-    APP.post_event(features)
+    zof.post_event(features)

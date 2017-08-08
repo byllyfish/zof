@@ -250,6 +250,7 @@ class Controller(object):
     def post_event(self, event):
         """Post an event to our event queue."""
         assert isinstance(event, Event)
+        LOGGER.debug('post_event %r', event)
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
@@ -472,9 +473,11 @@ class Controller(object):
                 await coroutine
             except asyncio.CancelledError:
                 LOGGER.debug('ensure_future cancelled: %r', coroutine)
-            except Exception:  # pylint: disable=broad-except
+            except Exception as ex:  # pylint: disable=broad-except
                 if app:
                     app.handle_exception(None, scope_key)
+                else:
+                    LOGGER.error('Exception caught', exc_info=True)
 
         assert inspect.isawaitable(coroutine)
         task_locals = dict(datapath_id=datapath_id, conn_id=conn_id)
