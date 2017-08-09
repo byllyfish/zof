@@ -34,7 +34,7 @@ Install - Linux
     # Create virtual environment and install latest zof.
     python3.5 -m venv myenv
     source myenv/bin/activate
-    pip install git+https://github.com/byllyfish/zof.git
+    pip install zof
 
 Demos
 -----
