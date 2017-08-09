@@ -67,10 +67,6 @@ class Application(object):
         return self._app.controller.phase
 
     @property
-    def apps(self):
-        return [app.ref for app in self._app.controller.apps]
-
-    @property
     def oftr_connection(self):
         return self._app.controller.conn
 

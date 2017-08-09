@@ -1,7 +1,7 @@
 """
 This app retrieves a datapath's ports.
 
-This is a guard app with high precedence. This app blocks other apps from 
+This is a guard app with high precedence. This app blocks other apps from
 receiving channel_up messages until all of the datapath's ports are discovered.
 """
 
@@ -17,6 +17,22 @@ class DatapathApp(zof.Application):
 
     def get_datapaths(self):
         return [datapath for datapath in self.datapaths if READY_FLAG in datapath.user_data]
+
+    def find_datapath(self, datapath_id):
+        try:
+            datapath = self.datapaths[datapath_id]
+            if READY_FLAG in datapath.user_data:
+                return datapath
+        except KeyError:
+            pass
+        return None
+
+    def find_port(self, datapath_id, port_no):
+        datapath = self.find_datapath(datapath_id)
+        try:
+            return datapath[port_no]
+        except KeyError:
+            return None
 
 
 APP = DatapathApp()

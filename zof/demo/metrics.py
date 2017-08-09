@@ -2,7 +2,6 @@ import argparse
 import zof
 from zof import exception as _exc
 from zof.http import HttpServer
-import zof.service.device as dev
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
 from prometheus_client.core import CounterMetricFamily
 
@@ -14,39 +13,39 @@ def arg_parser():
     return parser
 
 
-app = zof.Application('metrics', arg_parser=arg_parser())
-web = HttpServer()
+APP = zof.Application('metrics', arg_parser=arg_parser())
+WEB = HttpServer()
 
 
-@app.event('preflight')
+@APP.event('preflight')
 def preflight(_):
-    if not app.args.metrics_endpoint:
+    if not APP.args.metrics_endpoint:
         # If we're not listening, unload the application.
         raise _exc.PreflightUnloadException()
 
 
-@app.event('start')
+@APP.event('start')
 async def start(_):
     # Start a process collector for our oftr subprocess.
-    ProcessCollector(namespace='oftr', pid=lambda: app.oftr_connection.pid)
-    await web.start(app.args.metrics_endpoint)
-    app.logger.info('Start listening on %s', app.args.metrics_endpoint)
+    ProcessCollector(namespace='oftr', pid=lambda: APP.oftr_connection.pid)
+    await WEB.start(APP.args.metrics_endpoint)
+    APP.logger.info('Start listening on %s', APP.args.metrics_endpoint)
 
 
-@app.event('stop')
+@APP.event('stop')
 async def stop(_):
-    await web.stop()
-    app.logger.info('Stop listening on %s', app.args.metrics_endpoint)
+    await WEB.stop()
+    APP.logger.info('Stop listening on %s', APP.args.metrics_endpoint)
 
 
-@web.get_text('/')
-@web.get_text('/metrics')
-@web.get_text('/metrics/')
+@WEB.get_text('/')
+@WEB.get_text('/metrics')
+@WEB.get_text('/metrics/')
 async def metrics():
     return generate_latest(REGISTRY)
 
 
-@web.get_text('/metrics/ports?{target}')
+@WEB.get_text('/metrics/ports?{target}')
 async def ports(target):
     if target:
         met = PortMetrics()
@@ -58,8 +57,8 @@ async def ports(target):
         # duration. The advantage of collecting them all is that we don't
         # have to worry about service discovery.
         met = PortMetrics(include_instance=True)
-        for device in dev.get_devices():
-            await _collect_port_stats(device.datapath_id, met)
+        for datapath in zof.get_datapaths():
+            await _collect_port_stats(datapath.datapath_id, met)
     return _dump_prometheus(met.metrics())
 
 
@@ -127,7 +126,7 @@ async def _collect_port_stats(dpid, metric):
     try:
         reply = await PORT_STATS.request(datapath_id=dpid)
     except _exc.ControllerException as ex:
-        app.logger.warning('Unable to retrieve stats: %r', ex)
+        APP.logger.warning('Unable to retrieve stats: %r', ex)
         return
 
     for stat in reply.msg:

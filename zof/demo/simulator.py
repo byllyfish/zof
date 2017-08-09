@@ -30,15 +30,15 @@ def _arg_parser():
     return parser
 
 
-app = zof.Application(
+APP = zof.Application(
     'simulator',
     exception_fatal=True,
     arg_parser=_arg_parser(),
     has_datapath_id=False)
-app.tls_id = 0
-app.sims = []
-app.conn_to_sim = {}
-app.connect_count = 0
+APP.tls_id = 0
+APP.sims = []
+APP.conn_to_sim = {}
+APP.connect_count = 0
 
 
 async def _exit_timeout(timeout):
@@ -46,67 +46,67 @@ async def _exit_timeout(timeout):
     zof.post_event('SIM_TIMEOUT')
 
 
-@app.event('sim_timeout')
+@APP.event('sim_timeout')
 def sim_timeout(_):
-    exit_status = 20 if app.connect_count < app.args.sim_count else 0
+    exit_status = 20 if APP.connect_count < APP.args.sim_count else 0
     zof.post_event('EXIT', exit_status=exit_status)
 
 
-@app.event('prestart')
+@APP.event('prestart')
 async def prestart(_):
-    if app.args.sim_cert:
-        app.tls_id = await zof.add_identity(
-            cert=app.args.sim_cert,
-            cacert=app.args.sim_cacert,
-            privkey=app.args.sim_privkey)
+    if APP.args.sim_cert:
+        APP.tls_id = await zof.add_identity(
+            cert=APP.args.sim_cert,
+            cacert=APP.args.sim_cacert,
+            privkey=APP.args.sim_privkey)
 
 
-@app.event('start')
+@APP.event('start')
 def start(_):
-    if app.args.sim_timeout:
-        zof.ensure_future(_exit_timeout(app.args.sim_timeout))
-    for i in range(app.args.sim_count):
+    if APP.args.sim_timeout:
+        zof.ensure_future(_exit_timeout(APP.args.sim_timeout))
+    for i in range(APP.args.sim_count):
         sim = Simulator(hex(i + 1))  # 'ff:ff:00:00:00:00:00:01')
         zof.ensure_future(sim.start())
 
 
-@app.message('channel_up')
-@app.message('flow_mod')
+@APP.message('channel_up')
+@APP.message('flow_mod')
 def ignore(_):
     return
 
 
-@app.message('features_request')
+@APP.message('features_request')
 def features_request(event):
-    app.connect_count += 1
-    app.conn_to_sim[event.conn_id].features_request(event)
+    APP.connect_count += 1
+    APP.conn_to_sim[event.conn_id].features_request(event)
 
 
-@app.message('barrier_request')
+@APP.message('barrier_request')
 def barrier_request(event):
-    app.conn_to_sim[event.conn_id].barrier_request(event)
+    APP.conn_to_sim[event.conn_id].barrier_request(event)
 
 
-@app.message('request.port_desc')
+@APP.message('request.port_desc')
 def request_portdesc(event):
-    app.conn_to_sim[event.conn_id].request_portdesc(event)
+    APP.conn_to_sim[event.conn_id].request_portdesc(event)
 
 
-@app.message('request.desc')
+@APP.message('request.desc')
 def request_desc(event):
-    app.conn_to_sim[event.conn_id].request_desc(event)
+    APP.conn_to_sim[event.conn_id].request_desc(event)
 
 
-@app.message('channel_down')
+@APP.message('channel_down')
 def channel_down(event):
-    sim = app.conn_to_sim.pop(event.conn_id, None)
+    sim = APP.conn_to_sim.pop(event.conn_id, None)
     if sim:
-        app.sims.remove(sim)
+        APP.sims.remove(sim)
 
 
-@app.message(any)
+@APP.message(any)
 def other(event):
-    app.logger.info('Unhandled message: %r', event)
+    APP.logger.info('Unhandled message: %r', event)
     raise ValueError('Unexpected message: %r' % event)
 
 
@@ -115,12 +115,12 @@ class Simulator(object):
 
     def __init__(self, datapath_id):
         self.datapath_id = datapath_id
-        app.sims.append(self)
+        APP.sims.append(self)
 
     async def start(self):
         conn_id = await zof.connect(
-            '127.0.0.1:6653', versions=[4], tls_id=app.tls_id)
-        app.conn_to_sim[conn_id] = self
+            '127.0.0.1:6653', versions=[4], tls_id=APP.tls_id)
+        APP.conn_to_sim[conn_id] = self
 
     def features_request(self, event):
         msg = {

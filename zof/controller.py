@@ -43,7 +43,13 @@ class Controller(object):
 
     @staticmethod
     def destroy():
-        """Destroy global singleton object."""
+        """Destroy global singleton object.
+
+        This method is provided for use by unit tests.
+
+        N.B. Existing apps must be reloaded manually (importlib.reload) into
+        any new controller object.
+        """
         Controller._singleton = None
 
     def __init__(self):
@@ -249,8 +255,10 @@ class Controller(object):
 
     def post_event(self, event):
         """Post an event to our event queue."""
-        assert isinstance(event, Event)
-        LOGGER.debug('post_event %r', event)
+        if not isinstance(event, Event):
+            raise ValueError('Not an event: %r' % event)
+        if self.phase == 'INIT':
+            raise RuntimeError('post_event not allowed in INIT phase')
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
@@ -473,7 +481,7 @@ class Controller(object):
                 await coroutine
             except asyncio.CancelledError:
                 LOGGER.debug('ensure_future cancelled: %r', coroutine)
-            except Exception as ex:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 if app:
                     app.handle_exception(None, scope_key)
                 else:

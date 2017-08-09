@@ -35,15 +35,29 @@ class SimulatorTester(zof.Application):
 
 class SimulatorTestCase(unittest.TestCase):
     def test_simulator(self):
-        import zof.demo.simulator as sim
-        import zof.service.datapath as _
+        from zof.demo.simulator import APP as sim
+        from zof.service.datapath import APP as dp_app
+
+        # Apps does *not* yet include `dp_app` because it was imported 
+        # previously.
+        self.assertEqual(set(zof.get_apps()), {sim})
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        SimulatorTester(sim.app)
+        tester = SimulatorTester(sim)
+        dp_app = _reload_app(zof.service.datapath)
+
+        self.assertEqual(set(zof.get_apps()), {sim, dp_app, tester})
 
         parser = zof.common_args(under_test=True)
         args = parser.parse_args(['--sim-count=50', '--sim-timeout=5'])
         exit_status = zof.run(args=args)
         self.assertEqual(exit_status, 0)
+
+
+def _reload_app(module):
+    import importlib
+    module = importlib.reload(module)
+    return module.APP
+

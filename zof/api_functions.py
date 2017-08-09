@@ -1,13 +1,30 @@
-import inspect
 from .controller import Controller
 from .service.datapath import APP as DATAPATH_APP
 from .event import Event, make_event
+
+
+def get_apps():
+    """Get list of app's.
+    """
+    return [app.ref for app in Controller.singleton().apps]
 
 
 def get_datapaths():
     """Get list of currently connected datapaths.
     """
     return DATAPATH_APP.get_datapaths()
+
+
+def find_datapath(*, datapath_id):
+    """Return given datapath object.
+    """
+    return DATAPATH_APP.find_datapath(datapath_id)
+
+
+def find_port(*, datapath_id, port_no):
+    """Return given port object.
+    """
+    return DATAPATH_APP.find_port(datapath_id, port_no)
 
 
 def post_event(event, **kwds):
@@ -51,7 +68,7 @@ async def connect(endpoint, *, options=(), versions=(), tls_id=0):
         options=options,
         versions=versions)
     return result.conn_id
-    
+
 
 async def close(*, conn_id=0, datapath_id=None):
     """Close an OpenFlow connection.

@@ -42,10 +42,10 @@ class _ArgumentParser(argparse.ArgumentParser):
         super().exit(status, message)
 
 
-app = zof.Application('command_shell')
-app.foreground_task = None
-app.command_prompt = '> '
-app.commands = {}
+APP = zof.Application('command_shell')
+APP.foreground_task = None
+APP.command_prompt = '> '
+APP.commands = {}
 
 _Handler = collections.namedtuple('_Handler', 'subtype func options')
 
@@ -56,20 +56,20 @@ def _command(subtype, **kwds):
 
     def _wrap(func):
         upper_type = subtype.upper()
-        app.commands[upper_type] = _Handler(upper_type, func, kwds)
+        APP.commands[upper_type] = _Handler(upper_type, func, kwds)
 
     return _wrap
 
 
-app.command = _command
-app.command.ArgumentParser = _ArgumentParser
+APP.command = _command
+APP.command.ArgumentParser = _ArgumentParser
 
 
-@app.event('start')
+@APP.event('start')
 async def command_shell(_event):
     """Async task to listen for input and execute commands."""
     # The command shell task can be interrupted with CTRL-C (KeyboardInterrupt).
-    app.foreground_task = asyncio.Task.current_task()
+    APP.foreground_task = asyncio.Task.current_task()
     cmds = [h.subtype.lower() for h in all_command_handlers()]
     completer = WordCompleter(cmds)
     history = InMemoryHistory()
@@ -77,7 +77,7 @@ async def command_shell(_event):
     while True:
         try:
             command = await prompt_async(
-                app.command_prompt,
+                APP.command_prompt,
                 history=history,
                 completer=completer,
                 style=bold_style,
@@ -87,16 +87,16 @@ async def command_shell(_event):
             if command:
                 await run_command(command)
         except EOFError:
-            app.post_event('EXIT')
+            zof.post_event('EXIT')
             break
-    app.foreground_task = None
+    APP.foreground_task = None
 
 
-@app.event('signal', signal='SIGINT')
+@APP.event('signal', signal='SIGINT')
 def handle_sigint(event):
     """Cancel async command_shell task."""
-    if app.foreground_task:
-        app.foreground_task.cancel()
+    if APP.foreground_task:
+        APP.foreground_task.cancel()
         event.exit = False
 
 
@@ -123,17 +123,17 @@ async def run_command(command):
         except CommandException as ex:
             # Stay silent for commands that exit with status 0.
             if ex.status != 0:
-                app.logger.exception(ex)
+                APP.logger.exception(ex)
         except asyncio.CancelledError:
-            app.logger.debug('CancelledError')
+            APP.logger.debug('CancelledError')
         except Exception as ex:  # pylint: disable=broad-except
-            app.logger.exception(ex)
+            APP.logger.exception(ex)
 
 
 def exec_command(cmd, handler):
     parser = handler.options.get('argparser')
     if parser:
-        assert isinstance(parser, app.command.ArgumentParser)
+        assert isinstance(parser, APP.command.ArgumentParser)
         # Make sure `prog` is set to correct command name.
         parser.prog = cmd[0]
         cmd = parser.parse_args(cmd[1:])
@@ -142,11 +142,11 @@ def exec_command(cmd, handler):
 
 
 def find_command_handler(cmd):
-    return app.commands.get(cmd.upper())
+    return APP.commands.get(cmd.upper())
 
 
 def all_command_handlers():
-    return list(app.commands.values())
+    return list(APP.commands.values())
 
 
 # =============== #
@@ -167,12 +167,12 @@ def _help_brief(handler):
 
 def _help_args():
     desc = '''List all commands or show help for a specific command.'''
-    parser = app.command.ArgumentParser(description=desc)
+    parser = APP.command.ArgumentParser(description=desc)
     parser.add_argument('command', nargs='?', help='name of command')
     return parser
 
 
-@app.command('help', argparser=_help_args())
+@APP.command('help', argparser=_help_args())
 def help_cmd(event):
     """List all commands or show help for a specific command."""
     cmd_name = event.args.command
@@ -196,14 +196,14 @@ def _show_help(cmd_name):
 
 
 def _ls_args():
-    parser = app.command.ArgumentParser(
+    parser = APP.command.ArgumentParser(
         description='List datapaths, ports or flows.')
     parser.add_argument(
         '-l', '--long', action='store_true', help='list in long format')
     return parser
 
 
-@app.command('ls', argparser=_ls_args())
+@APP.command('ls', argparser=_ls_args())
 def ls_cmd(event):
     """(TODO in device service) List datapaths, ports, or flows."""
     print(event)
@@ -216,13 +216,13 @@ def _ps_args():
       PREC  app precedence value (empty for tasks)
       NAME  app name
     '''
-    parser = app.command.ArgumentParser(description=desc)
+    parser = APP.command.ArgumentParser(description=desc)
     parser.add_argument(
         '-a', '--all', action='store_true', help='show all tasks')
     return parser
 
 
-@app.command('ps', argparser=_ps_args())
+@APP.command('ps', argparser=_ps_args())
 def ps_cmd(event):
     """List all running apps/tasks."""
     app_tasks = collections.defaultdict(list)
@@ -232,7 +232,7 @@ def ps_cmd(event):
             app_tasks[capp].append(task)
 
     yield 'PREC NAME'
-    for capp in app.apps:
+    for capp in zof.get_apps():
         yield '%4d %s' % (capp.precedence, capp.name)
         for task in app_tasks[capp]:
             yield '       %s:%s' % (_task_name(task), task.ofp_task_scope)
@@ -247,12 +247,12 @@ def _task_name(task):
 
 def _log_args():
     desc = '''Show recent log messages.'''
-    parser = app.command.ArgumentParser(description=desc)
+    parser = APP.command.ArgumentParser(description=desc)
     parser.add_argument('-f', action='store_true', help='continue logging')
     return parser
 
 
-@app.command('log', argparser=_log_args())
+@APP.command('log', argparser=_log_args())
 async def log_cmd(event):
     """Show recent log messages."""
     if event.args.f:
@@ -273,10 +273,10 @@ async def log_cmd(event):
             _CONSOLE_HANDLER.setLevel(console_level)
 
 
-@app.command('exit', brief='Exit command shell.')
+@APP.command('exit', brief='Exit command shell.')
 def exit_cmd(_event):
     """Exit command shell."""
-    app.post_event('EXIT')
+    zof.post_event('EXIT')
 
 
 class TailBufferedHandler(logging.Handler):

@@ -1,12 +1,10 @@
 """Implements ControllerApp class."""
 
 import logging
-import inspect
 import os
 import signal
 from operator import attrgetter
 from .handler import make_handler
-from .event import make_event, Event
 from . import exception as _exc
 
 
@@ -92,27 +90,6 @@ class ControllerApp(object):
             # Shutdown the program immediately.
             logging.shutdown()
             os.kill(os.getpid(), signal.SIGKILL)
-
-    '''
-    def post_event(self, event, **kwds):
-        """Function used to send an internal event to all app modules.
-
-        Args:
-            event (str | Event): event type or event object
-            kwds (dict): keyword arguments for make_event
-        """
-        if isinstance(event, str):
-            event = make_event(event=event.upper(), **kwds)
-        elif not isinstance(event, Event) or kwds:
-            raise ValueError('Invalid arguments to post_event')
-        self.logger.debug('post_event %r', event)
-        self.controller.post_event(event)
-
-    def rpc_call(self, method, **params):
-        """Function used to send a RPC request and receive a response."""
-        self.logger.debug('rpc_call %s', method)
-        return self.controller.rpc_call(method, **params)
-    '''
 
     def ensure_future(self, coroutine, *, datapath_id=None, conn_id=None):
         """Function used by an app to run an async handler.

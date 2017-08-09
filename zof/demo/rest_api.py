@@ -1,56 +1,56 @@
 import zof
 from ..http import HttpServer
-from ..service.device import get_devices, get_device_port
 from ..pktview import pktview_from_list
 
-app = zof.Application('webserver')
-app.http_endpoint = '127.0.0.1:8080'
 
-web = HttpServer(logger=app.logger)
-# web.define_var('dpid', _parse_dpid)
+APP = zof.Application('WEBserver')
+APP.http_endpoint = '127.0.0.1:8080'
+
+WEB = HttpServer(logger=APP.logger)
+# WEB.define_var('dpid', _parse_dpid)
 
 
-@app.event('start')
+@APP.event('start')
 async def start(_):
-    await web.start(app.http_endpoint)
+    await WEB.start(APP.http_endpoint)
 
 
-@app.event('stop')
+@APP.event('stop')
 async def stop(_):
-    await web.stop()
+    await WEB.stop()
 
 
-@web.get_json('/stats/switches')
+@WEB.get_json('/stats/switches')
 def get_switches():
-    return [d.datapath_id for d in get_devices()]
+    return [d.datapath_id for d in zof.get_datapaths()]
 
 
-@web.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
+@WEB.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
 async def get_flows(dpid):
     result = await FLOW_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_flows(result.msg)
     return {dpid: result.msg}
 
 
-@web.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
+@WEB.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_groups(result.msg)
     return {dpid: result.msg}
 
 
-@web.get_json('/stats/port/{dpid}/{port_no}')
+@WEB.get_json('/stats/port/{dpid}/{port_no}')
 async def get_portstats(dpid, port_no):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
     return {dpid: result.msg}
 
 
-@web.post_json('/stats/portdesc/modify')
+@WEB.post_json('/stats/portdesc/modify')
 async def modify_portdesc(post_data):
     dpid = _parse_dpid(post_data.dpid)
     port_no = _parse_port(post_data.port_no)
-    port = get_device_port(dpid, port_no)
+    port = zof.find_port(datapath_id=dpid, port_no=port_no)
     PORTMOD_REQ.send(
         datapath_id=dpid,
         port_no=port_no,
