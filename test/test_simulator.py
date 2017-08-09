@@ -1,6 +1,7 @@
 import unittest
 import asyncio
 import zof
+from zof.controller import Controller
 
 
 class SimulatorTester(zof.Application):
@@ -34,6 +35,10 @@ class SimulatorTester(zof.Application):
 
 
 class SimulatorTestCase(unittest.TestCase):
+    def tearDown(self):
+        Controller.destroy()
+
+
     def test_simulator(self):
         from zof.demo.simulator import APP as sim
         from zof.service.datapath import APP as dp_app
