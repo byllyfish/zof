@@ -1,12 +1,11 @@
 import unittest
 import zof
-from zof.controller import Controller
 
 
 class TestApi(unittest.TestCase):
 
     def test_zof(self):
-        Controller.singleton().apps = []
+        zof.set_apps([])
 
         app1 = zof.Application('app1', exception_fatal=True, precedence=12)
         self.assertEqual(app1.name, 'app1')

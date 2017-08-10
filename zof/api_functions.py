@@ -9,6 +9,14 @@ def get_apps():
     return [app.ref for app in Controller.singleton().apps]
 
 
+def set_apps(apps):
+    """Set list of apps.
+
+    Avoid this function; it is provided for testing. 
+    """
+    Controller.singleton().apps = [app._app for app in apps]
+
+
 def get_datapaths():
     """Get list of currently connected datapaths.
     """

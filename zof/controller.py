@@ -58,14 +58,11 @@ class Controller(object):
         """Find application object by name."""
         return any(app for app in self.apps if app.name == name)
 
-    def run_loop(self, *, args, apps):
+    def run_loop(self, *, args):
         """Main entry point for running a controller.
 
         Returns exit status.
         """
-        if apps:
-            # Set list of apps manually (ignores precedence value).
-            self.apps = [app._app for app in apps]
         if not self.apps:
             LOGGER.warning('No apps are loaded.')
 
