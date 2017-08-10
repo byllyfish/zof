@@ -41,17 +41,6 @@ class Controller(object):
             Controller._singleton = Controller()
         return Controller._singleton
 
-    @staticmethod
-    def destroy():
-        """Destroy global singleton object.
-
-        This method is provided for use by unit tests.
-
-        N.B. Existing apps must be reloaded manually (importlib.reload) into
-        any new controller object.
-        """
-        Controller._singleton = None
-
     def __init__(self):
         self.apps = []
         self.args = None
@@ -69,11 +58,14 @@ class Controller(object):
         """Find application object by name."""
         return any(app for app in self.apps if app.name == name)
 
-    def run_loop(self, *, args):
+    def run_loop(self, *, args, apps):
         """Main entry point for running a controller.
 
         Returns exit status.
         """
+        if apps:
+            # Set list of apps manually (ignores precedence value).
+            self.apps = [app._app for app in apps]
         if not self.apps:
             LOGGER.warning('No apps are loaded.')
 
