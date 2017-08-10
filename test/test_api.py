@@ -1,12 +1,13 @@
 import unittest
 import zof
 from zof.controller import Controller
-from zof.service.datapath import APP as DPA
 
 
 class TestApi(unittest.TestCase):
 
     def test_zof(self):
+        Controller.singleton().apps = []
+
         app1 = zof.Application('app1', exception_fatal=True, precedence=12)
         self.assertEqual(app1.name, 'app1')
 
@@ -19,9 +20,4 @@ class TestApi(unittest.TestCase):
             zof.Application('app3')
 
         # Test that apps are sorted by precedence.
-        self.assertEqual(zof.get_apps(), [DPA, app2, app3, app1])
-
-    def test_init_exclusions(self):
-        # These functions should fail if the system is in INIT mode.
-        with self.assertRaises(RuntimeError):
-            zof.post_event('test')
+        self.assertEqual(zof.get_apps(), [app2, app3, app1])

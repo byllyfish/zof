@@ -249,8 +249,6 @@ class Controller(object):
         """Post an event to our event queue."""
         if not isinstance(event, Event):
             raise ValueError('Not an event: %r' % event)
-        if self.phase == 'INIT':
-            raise RuntimeError('post_event not allowed in INIT phase')
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
