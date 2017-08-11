@@ -3,11 +3,11 @@ import zof
 from zof import exception as _exc
 from zof.http import HttpServer
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
-from prometheus_client.core import CounterMetricFamily
+from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(prog='Metrics', description='Metric Demo')
+    parser = argparse.ArgumentParser(prog='Metrics', description='Metric Demo', add_help=False)
     parser.add_argument(
         '--metrics-endpoint', help='HTTP endpoint for metrics server')
     return parser
@@ -89,19 +89,20 @@ class PortMetrics:
         self.rx_packets = CounterMetricFamily('port_rx_packets_total',
                                               'packets received', None, labels)
         self.tx_dropped = CounterMetricFamily(
-            'port_tx_dropped_total', 'packets dropped by TX', None, labels)
+            'port_tx_drops_total', 'packets dropped by TX', None, labels)
         self.rx_dropped = CounterMetricFamily(
-            'port_rx_dropped_total', 'packets dropped by RX', None, labels)
+            'port_rx_drops_total', 'packets dropped by RX', None, labels)
         self.rx_errors = CounterMetricFamily('port_rx_errors_total',
                                              'receive errors', None, labels)
         self.duration = CounterMetricFamily(
             'port_duration_seconds_total', 'duration in seconds', None, labels)
-        # TODO(bfish): self.up = GaugeMetricFamily()
+        self.port_up = GaugeMetricFamily('port_up', 'port is up', None, labels)
 
     def metrics(self):
         return [
             self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets,
-            self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration
+            self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration, 
+            self.port_up
         ]
 
     def update(self, dpid, stat):
@@ -120,13 +121,16 @@ class PortMetrics:
                 counter.add_metric(labels, value)
         if stat.duration != '0':
             self.duration.add_metric(labels, float(stat.duration))
+        port = zof.find_port(datapath_id=dpid, port_no=stat.port_no)
+        if port:
+            self.port_up.add_metric(labels, int(port.up))
 
 
 async def _collect_port_stats(dpid, metric):
     try:
         reply = await PORT_STATS.request(datapath_id=dpid)
     except _exc.ControllerException as ex:
-        APP.logger.warning('Unable to retrieve stats: %r', ex)
+        APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid, ex)
         return
 
     for stat in reply.msg:
