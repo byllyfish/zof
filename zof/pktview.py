@@ -80,6 +80,20 @@ class PktView(ObjectView):
     hop_limit = pktview_alias('nx_ip_ttl')
     ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
 
+    @property
+    def src(self):
+        result = self('ipv4_src') or self('ipv6_src')
+        if not result:
+            raise AttributeError('src')
+        return result
+
+    @property
+    def dst(self):
+        result = self('ipv4_dst') or self('ipv6_dst')
+        if not result:
+            raise AttributeError('dst')
+        return result
+
     def items(self):
         return self.__dict__.items()
 
