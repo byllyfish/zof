@@ -3,6 +3,8 @@ This app retrieves a datapath's ports.
 
 This is a guard app with high precedence. This app blocks other apps from
 receiving channel_up messages until all of the datapath's ports are discovered.
+
+This app modifies message events to include the source `datapath` object.
 """
 
 import zof
@@ -49,6 +51,7 @@ def channel_up(event):
     datapath = APP.datapaths.add_datapath(
         datapath_id=event.datapath_id, conn_id=event.conn_id)
     if READY_FLAG in datapath.user_data:
+        event.datapath = datapath
         return
     datapath.user_data[CHANNEL_UP_MSG] = event
     raise _exc.StopPropagationException()
@@ -57,7 +60,9 @@ def channel_up(event):
 @APP.message('channel_down')
 def channel_down(event):
     datapath = APP.datapaths.delete_datapath(datapath_id=event.datapath_id)
+    datapath.up = False
     if READY_FLAG in datapath.user_data:
+        event.datapath = datapath
         return
     raise _exc.StopPropagationException()
 
@@ -66,6 +71,7 @@ def channel_down(event):
 def features_reply(event):
     datapath = APP.datapaths[event.datapath_id]
     if READY_FLAG in datapath.user_data:
+        event.datapath = datapath
         return
 
     datapath.user_data[FEATURES_REPLY_MSG] = event
@@ -82,6 +88,7 @@ def features_reply(event):
 def port_status(event):
     datapath = APP.datapaths[event.datapath_id]
     if READY_FLAG in datapath.user_data:
+        event.datapath = datapath
         msg = event.msg
         if msg.reason == 'DELETE':
             datapath.delete_port(port_no=msg.port_no)
@@ -98,6 +105,7 @@ def port_status(event):
 def other_message(event):
     datapath = APP.datapaths[event.datapath_id]
     if READY_FLAG in datapath.user_data:
+        event.datapath = datapath
         return
 
     raise _exc.StopPropagationException()

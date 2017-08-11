@@ -54,6 +54,7 @@ class Datapath:
         self.datapath_id = datapath_id
         self.conn_id = conn_id
         self.ports = OrderedDict()
+        self.up = True
         self.user_data = {}
 
     def add_port(self, *, port_no):
@@ -116,6 +117,9 @@ class Datapath:
         port_no = normalize_port_no(port_no)
         return self.ports[port_no]
 
+    def __repr__(self):
+        return '<zof.Datapath datapath_id=%s>' % self.datapath_id
+
 
 class Port:
     """Represents a datapath port."""
@@ -150,7 +154,7 @@ def normalize_datapath_id(datapath_id):
     """Normalize datapath_id value."""
     if isinstance(datapath_id, int):
         return datapath_id
-    if isinstance(datapath_id, str):
+    if isinstance(datapath_id, str) and datapath_id:
         return int(datapath_id.replace(':', ''), 16)
     raise ValueError('Invalid datapath_id: %r' % datapath_id)
 

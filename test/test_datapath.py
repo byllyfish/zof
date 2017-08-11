@@ -89,6 +89,11 @@ class DatapathTestCase(unittest.TestCase):
         result = dpids.delete_datapath(datapath_id=12345)
         self.assertIsNone(result)
 
+    def test_repr(self):
+        dpids = DatapathList()
+        dp1 = dpids.add_datapath(datapath_id=0x01, conn_id=0x01)
+        self.assertEqual(repr(dp1), '<zof.Datapath datapath_id=1>')
+
     def test_add_port(self):
         dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
 
@@ -149,6 +154,9 @@ class DatapathTestCase(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             normalize_datapath_id('blah')
+
+        with self.assertRaises(ValueError):
+            normalize_datapath_id('')
 
     def test_normalize_port_no(self):
         port_no = normalize_port_no(123)
