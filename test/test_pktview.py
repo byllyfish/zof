@@ -164,6 +164,17 @@ class PktViewTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             convert_slash_notation('IPV4_SRC', '1.2.3.4/64')
 
+    def test_slash_notation_nd_target(self):
+        result = convert_slash_notation('IPV6_ND_TARGET', 'fc00::1:2/112')
+        self.assertEqual(result, (IPv6Address('fc00::1:2'), IPv6Address('ffff:ffff:ffff:ffff:ffff:ffff:ffff:0')))
+
+        data = dict(ipv6_nd_target='fc00::1:2/112')
+        fields = pktview_to_list(data)
+        self.assertEqual(fields, [{'field': 'IPV6_ND_TARGET', 'value': IPv6Address('fc00::1:2'), 'mask': IPv6Address('ffff:ffff:ffff:ffff:ffff:ffff:ffff:0')}])
+
+        result = pktview_from_list(fields, slash_notation=True)
+        self.assertEqual(result, {'ipv6_nd_target': 'fc00::1:2/ffff:ffff:ffff:ffff:ffff:ffff:ffff:0'})
+
     def test_description(self):
         pkt = make_pktview(ip_proto=6, eth_type=0x0800)
         self.assertEqual(pkt.get_description(), 'TCPv4')
