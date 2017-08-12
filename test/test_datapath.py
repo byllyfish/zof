@@ -93,6 +93,11 @@ class DatapathTestCase(unittest.TestCase):
         dpids = DatapathList()
         dp1 = dpids.add_datapath(datapath_id=0x01, conn_id=0x01)
         self.assertEqual(repr(dp1), '<zof.Datapath datapath_id=1>')
+        self.assertEqual(repr(dp1), dp1.__getstate__())
+
+        port1 = dp1.add_port(port_no=2)
+        self.assertEqual(repr(port1), '<zof.Port port_no=2>')
+        self.assertEqual(repr(port1), port1.__getstate__())
 
     def test_add_port(self):
         dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)

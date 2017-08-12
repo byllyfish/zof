@@ -101,7 +101,7 @@ class Datapath:
             port.config = port_desc.config
 
     def __getstate__(self):
-        return self.__dict__
+        return repr(self)
 
     def __len__(self):
         return len(self.ports)
@@ -133,7 +133,7 @@ class Port:
         self.config = []
 
     def __getstate__(self):
-        return self.__dict__
+        return repr(self)
 
     @property
     def datapath_id(self):
@@ -148,6 +148,9 @@ class Port:
     def admin_down(self):
         "Return true if port is administratively configured down."
         return 'PORT_DOWN' in self.config
+
+    def __repr__(self):
+        return '<zof.Port port_no=%s>' % self.port_no
 
 
 def normalize_datapath_id(datapath_id):
