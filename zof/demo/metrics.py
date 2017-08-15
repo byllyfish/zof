@@ -24,7 +24,7 @@ def preflight(_):
         raise _exc.PreflightUnloadException()
 
 
-@APP.event('start')
+@APP.event('prestart')
 async def start(_):
     # Start a process collector for our oftr subprocess.
     ProcessCollector(namespace='oftr', pid=lambda: APP.oftr_connection.pid)
@@ -129,12 +129,10 @@ class PortMetrics:
 async def _collect_port_stats(dpid, metric):
     try:
         reply = await PORT_STATS.request(datapath_id=dpid)
+        for stat in reply.msg:
+            metric.update(dpid, stat)
     except _exc.ControllerException as ex:
         APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid, ex)
-        return
-
-    for stat in reply.msg:
-        metric.update(dpid, stat)
 
 
 class _MyCollector:
