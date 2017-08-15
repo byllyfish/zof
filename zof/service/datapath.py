@@ -103,11 +103,6 @@ def port_status(event):
 
 @APP.message(any)
 def other_message(event):
-    # There's a bug in oftr where a CHANNEL_ALERT message can be sent with 
-    # a datapath_id=''. Ignore these messages for now. -bfish
-    if not event.datapath_id:
-        return
-
     datapath = APP.datapaths[event.datapath_id]
     if READY_FLAG in datapath.user_data:
         event.datapath = datapath
