@@ -18,7 +18,10 @@ class DatapathApp(zof.Application):
         self.datapaths = DatapathList()
 
     def get_datapaths(self):
-        return [datapath for datapath in self.datapaths if READY_FLAG in datapath.user_data]
+        return [
+            datapath for datapath in self.datapaths
+            if READY_FLAG in datapath.user_data
+        ]
 
     def find_datapath(self, datapath_id):
         try:

@@ -7,7 +7,8 @@ from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(prog='Metrics', description='Metric Demo', add_help=False)
+    parser = argparse.ArgumentParser(
+        prog='Metrics', description='Metric Demo', add_help=False)
     parser.add_argument(
         '--metrics-endpoint', help='HTTP endpoint for metrics server')
     return parser
@@ -101,7 +102,7 @@ class PortMetrics:
     def metrics(self):
         return [
             self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets,
-            self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration, 
+            self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration,
             self.port_up
         ]
 
@@ -132,7 +133,8 @@ async def _collect_port_stats(dpid, metric):
         for stat in reply.msg:
             metric.update(dpid, stat)
     except _exc.ControllerException as ex:
-        APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid, ex)
+        APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid,
+                           ex)
 
 
 class _MyCollector:

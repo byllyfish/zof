@@ -2,7 +2,6 @@ import zof
 from ..http import HttpServer
 from ..pktview import pktview_from_list
 
-
 APP = zof.Application('rest_api')
 APP.http_endpoint = '127.0.0.1:8080'
 

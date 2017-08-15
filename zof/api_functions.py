@@ -99,5 +99,6 @@ async def add_identity(*, cert, cacert, privkey):
     Returns:
         int: tls_id
     """
-    result = await _rpc_call('OFP.ADD_IDENTITY', cert=cert, cacert=cacert, privkey=privkey)
+    result = await _rpc_call(
+        'OFP.ADD_IDENTITY', cert=cert, cacert=cacert, privkey=privkey)
     return result.tls_id
