@@ -1,4 +1,11 @@
 from collections import OrderedDict
+from .controller import Controller
+
+
+# Keys for datapath.user_data dictionary. Used by datapath service.
+CHANNEL_UP_MSG = '_datapath.channel_up'
+FEATURES_MSG = '_datapath.features_reply'
+READY_FLAG = '_datapath.ready'
 
 
 class DatapathList:
@@ -99,6 +106,17 @@ class Datapath:
             port.name = port_desc.name
             port.state = port_desc.state
             port.config = port_desc.config
+
+    def close(self):
+        """Close connection to datapath; i.e. hang up.
+
+        This function coordinates with the datapath service to make sure no
+        apps receive any further events from this datapath.
+        """
+        assert self.user_data[READY_FLAG]
+        self.up = False
+        del self.user_data[READY_FLAG]
+        Controller.singleton().rpc_call('OFP.CLOSE', ignore_reply=True, conn_id=self.conn_id)
 
     def __getstate__(self):
         return repr(self)
