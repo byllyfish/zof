@@ -12,8 +12,9 @@ def get_apps():
 def set_apps(apps):
     """Set list of apps.
 
-    Avoid this function; it is provided for testing. 
+    Avoid this function; it is provided for testing.
     """
+    # pylint: disable=protected-access
     Controller.singleton().apps = [app._app for app in apps]
 
 
@@ -89,7 +90,7 @@ async def close(*, conn_id=0, datapath_id=None):
 async def get_connections(*, conn_id=0):
     """Get list of OpenFlow connections.
     """
-    result = await _rpc_call('OFP.LIST_CONNECTIONS', conn_id=0)
+    result = await _rpc_call('OFP.LIST_CONNECTIONS', conn_id=conn_id)
     return result.stats
 
 
