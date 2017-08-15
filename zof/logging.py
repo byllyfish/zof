@@ -6,7 +6,7 @@ import sys
 EXT_STDERR = 'ext://stderr'
 
 DEFAULT_FORMATTER = logging.Formatter(
-    '%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    '%(asctime)s %(name)-6s %(levelname)-8s %(message)s', '%b %d %H:%M:%S')
 
 STDERR_HANDLER = logging.StreamHandler(sys.stderr)
 STDERR_HANDLER.setFormatter(DEFAULT_FORMATTER)
