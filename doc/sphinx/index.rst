@@ -1,9 +1,9 @@
-.. ofp_app documentation master file, created by
+.. zof documentation master file, created by
    sphinx-quickstart on Fri Mar 24 17:10:41 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ofp_app's documentation!
+Welcome to zof's documentation!
 ===================================
 
 .. toctree::

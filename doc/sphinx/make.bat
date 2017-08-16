@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=ofp_app
+set SPHINXPROJ=zof
 
 if "%1" == "" goto help
 

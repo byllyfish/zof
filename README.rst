@@ -100,8 +100,8 @@ To compose the demo.py program with the layer2 demo::
 
 
 .. |MIT licensed| image:: https://img.shields.io/badge/license-MIT-blue.svg
-   :target: https://raw.githubusercontent.com/byllyfish/ofp_app/master/LICENSE.txt
-.. |Build Status| image:: https://travis-ci.org/byllyfish/ofp_app.svg?branch=master
-   :target: https://travis-ci.org/byllyfish/ofp_app
-.. |codecov.io| image:: https://codecov.io/gh/byllyfish/ofp_app/coverage.svg?branch=master
-   :target: https://codecov.io/gh/byllyfish/ofp_app?branch=master
+   :target: https://raw.githubusercontent.com/byllyfish/zof/master/LICENSE.txt
+.. |Build Status| image:: https://travis-ci.org/byllyfish/zof.svg?branch=master
+   :target: https://travis-ci.org/byllyfish/zof
+.. |codecov.io| image:: https://codecov.io/gh/byllyfish/zof/coverage.svg?branch=master
+   :target: https://codecov.io/gh/byllyfish/zof?branch=master

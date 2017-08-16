@@ -1,10 +1,10 @@
 .. _readme:
 
-OFP_APP: OpenFlow App Framework
+ZOF: OpenFlow App Framework
 ================================
 
-`ofp_app` is a Python framework for creating asyncio-based applications that control 
-the network using the OpenFlow protocol. `ofp_app` uses a separate *oftr* process to 
+`zof` is a Python framework for creating asyncio-based applications that control 
+the network using the OpenFlow protocol. `zof` uses a separate *oftr* process to 
 terminate OpenFlow connections and translate OpenFlow messages to JSON.
 
 .. figure:: _static/img/zof_architecture.png
@@ -38,10 +38,10 @@ Install - Linux
     sudo apt-get update
     sudo apt-get install oftr
 
-    # Create virtual environment and install ofp_app.
+    # Create virtual environment and install zof.
     python3.5 -m venv myenv
     source myenv/bin/activate
-    pip install ofp_app
+    pip install zof
 
 
 Demos
@@ -49,14 +49,14 @@ Demos
 
 To run the controller demo::
 
-    python -m ofp_app.demo.layer2 --help
+    python -m zof.demo.layer2 --help
 
 
 .. (TODO) To run the agent simulator demo::
 
-    python -m ofp_app.demo.agent_simulator --help
+    python -m zof.demo.agent_simulator --help
 
 .. (TODO) To run the command line tool demo::
 
-    python -m ofp_app.demo.ofctl --help
+    python -m zof.demo.ofctl --help
 

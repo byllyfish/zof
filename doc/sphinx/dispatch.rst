@@ -5,7 +5,7 @@ Event Dispatch
 
 Events are dispatched to apps with the highest precedence first.
 
-All apps are initially sorted by precedence value, highest to lowest. The default precedence value for an app is 100. You have the option to set the precedence value when you call ofp_app(). Where two apps have the same precedence value, they remain in their original order.
+All apps are initially sorted by precedence value, highest to lowest. The default precedence value for an app is 100. You have the option to set the precedence value when you call zof.Application. Where two apps have the same precedence value, they remain in their original order.
 
 Events are dispatched one at a time to each app in order. Each app checks its handlers from top to bottom, and runs the first handler that matches. Then, the dispatcher proceeds to the next app.
 
