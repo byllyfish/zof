@@ -105,11 +105,6 @@ def other_message(event):
     APP.logger.debug('Ignored message: %r', event)
 
 
-def _describe_pkt(pkt):
-    """Return description of packet contents."""
-    return pkt.get_description()
-
-
 DELETE_FLOWS = zof.compile('''
   # Delete flows in table 0.
   type: FLOW_MOD
