@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+Version 0.3.0
+-------------
+
+- Rename to zof.
+- Add close() method to Datapath class for hanging up.
+- Change default log format.
+- Metrics app now initiates on prestart event.
+- Add zof.demo.hub module.
+
+
 Version 0.2.0
 -------------
 
