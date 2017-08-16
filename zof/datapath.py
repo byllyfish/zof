@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from .controller import Controller
 
-
 # Keys for datapath.user_data dictionary. Used by datapath service.
 CHANNEL_UP_MSG = '_datapath.channel_up'
 FEATURES_MSG = '_datapath.features_reply'
@@ -116,7 +115,8 @@ class Datapath:
         assert self.user_data[READY_FLAG]
         self.up = False
         del self.user_data[READY_FLAG]
-        Controller.singleton().rpc_call('OFP.CLOSE', ignore_reply=True, conn_id=self.conn_id)
+        Controller.singleton().rpc_call(
+            'OFP.CLOSE', ignore_reply=True, conn_id=self.conn_id)
 
     def __getstate__(self):
         return repr(self)

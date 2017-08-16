@@ -12,7 +12,10 @@ def channel_up(event):
 @APP.message('packet_in')
 def packet_in(event):
     APP.logger.info('Packet_in %r', event)
-    PACKET_OUT.send(datapath_id=event.datapath_id, in_port=event.msg.in_port, data=event.msg.data)
+    PACKET_OUT.send(
+        datapath_id=event.datapath_id,
+        in_port=event.msg.in_port,
+        data=event.msg.data)
 
 
 FLOW_MOD_TABLE_MISS = zof.compile('''
@@ -30,7 +33,6 @@ FLOW_MOD_TABLE_MISS = zof.compile('''
             max_len: NO_BUFFER
 ''')
 
-
 PACKET_OUT = zof.compile('''
   type: PACKET_OUT
   msg:
@@ -40,7 +42,6 @@ PACKET_OUT = zof.compile('''
         port_no: ALL
     data: $data
 ''')
-
 
 if __name__ == '__main__':
     zof.run()
