@@ -36,6 +36,8 @@ Install - Linux
     source myenv/bin/activate
     pip install zof
 
+The oftr command line tool can also be installed on a `Raspberry PI or using HomeBrew <https://github.com/byllyfish/oftr/blob/master/docs/INSTALL.rst>`_.
+
 Demos
 -----
 
