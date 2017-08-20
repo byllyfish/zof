@@ -23,7 +23,7 @@ def _convert_vlan(vlan):
 
 _OFPVID_PRESENT = 0x1000
 
-_IP_PROTO_NAME = {6: 'tcp', 11: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
+_IP_PROTO_NAME = {6: 'tcp', 17: 'udp', 1: 'icmpv4', 58: 'icmpv6', 132: 'sctp'}
 
 _LEGACY_FIELDS = dict(
     dl_type='eth_type',

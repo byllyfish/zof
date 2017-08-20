@@ -73,6 +73,20 @@ class TestOfctl(unittest.TestCase):
         with self.assertRaises(ValueError):
             convert_from_ofctl(ofctl)
 
+    def test_tp_dst(self):
+        # UDP
+        ofctl = {'dl_type': 0x0800, 'nw_proto': 17, 'tp_dst': 53}
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {'eth_type': 0x0800, 'ip_proto': 17, 'udp_dst': 53})
+
+        ofctl['nw_proto'] = 6   # TCP
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {'eth_type': 0x0800, 'ip_proto': 6, 'tcp_dst': 53})
+
+        ofctl['nw_proto'] = 132   # SCTP
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {'eth_type': 0x0800, 'ip_proto': 132, 'sctp_dst': 53})
+
     def test_empty(self):
         result = convert_from_ofctl(None)
         self.assertEqual(result, None)
