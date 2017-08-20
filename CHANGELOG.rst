@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Version 0.3.1
+-------------
+
+- Fix UDP tp_src/tp_dst bug in convert_from_ofctl.
+
+
 Version 0.3.0
 -------------
 
