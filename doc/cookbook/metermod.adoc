@@ -1,0 +1,15 @@
+=== MeterMod Messages
+
+==== Add Meter
+
+[source,yaml]
+----
+type: METER_MOD
+msg:
+  command: ADD
+  flags: [ KBPS ]
+  meter_id: 1
+  bands:
+    - type: DROP
+      rate: 1000
+----

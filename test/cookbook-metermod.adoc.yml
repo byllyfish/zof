@@ -1,0 +1,20 @@
+---
+# type: METER_MOD
+# msg:
+#   command: ADD
+#   flags: [ KBPS ]
+#   meter_id: 1
+#   bands:
+#     - type: DROP
+#       rate: 1000
+type:            METER_MOD
+xid:             0x00000000
+version:         0x04
+msg:             
+  command:         ADD
+  flags:           [ KBPS ]
+  meter_id:        0x00000001
+  bands:           
+    - type:            DROP
+      rate:            0x000003E8
+      burst_size:      0x00000000
