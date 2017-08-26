@@ -94,7 +94,14 @@ class PktView(ObjectView):
             raise AttributeError('dst')
         return result
 
+    def get(self, key, default=None):
+        """Allows PktView to be treated as a Python dict.
+        """
+        return self.__dict__.get(key, default)
+
     def items(self):
+        """Allows PktView to be treated as a Python dict.
+        """
         return self.__dict__.items()
 
     def get_description(self):
