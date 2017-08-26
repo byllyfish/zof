@@ -80,10 +80,6 @@ class Controller(object):
             LOGGER.exception(ex)
 
         finally:
-            # Log a warning if there are any asyncio tasks still present.
-            task_count = len(asyncio.Task.all_tasks())
-            if task_count > 0:
-                LOGGER.warning('run_loop: Exiting with %d tasks!', task_count)
             LOGGER.info('Exiting with status %d', self._exit_status)
 
         return self._exit_status

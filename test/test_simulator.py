@@ -49,3 +49,5 @@ class SimulatorTestCase(unittest.TestCase):
         args = parser.parse_args(['--sim-count=50', '--sim-timeout=5'])
         exit_status = zof.run(args=args)
         self.assertEqual(exit_status, 0)
+
+        loop.close()
