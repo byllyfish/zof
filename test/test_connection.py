@@ -1,6 +1,6 @@
 import asyncio
 import time
-from unittest import skipIf
+import unittest
 from zof.connection import Connection
 from .asynctestcase import AsyncTestCase
 
@@ -94,7 +94,7 @@ class ConnectionTestCase(AsyncTestCase):
         )
         await self._still_alive()
 
-    @skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
+    @unittest.skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
     async def test_write_max_size(self):
         # Write a maximum sized message.
         junk = b'x' * (MSG_LIMIT - 1)
@@ -106,7 +106,7 @@ class ConnectionTestCase(AsyncTestCase):
         )
         await self._still_alive()
 
-    @skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
+    @unittest.skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
     async def test_write_too_big(self):
         # Write a message that is too big.
         junk = b'x' * MSG_LIMIT
@@ -120,7 +120,7 @@ class ConnectionTestCase(AsyncTestCase):
         )
         await self._end_of_input()
 
-    @skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
+    @unittest.skipIf(SKIP_BIG_MESSAGES, "skipping big message tests")
     async def test_zmassive_write(self):
         # Now, write enough messages to really back things up.
         count = 5
@@ -304,3 +304,10 @@ class ConnectionTestCase(AsyncTestCase):
     def assert_prefix(self, value, prefix):
         if not value.startswith(prefix):
             self.fail('Prefix %s does not match: %s' % (prefix, value))
+
+
+class ConnectionMiscTestCase(unittest.TestCase):
+
+    def test_find_oftr_path(self):
+        path = Connection.find_oftr_path()
+        self.assertTrue(path)
