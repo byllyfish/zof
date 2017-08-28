@@ -479,9 +479,9 @@ class Controller(object):
         else:
             scope_key = self.phase
         self._tasks[scope_key].append(task)
-        task.ofp_task_app = app
-        task.ofp_task_scope = scope_key
-        task.ofp_task_locals = task_locals
+        task.zof_task_app = app
+        task.zof_task_scope = scope_key
+        task.zof_task_locals = task_locals
         task.add_done_callback(
             functools.partial(
                 self._task_callback, scope_key=scope_key))

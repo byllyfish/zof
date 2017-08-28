@@ -228,14 +228,14 @@ def ps_cmd(event):
     app_tasks = collections.defaultdict(list)
     if event.args.all:
         for task in asyncio.Task.all_tasks():
-            capp = getattr(task, 'ofp_task_app', None)
+            capp = getattr(task, 'zof_task_app', None)
             app_tasks[capp].append(task)
 
     yield 'PREC NAME'
     for capp in zof.get_apps():
         yield '%4d %s' % (capp.precedence, capp.name)
         for task in app_tasks[capp]:
-            yield '       %s:%s' % (_task_name(task), task.ofp_task_scope)
+            yield '       %s:%s' % (_task_name(task), task.zof_task_scope)
     for task in app_tasks[None]:
         yield '   - %s' % (_task_name(task))
 
