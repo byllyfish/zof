@@ -11,7 +11,8 @@ from .api_run import run  # noqa: E402,F401
 from .api_args import common_args  # noqa: E402,F401
 from .api_compile import compile  # noqa: E402,F401
 from .api_encode import encode  # noqa: E402,F401
-from .api_functions import get_apps, set_apps, get_datapaths, find_datapath, find_port, post_event, ensure_future, connect, close, get_connections, add_identity
-
+from .api_functions import (get_apps, set_apps, get_datapaths, find_datapath,
+                            find_port, post_event, ensure_future, connect,
+                            close, get_connections, add_identity)
 
 __version__ = '0.3.1'

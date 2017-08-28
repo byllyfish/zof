@@ -152,4 +152,3 @@ class Connection(object):
         if not path:
             raise RuntimeError('Unable to find oftr executable.')
         return path
-
