@@ -17,7 +17,6 @@ class RunServerTestCase(unittest.TestCase):
         asyncio.ensure_future(_task())
         run_server()
         self.assert_final_task_count(0)
-        loop.close()
 
     def test_empty_task(self):
         """Verify with task that immediately returns.
@@ -35,7 +34,6 @@ class RunServerTestCase(unittest.TestCase):
         signal.alarm(1)
         run_server(signals=['SIGALRM'])
         self.assert_final_task_count(0)
-        loop.close()
         
     def test_destroyed_task_pending(self):
         """Verify with task that sleeps in an infinite loop calling stop.
@@ -50,8 +48,7 @@ class RunServerTestCase(unittest.TestCase):
 
         task = asyncio.ensure_future(_task())
         run_server(pending_timeout=0.001)
-        self.assertFalse(loop.is_closed())
-        loop.close()
+        self.assertTrue(loop.is_closed())
 
         tasks = asyncio.Task.all_tasks(loop)
         self.assertEqual({task}, tasks)
@@ -65,5 +62,5 @@ class RunServerTestCase(unittest.TestCase):
         """Verify that event loop is closed and there are `n` tasks pending.
         """
         loop = asyncio.get_event_loop()
-        self.assertFalse(loop.is_closed())
+        self.assertTrue(loop.is_closed())
         self.assertEqual(n, len(asyncio.Task.all_tasks(loop)))

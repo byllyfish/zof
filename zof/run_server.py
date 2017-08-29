@@ -57,6 +57,7 @@ def run_server(*,
             if logger:
                 logger.debug('run_server shutdown_asyncgens')
             loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
         if logger:
             logger.debug('run_server stopped')
 
