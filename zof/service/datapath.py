@@ -111,10 +111,15 @@ def other_message(event):
 
 
 async def _get_ports(datapath):
-    ports = await PORTS_REQUEST.request(
-        datapath_id=datapath.datapath_id, conn_id=datapath.conn_id)
-    datapath.add_ports(ports.msg)
-    _post_channel_up(datapath)
+    try:
+        ports = await PORTS_REQUEST.request(
+            datapath_id=datapath.datapath_id, conn_id=datapath.conn_id)
+        datapath.add_ports(ports.msg)
+        _post_channel_up(datapath)
+    except _exc.ControllerException as ex:
+        datapath.close()
+        APP.logger.warning('_get_ports failed: %s', ex)
+
 
 
 def _post_channel_up(datapath):
