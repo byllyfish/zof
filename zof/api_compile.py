@@ -192,6 +192,6 @@ class MyTemplate(string.Template):
 
 def _task_locals():
     task = asyncio.Task.current_task()
-    task_locals = getattr(task, 'ofp_task_locals', {})
+    task_locals = getattr(task, 'zof_task_locals', {})
     assert isinstance(task_locals, dict)
     return task_locals

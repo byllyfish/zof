@@ -112,11 +112,11 @@ class Datapath:
         This function coordinates with the datapath service to make sure no
         apps receive any further events from this datapath.
         """
-        assert self.user_data[READY_FLAG]
-        self.up = False
-        del self.user_data[READY_FLAG]
-        Controller.singleton().rpc_call(
-            'OFP.CLOSE', ignore_reply=True, conn_id=self.conn_id)
+        if self.up:
+            self.up = False
+            self.user_data.pop(READY_FLAG)
+            Controller.singleton().rpc_call(
+                'OFP.CLOSE', ignore_result=True, conn_id=self.conn_id)
 
     def __getstate__(self):
         return repr(self)

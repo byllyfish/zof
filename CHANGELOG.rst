@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+Version 0.4.0
+-------------
+
+- Exceptions in async tasks will be associated with the app that created the task.
+- Add get() method to PktView.
+- Added zof.encode() function.
+- Added --sim-endpoint command line argument to simulator demo app.
+- Handle failure in datapath service _get_ports() function.
+
+
 Version 0.3.1
 -------------
 

@@ -69,7 +69,8 @@ class BaseHandler(object):
         else:
             task = asyncio.Task.current_task()
             if task:
-                task.ofp_task_locals = {
+                task.zof_task_app = app
+                task.zof_task_locals = {
                     'datapath_id': datapath_id,
                     'conn_id': conn_id
                 }

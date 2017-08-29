@@ -1,3 +1,4 @@
+import asyncio
 from .controller import Controller
 from .service.datapath import APP as DATAPATH_APP
 from .event import Event, make_event
@@ -54,8 +55,8 @@ def ensure_future(coroutine, *, datapath_id=None, conn_id=None):
     """Function used by an app to run an async coroutine, under a specific
     scope.
     """
-    return Controller.singleton().ensure_future(
-        coroutine, datapath_id=datapath_id, conn_id=conn_id)
+    app = asyncio.Task.current_task().zof_task_app
+    return app.ensure_future(coroutine, datapath_id=datapath_id, conn_id=conn_id)
 
 
 def _rpc_call(method, **params):

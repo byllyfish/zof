@@ -117,6 +117,11 @@ class PktViewTestCase(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.assertFalse(pkt.src)
 
+    def test_pktview_get(self):
+        pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
+        self.assertEqual(pkt.get('ipv4_src'), '1.2.3.4')
+        self.assertEqual(pkt.get('ipv4_dst', '5.6.7.8'), '5.6.7.8')
+
     def test_pktview_items(self):
         pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
         items = list(pkt.items())

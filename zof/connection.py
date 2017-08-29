@@ -37,16 +37,10 @@ class Connection(object):
         self._input = None
         self._output = None
 
-        oftr_path = oftr_options.get('path') or ''
+        oftr_path = self.find_oftr_path(oftr_options.get('path'))
         oftr_subcmd = oftr_options.get('subcmd') or 'jsonrpc'
         oftr_args = oftr_options.get('args') or ''
         oftr_prefix = oftr_options.get('prefix') or ''
-
-        # The default path is to the local executable.
-        if not oftr_path:
-            oftr_path = shutil.which('oftr')
-            if not oftr_path:
-                raise RuntimeError('Unable to find oftr executable.')
 
         # Construct the cmd used to launch oftr subprocess.
         cmd = '%s %s %s %s' % (oftr_prefix, oftr_path, oftr_subcmd, oftr_args)
@@ -147,3 +141,14 @@ class Connection(object):
         """Get size of the write buffer.
         """
         return self._output.transport.get_write_buffer_size()
+
+    @staticmethod
+    def find_oftr_path(default=None):
+        """Return path to oftr executable.
+        """
+        if default:
+            return default
+        path = shutil.which('oftr')
+        if not path:
+            raise RuntimeError('Unable to find oftr executable.')
+        return path

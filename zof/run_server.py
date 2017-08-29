@@ -74,7 +74,7 @@ def _shutdown_pending(loop, pending_timeout, logger):
         if not _run_pending(loop, pending_timeout, logger):
             break
     if logger:
-        tasks = _running_tasks(loop)
+        tasks = [t for t in asyncio.Task.all_tasks(loop) if not t.done()]
         if tasks:
             logger.warning('run_server: shutdown completed: %d tasks:\n  %s',
                            len(tasks), '\n  '.join(repr(t) for t in tasks))
@@ -87,26 +87,17 @@ def _run_pending(loop, pending_timeout, logger):
 
     Return true if we still have more pending tasks.
     """
+    pending = asyncio.Task.all_tasks(loop)
+    if not pending:
+        return False
+    if logger:
+        logger.debug('run_server: run_pending %r', pending)
     try:
-        pending = asyncio.Task.all_tasks(loop)
-        if pending:
-            if logger:
-                logger.debug('run_server: run_pending %r', pending)
-            loop.run_until_complete(
-                asyncio.wait(
-                    pending, timeout=pending_timeout))
-            return True
+        loop.run_until_complete(asyncio.wait(pending, timeout=pending_timeout))
     except RuntimeError as ex:
         # `run_until_complete` throws an exception if new async tasks are
         # started by the pending tasks *and* they are still running when the
         # original tasks complete. Return true when this happens.
-        if str(ex) == 'Event loop stopped before Future completed.':
-            return True
-        raise
-    return False
-
-
-def _running_tasks(loop):
-    # pylint: disable=protected-access
-    tasks = asyncio.Task.all_tasks(loop)
-    return [t for t in tasks if t._state not in ('FINISHED', 'CANCELLED')]
+        if str(ex) != 'Event loop stopped before Future completed.':
+            raise
+    return True
