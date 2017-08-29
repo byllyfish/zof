@@ -43,6 +43,5 @@ def encode(text, version=4):
     """Encode source code as binary.
     """
 
-    return _oftr_call(
-        1 +
-        (version << 24), text.encode('utf-8'), buflen=max(len(text), 1024))
+    opcode = 1 + (version << 24)
+    return _oftr_call(opcode, text.encode('utf-8'), buflen=max(len(text), 1024))
