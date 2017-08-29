@@ -8,6 +8,11 @@ def _arg_parser():
     parser = argparse.ArgumentParser(
         prog='simulator', description='Simulator Demo', add_help=False)
     parser.add_argument(
+        '--sim-endpoint', 
+        metavar='ENDPOINT',
+        help='endpoint to connect to',
+        default='127.0.0.1:6653')
+    parser.add_argument(
         '--sim-count',
         type=int,
         default=10,
@@ -119,7 +124,7 @@ class Simulator(object):
 
     async def start(self):
         conn_id = await zof.connect(
-            '127.0.0.1:6653', versions=[4], tls_id=APP.tls_id)
+            APP.args.sim_endpoint, versions=[4], tls_id=APP.tls_id)
         APP.conn_to_sim[conn_id] = self
 
     def features_request(self, event):

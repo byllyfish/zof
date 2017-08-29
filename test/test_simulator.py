@@ -46,7 +46,7 @@ class SimulatorTestCase(unittest.TestCase):
 
         zof.set_apps([dpa, sim, tester])
         parser = zof.common_args(under_test=True)
-        args = parser.parse_args(['--sim-count=50', '--sim-timeout=5'])
+        args = parser.parse_args(['--sim-count=50', '--sim-timeout=5', '--sim-endpoint=127.0.0.1:16653', '--listen-endpoints=16653'])
         exit_status = zof.run(args=args)
         self.assertEqual(exit_status, 0)
 
