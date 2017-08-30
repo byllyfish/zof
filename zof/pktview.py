@@ -177,8 +177,7 @@ def pktview_from_ofctl(ofctl):
 
 def _make_field(name, value):
     fname = name.upper()
-    if fname in _SLASH_FIELDS:
-        value = convert_slash_notation(fname, value)
+    value = convert_slash_notation(fname, value)
 
     if isinstance(value, tuple):
         if len(value) != 2:
@@ -201,7 +200,7 @@ def convert_slash_notation(fname, value):
     if not isinstance(value, str) or '/' not in value:
         return value
 
-    if fname in _MAC_FIELDS:
+    if fname not in _IP_FIELDS:
         return tuple(value.split('/', 1))
 
     try:
@@ -217,8 +216,4 @@ def convert_slash_notation(fname, value):
     return (ipaddress.IPv6Address(addr[0]), ipaddress.IPv6Address(addr[1]))
 
 
-_MAC_FIELDS = {'ETH_DST', 'ETH_SRC', 'ARP_SHA', 'ARP_THA'}
-_SLASH_FIELDS = {
-    'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST', 'IPV6_ND_TARGET',
-    'IPV6_ND_SLL', 'IPV6_ND_TLL', 'ARP_SPA', 'ARP_TPA'
-} | _MAC_FIELDS
+_IP_FIELDS = {'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST', 'IPV6_ND_TARGET'}
