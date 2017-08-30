@@ -85,8 +85,8 @@ def features_reply(event):
 
 @APP.message('port_status')
 def port_status(event):
-    datapath = APP.datapaths[event.datapath_id]
-    if READY_FLAG in datapath.user_data:
+    datapath = APP.find_datapath(event.datapath_id)
+    if datapath is not None:
         event.datapath = datapath
         msg = event.msg
         if msg.reason == 'DELETE':
@@ -102,8 +102,8 @@ def port_status(event):
 
 @APP.message(any)
 def other_message(event):
-    datapath = APP.datapaths[event.datapath_id]
-    if READY_FLAG in datapath.user_data:
+    datapath = APP.find_datapath(event.datapath_id)
+    if datapath is not None:
         event.datapath = datapath
         return
 
