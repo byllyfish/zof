@@ -1,7 +1,5 @@
 """
-Environment Variables:
-
-    zof_DEBUG            Debug mode.
+Implements run() function.
 """
 
 import sys
@@ -15,10 +13,13 @@ def run(*, args=None):
 
     Args:
         args (Optional[argparse.Namespace]): Arguments derived from
-            ArgumentParser. If None, use `common_args` parser.
+            ArgumentParser. If None, use `common_args` parser. If args is a
+            list, pass these to parse_args.
     """
     if args is None:
         args = common_args(include_x_modules=True).parse_args()
+    elif isinstance(args, (list, tuple)):
+        args = common_args(include_x_modules=True).parse_args(args)
 
     if args.loglevel:
         init_logging(args.loglevel, args.logfile)
