@@ -153,6 +153,16 @@ class ObjectViewTestCase(unittest.TestCase):
             ]))
         self.assertEqual(to_json(obj), '{"a":["10.1.2.3","2001::1"]}')
 
+    def test_ip_address_repr(self):
+        # Using repr on an ObjectView containing objects does not
+        # yield valid YAML.
+        obj = ObjectView(
+            dict(a=[
+                ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
+                    '2001::1')
+            ]))
+        self.assertEqual(repr(obj), "{'a': [IPv4Address('10.1.2.3'), IPv6Address('2001::1')]}")
+
     def test_argparse_namespace(self):
         args = argparse.Namespace(b=3)
         obj = ObjectView(dict(a=args))

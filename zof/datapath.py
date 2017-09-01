@@ -119,7 +119,7 @@ class Datapath:
                 'OFP.CLOSE', ignore_result=True, conn_id=self.conn_id)
 
     def __getstate__(self):
-        return repr(self)
+        return str(self)
 
     def __len__(self):
         return len(self.ports)
@@ -136,7 +136,11 @@ class Datapath:
         return self.ports[port_no]
 
     def __repr__(self):
-        return '<zof.Datapath datapath_id=%s>' % self.datapath_id
+        # Include single quotes; repr(self) should be valid YAML scalar.
+        return "'<zof.Datapath %s>'" % self.datapath_id
+
+    def __str__(self):
+        return "<zof.Datapath %s>" % self.datapath_id
 
 
 class Port:
@@ -151,7 +155,7 @@ class Port:
         self.config = []
 
     def __getstate__(self):
-        return repr(self)
+        return str(self)
 
     @property
     def datapath_id(self):
@@ -168,7 +172,11 @@ class Port:
         return 'PORT_DOWN' in self.config
 
     def __repr__(self):
-        return '<zof.Port port_no=%s>' % self.port_no
+        # Include single quotes; repr(self) should be valid YAML scalar.
+        return "'<zof.Port %s>'" % self.port_no
+
+    def __str__(self):
+        return "<zof.Port %s>" % self.port_no
 
 
 def normalize_datapath_id(datapath_id):

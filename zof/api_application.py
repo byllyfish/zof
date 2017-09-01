@@ -4,7 +4,7 @@ from .controllerapp import ControllerApp
 from .logging import init_logging
 
 # Enable logging before the first Application is created.
-_DEBUG = os.environ.get('zof_DEBUG')
+_DEBUG = os.environ.get('ZOF_DEBUG')
 if _DEBUG:
     init_logging('info' if _DEBUG.lower() == 'info' else 'debug')
 

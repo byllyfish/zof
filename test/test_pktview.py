@@ -180,6 +180,21 @@ class PktViewTestCase(unittest.TestCase):
         result = pktview_from_list(fields, slash_notation=True)
         self.assertEqual(result, {'ipv6_nd_target': 'fc00::1:2/ffff:ffff:ffff:ffff:ffff:ffff:ffff:0'})
 
+    def test_slash_notation_tcp_dst(self):
+        result = convert_slash_notation('TCP_DST', '1024/1024')
+        self.assertEqual(result, ('1024', '1024'))
+
+        data = dict(tcp_dst='1024/1024')
+        fields = pktview_to_list(data)
+        self.assertEqual(fields, [{'field':'TCP_DST', 'value':'1024', 'mask':'1024'}])
+
+        result = pktview_from_list(fields, slash_notation=True)
+        self.assertEqual(result, {'tcp_dst': '1024/1024'})
+
+    def test_slash_notation_nd_sll(self):
+        result = convert_slash_notation('IPV6_ND_SLL', '01:02:03:04:05:06/ff:ff:ff:00:00:00')
+        self.assertEqual(result, ('01:02:03:04:05:06', 'ff:ff:ff:00:00:00'))
+
     def test_description(self):
         pkt = make_pktview(ip_proto=6, eth_type=0x0800)
         self.assertEqual(pkt.get_description(), 'TCPv4')
