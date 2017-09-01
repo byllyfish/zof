@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+
+Version 0.4.1
+-------------
+
+- Fix exception in datapath service caused by manually closed datapath.
+- All fields support slash notation.
+- zof.run() supports arguments passed as a list.
+- Fixed zof.encode() function to support dict and ObjectView argument types.
+- Fixed zof.encode() function so exception messages are strings, not bytes.
+
+
 Version 0.4.0
 -------------
 
