@@ -1,6 +1,6 @@
 import unittest
 from zof.datapath import DatapathList, Datapath, normalize_datapath_id, normalize_port_no
-from zof.objectview import make_objectview
+from zof.objectview import make_objectview, to_json
 
 
 class DatapathTestCase(unittest.TestCase):
@@ -92,12 +92,12 @@ class DatapathTestCase(unittest.TestCase):
     def test_repr(self):
         dpids = DatapathList()
         dp1 = dpids.add_datapath(datapath_id=0x01, conn_id=0x01)
-        self.assertEqual(repr(dp1), '<zof.Datapath datapath_id=1>')
-        self.assertEqual(repr(dp1), dp1.__getstate__())
+        self.assertEqual(repr(dp1), "'<zof.Datapath 1>'")
+        self.assertEqual(repr(dp1), "'%s'" % dp1.__getstate__())
 
         port1 = dp1.add_port(port_no=2)
-        self.assertEqual(repr(port1), '<zof.Port port_no=2>')
-        self.assertEqual(repr(port1), port1.__getstate__())
+        self.assertEqual(repr(port1), "'<zof.Port 2>'")
+        self.assertEqual(repr(port1), "'%s'" % port1.__getstate__())
 
     def test_add_port(self):
         dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
@@ -175,3 +175,11 @@ class DatapathTestCase(unittest.TestCase):
 
         port_no = normalize_port_no('controller')
         self.assertEqual(port_no, 'CONTROLLER')
+
+    def test_json(self):
+        dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
+        result = to_json({'datapath': dp1})
+        self.assertEqual(result, '{"datapath":"<zof.Datapath 00:00:00:00:00:00:00:01>"}')
+
+        result = repr({'datapath': dp1})
+        self.assertEqual(result, "{'datapath': '<zof.Datapath 00:00:00:00:00:00:00:01>'}")
