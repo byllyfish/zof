@@ -49,6 +49,8 @@ def common_args(*, under_test=False, include_x_modules=False):
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
     parser = parser_class(add_help=False, parents=_parent_args())
 
+    parser.add_argument('--pidfile', help='PID file')
+    
     log_group = parser.add_argument_group('log arguments')
     log_group.add_argument(
         '--loglevel',
