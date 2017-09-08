@@ -1,16 +1,16 @@
 import unittest
-from zof.api_compile import CompiledMessage
+from zof.api_compile import CompiledString
 from zof.objectview import ObjectView
 
 
-class CompiledMessageTestCase(unittest.TestCase):
+class CompiledStringTestCase(unittest.TestCase):
     def test_init(self):
         msg = '''
         type: ECHO_REQUEST
         msg:
           data: DEADBEEF
         '''
-        cmsg = CompiledMessage(None, msg)
+        cmsg = CompiledString(None, msg)
 
         expected = '''\
 method: OFP.SEND
@@ -45,7 +45,7 @@ params:
         type: $type_
         msg: $msg
         '''
-        cmsg = CompiledMessage(None, template)
+        cmsg = CompiledString(None, template)
         task_locals = dict(datapath_id=None, conn_id=None)
 
         expected = '''\
@@ -73,33 +73,13 @@ params:
             task_locals)
         self.assertEqual(expected, actual)
 
-    def test_repr(self):
-        msg = '''
-        type: ECHO_REQUEST
-        msg:
-          data: DEADBEEF
-        '''
-        cmsg = CompiledMessage(None, msg)
-
-        expected = '''CompiledMessage ---
-  method: OFP.SEND
-  params:
-    xid: $xid
-    datapath_id: $datapath_id
-    conn_id: $conn_id
-    type: ECHO_REQUEST
-    msg:
-      data: DEADBEEF'''
-
-        self.assertEqual(expected, repr(cmsg))
-
     def test_missing_argument(self):
         msg = '''
         type: ECHO_REQUEST
         msg:
           data: DEADBEEF
         '''
-        cmsg = CompiledMessage(None, msg)
+        cmsg = CompiledString(None, msg)
 
         with self.assertRaises(ValueError):
             cmsg._complete(dict(), dict())
@@ -110,7 +90,7 @@ params:
         msg:
           data: DEADBEEF
         '''
-        cmsg = CompiledMessage(None, msg)
+        cmsg = CompiledString(None, msg)
         task_locals = dict(datapath_id='dpid_1', conn_id=7)
 
         with self.assertRaisesRegex(ValueError,
