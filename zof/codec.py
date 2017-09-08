@@ -1,9 +1,13 @@
 import os
+import codecs
 from ctypes import cdll, c_void_p, c_size_t, c_uint32, create_string_buffer
 from zof.connection import Connection
 from zof.objectview import to_json, ObjectView
 
 OFTR_DLL = None
+
+OFTR_ENCODE = 1
+OFTR_DECODE = 2
 
 
 def _dll():
@@ -23,6 +27,8 @@ def _dll():
 
 
 def _oftr_call(opcode, data, buflen=2048):
+    assert isinstance(data, bytes)
+
     dll = _dll()
     buf = create_string_buffer(buflen)
 
@@ -52,5 +58,45 @@ def encode(text, version=4):
     if isinstance(text, (dict, ObjectView)):
         text = to_json(text)
 
-    opcode = 1 + (version << 24)
+    opcode = OFTR_ENCODE + (version << 24)
     return _oftr_call(opcode, text.encode('utf-8'), buflen=max(len(text), 1024))
+
+
+def decode(binary):
+    """Decode binary as source code.
+    """
+
+    return _oftr_call(OFTR_DECODE, bytes(binary), buflen=1024).decode('utf-8')
+
+
+#-------------------------------------------------------------------------------
+
+
+def _of_encode(text, errors='strict'):
+    if errors != 'strict':
+        raise ValueError('invalid errors argument: %s' % errors)
+    return encode(text), len(text)
+
+
+def _of_decode(binary, errors='strict'):
+    if errors != 'strict':
+        raise ValueError('invalid errors argument: %s' % errors)
+    return decode(binary), len(binary)
+
+
+def search(name):
+    """Search function registered for codecs.
+
+    Args:
+        name (str): Codec name.
+
+    Returns:
+        CodecInfo: Encode/decode information or None if not found.
+    """
+    if name == 'openflow':
+        return codecs.CodecInfo(
+            name=name, encode=_of_encode, decode=_of_decode) 
+    return None
+
+
+codecs.register(search)
