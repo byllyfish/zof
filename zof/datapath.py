@@ -114,7 +114,7 @@ class Datapath:
         """
         if self.up:
             self.up = False
-            self.user_data.pop(READY_FLAG)
+            self.user_data.pop(READY_FLAG, None)
             Controller.singleton().rpc_call(
                 'OFP.CLOSE', ignore_result=True, conn_id=self.conn_id)
 
