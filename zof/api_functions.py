@@ -56,7 +56,8 @@ def ensure_future(coroutine, *, datapath_id=None, conn_id=None):
     scope.
     """
     app = asyncio.Task.current_task().zof_task_app
-    return app.ensure_future(coroutine, datapath_id=datapath_id, conn_id=conn_id)
+    return app.ensure_future(
+        coroutine, datapath_id=datapath_id, conn_id=conn_id)
 
 
 def _rpc_call(method, **params):

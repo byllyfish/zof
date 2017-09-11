@@ -1,8 +1,11 @@
 import asyncio
 
 
-
-async def asyncmap(coro, seq, *, ensure_future=asyncio.ensure_future, parallelism=1):
+async def asyncmap(coro,
+                   seq,
+                   *,
+                   ensure_future=asyncio.ensure_future,
+                   parallelism=1):
     """
     Returns a coroutine object that, when awaited, yields the next result.
 
@@ -28,7 +31,8 @@ async def asyncmap(coro, seq, *, ensure_future=asyncio.ensure_future, parallelis
     next_idx = parallelism
 
     while pending:
-        done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        done, pending = await asyncio.wait(
+            pending, return_when=asyncio.FIRST_COMPLETED)
         for fut in done:
             if next_idx < len(seq):
                 pending.add(ensure_future(coro(seq[next_idx])))

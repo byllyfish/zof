@@ -65,6 +65,7 @@ class CompiledMessage:
         Args:
             kwds (dict): Template argument values.
         """
+
         def _req(conn_id):
             return self.request(conn_id=conn_id, **kwds)
 

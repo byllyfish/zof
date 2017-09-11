@@ -141,7 +141,6 @@ async def _collect_port_stats_all(metric):
             pass
 
 
-
 class _MyCollector:
     def __init__(self, stats):
         self.stats = stats

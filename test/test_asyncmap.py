@@ -3,9 +3,7 @@ import asyncio
 from zof.asyncmap import asyncmap
 
 
-
 class AsyncMapTestCase(AsyncTestCase):
-
     async def test_asyncmap(self):
         parallel = 0
         max_parallel = 0
@@ -27,7 +25,8 @@ class AsyncMapTestCase(AsyncTestCase):
         for parallelism in (1, 2, 3, 4, 5, 6, 8):
             output = set()
             max_parallel = 0
-            async for next_result in asyncmap(_test, targets, parallelism=parallelism):
+            async for next_result in asyncmap(
+                _test, targets, parallelism=parallelism):
                 try:
                     assert next_result.done()
                     result = await next_result

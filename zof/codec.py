@@ -59,7 +59,8 @@ def encode(text, version=4):
         text = to_json(text)
 
     opcode = OFTR_ENCODE + (version << 24)
-    return _oftr_call(opcode, text.encode('utf-8'), buflen=max(len(text), 1024))
+    return _oftr_call(
+        opcode, text.encode('utf-8'), buflen=max(len(text), 1024))
 
 
 def decode(binary):
@@ -95,7 +96,7 @@ def search(name):
     """
     if name == 'openflow':
         return codecs.CodecInfo(
-            name=name, encode=_of_encode, decode=_of_decode) 
+            name=name, encode=_of_encode, decode=_of_decode)
     return None
 
 

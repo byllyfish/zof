@@ -1,10 +1,9 @@
-
 import os
 
 
 class PidFile:
     """Concrete class that represents a PID file."""
-    
+
     def __init__(self, pid_path):
         self.pid_path = pid_path
         self.exists = False
@@ -36,4 +35,3 @@ class PidFile:
 
     def __exit__(self, *args):
         self.remove()
-

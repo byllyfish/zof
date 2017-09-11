@@ -179,7 +179,9 @@ class DatapathTestCase(unittest.TestCase):
     def test_json(self):
         dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
         result = to_json({'datapath': dp1})
-        self.assertEqual(result, '{"datapath":"<zof.Datapath 00:00:00:00:00:00:00:01>"}')
+        self.assertEqual(
+            result, '{"datapath":"<zof.Datapath 00:00:00:00:00:00:00:01>"}')
 
         result = repr({'datapath': dp1})
-        self.assertEqual(result, "{'datapath': '<zof.Datapath 00:00:00:00:00:00:00:01>'}")
+        self.assertEqual(
+            result, "{'datapath': '<zof.Datapath 00:00:00:00:00:00:00:01>'}")

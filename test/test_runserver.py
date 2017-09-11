@@ -34,7 +34,7 @@ class RunServerTestCase(unittest.TestCase):
         signal.alarm(1)
         run_server(signals=['SIGALRM'])
         self.assert_final_task_count(0)
-        
+
     def test_destroyed_task_pending(self):
         """Verify with task that sleeps in an infinite loop calling stop.
         """

@@ -10,7 +10,6 @@ def _tmp_path():
 
 
 class PidFileTestCase(unittest.TestCase):
-
     def test_pidfile(self):
         path = _tmp_path()
         pidfile = PidFile(path)
@@ -27,4 +26,3 @@ class PidFileTestCase(unittest.TestCase):
         with PidFile(path):
             pid = PidFile(path).read()
             self.assertEqual(pid, os.getpid())
-
