@@ -4,11 +4,11 @@ import sys
 _PY36 = sys.version_info[0:2] >= (3, 6)
 
 if _PY36:
-    from .asyncmap36 import asyncmap
+    from .asyncmap36 import asyncmap  # pylint: disable=unused-import
 
 else:
 
-    class asyncmap:
+    class asyncmap:  # pylint: disable=invalid-name
         """
         Async generator object that is a port of the asyncmap36 generator.
 

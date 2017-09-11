@@ -37,9 +37,6 @@ class CompiledMessage:
 
     _controller = None
 
-    def __init__(self, controller, msg):
-        raise NotImplementedError()
-
     def send(self, **kwds):
         """Send an OpenFlow message (fire and forget).
 
