@@ -2,6 +2,17 @@ CHANGELOG
 =========
 
 
+Version 0.5.0
+-------------
+
+- Add request_all() api.
+- Add support for the --pidfile command line argument.
+- Add zof.codec module with Python codec for encode/decode OF messages.
+- Refactor CompiledMessage into a base class.
+- Add argument to control number of ports in simulator demo app.
+- Fix KeyError bug in datapath class.
+
+
 Version 0.4.1
 -------------
 
