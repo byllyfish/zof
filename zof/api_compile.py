@@ -2,9 +2,11 @@ import string
 import textwrap
 import asyncio
 import logging
+import zof
 from .controller import Controller
 from .objectview import ObjectView, to_json
 from .pktview import pktview_to_list
+from .asyncmap import asyncmap
 
 LOGGER = logging.getLogger(__package__)
 
@@ -57,13 +59,17 @@ class CompiledMessage:
         return self._controller.write(
             self._complete(kwds, _task_locals()), xid)
 
-    def request_all(self, *, datapath_ids=None, **kwds):
+    def request_all(self, *, parallelism=1, **kwds):
         """Send multiple OpenFlow requests and receive responses.
 
         Args:
             kwds (dict): Template argument values.
         """
-        raise NotImplementedError()
+        def _req(conn_id):
+            return self.request(conn_id=conn_id, **kwds)
+
+        conn_ids = [dp.conn_id for dp in zof.get_datapaths()]
+        return asyncmap(_req, conn_ids, parallelism=parallelism)
 
     def _complete(self, kwds, task_locals):
         raise NotImplementedError()
