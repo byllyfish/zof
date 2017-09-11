@@ -2,9 +2,11 @@ import string
 import textwrap
 import asyncio
 import logging
+import zof
 from .controller import Controller
 from .objectview import ObjectView, to_json
 from .pktview import pktview_to_list
+from .asyncmap import asyncmap
 
 LOGGER = logging.getLogger(__package__)
 
@@ -22,24 +24,18 @@ def compile(msg):
     """Compile an OpenFlow message template."""
     controller = Controller.singleton()
     if isinstance(msg, str):
-        return CompiledMessage(controller, msg)
+        return CompiledString(controller, msg)
     return CompiledObject(controller, msg)
 
 
-class CompiledMessage(object):
-    """Concrete class representing a compiled OpenFlow message template.
+class CompiledMessage:
+    """Abstract class representing a compiled OpenFlow message.
 
     Attributes:
         _controller (Controller): Controller object.
-        _template (StringTemplate): Prepared message template.
     """
 
-    def __init__(self, controller, msg):
-        assert isinstance(msg, str)
-        self._controller = controller
-        self._template = None
-        self._template_args = None
-        self._compile(msg)
+    _controller = None
 
     def send(self, **kwds):
         """Send an OpenFlow message (fire and forget).
@@ -59,6 +55,38 @@ class CompiledMessage(object):
         xid = kwds.setdefault('xid', self._controller.next_xid())
         return self._controller.write(
             self._complete(kwds, _task_locals()), xid)
+
+    def request_all(self, *, parallelism=1, **kwds):
+        """Send multiple OpenFlow requests and receive responses.
+
+        Args:
+            kwds (dict): Template argument values.
+        """
+
+        def _req(conn_id):
+            return self.request(conn_id=conn_id, **kwds)
+
+        conn_ids = [dp.conn_id for dp in zof.get_datapaths()]
+        return asyncmap(_req, conn_ids, parallelism=parallelism)
+
+    def _complete(self, kwds, task_locals):
+        raise NotImplementedError()
+
+
+class CompiledString(CompiledMessage):
+    """Concrete class representing a compiled OpenFlow message template.
+
+    Attributes:
+        _controller (Controller): Controller object.
+        _template (StringTemplate): Prepared message template.
+    """
+
+    def __init__(self, controller, msg):
+        assert isinstance(msg, str)
+        self._controller = controller
+        self._template = None
+        self._template_args = None
+        self._compile(msg)
 
     def _compile(self, msg):
         """Compile OFP.SEND message and store it into `self._template`.
@@ -110,13 +138,8 @@ class CompiledMessage(object):
             if key not in self._template_args:
                 raise ValueError('Unknown keyword argument "%s"' % key)
 
-    def __repr__(self):
-        """Return string represenation of template."""
-        template = self._template.template.replace('\n', '\n  ')
-        return 'CompiledMessage ---\n  %s' % template
 
-
-class CompiledObject(object):
+class CompiledObject(CompiledMessage):
     """Concrete class representing a compiled OpenFlow object template."""
 
     def __init__(self, controller, obj):
@@ -126,25 +149,6 @@ class CompiledObject(object):
         self._obj = obj
         if self._obj['type'] in ('PACKET_OUT', 'PACKET_IN'):
             self._convert_pkt()
-
-    def send(self, **kwds):
-        """Send an OpenFlow message (fire and forget).
-
-        Args:
-            kwds (dict): Template argument values.
-        """
-        kwds.setdefault('xid', self._controller.next_xid())
-        self._controller.write(self._complete(kwds, _task_locals()))
-
-    def request(self, **kwds):
-        """Send an OpenFlow request and receive a response.
-
-        Args:
-            kwds (dict): Template argument values.
-        """
-        xid = kwds.setdefault('xid', self._controller.next_xid())
-        return self._controller.write(
-            self._complete(kwds, _task_locals()), xid)
 
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.

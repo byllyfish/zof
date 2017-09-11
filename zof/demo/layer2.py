@@ -20,8 +20,9 @@ APP.forwarding_table = {}
 @APP.message('channel_up')
 def channel_up(event):
     """Set up datapath when switch connects."""
-    APP.logger.info('%s Connected from %s (version %d)', event.datapath_id,
-                    event.endpoint, event.version)
+    APP.logger.info('%s Connected from %s (%d ports, version %d)',
+                    event.datapath_id, event.endpoint,
+                    len(event.datapath), event.version)
     APP.logger.info('%s Remove all flows', event.datapath_id)
 
     DELETE_FLOWS.send()

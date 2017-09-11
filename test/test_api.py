@@ -3,7 +3,6 @@ import zof
 
 
 class TestApi(unittest.TestCase):
-
     def test_zof(self):
         zof.set_apps([])
 

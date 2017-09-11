@@ -52,14 +52,8 @@ async def ports(target):
         met = PortMetrics()
         await _collect_port_stats(target, met)
     else:
-        # FIXME(bfish): Collecting stats from multiple datapaths serially is
-        # problematic. A slow responder could hold up collection. If we allow
-        # parallelism, we must enforce a strict timeout to limit the scrape
-        # duration. The advantage of collecting them all is that we don't
-        # have to worry about service discovery.
         met = PortMetrics(include_instance=True)
-        for datapath in zof.get_datapaths():
-            await _collect_port_stats(datapath.datapath_id, met)
+        await _collect_port_stats_all(met)
     return _dump_prometheus(met.metrics())
 
 
@@ -131,10 +125,20 @@ async def _collect_port_stats(dpid, metric):
     try:
         reply = await PORT_STATS.request(datapath_id=dpid)
         for stat in reply.msg:
-            metric.update(dpid, stat)
+            metric.update(reply.datapath_id, stat)
     except _exc.ControllerException as ex:
         APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid,
                            ex)
+
+
+async def _collect_port_stats_all(metric):
+    async for reply in PORT_STATS.request_all(parallelism=5):
+        try:
+            reply = await reply
+            for stat in reply.msg:
+                metric.update(reply.datapath_id, stat)
+        except _exc.ControllerException:
+            pass
 
 
 class _MyCollector:

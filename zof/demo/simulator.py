@@ -8,7 +8,7 @@ def _arg_parser():
     parser = argparse.ArgumentParser(
         prog='simulator', description='Simulator Demo', add_help=False)
     parser.add_argument(
-        '--sim-endpoint', 
+        '--sim-endpoint',
         metavar='ENDPOINT',
         help='endpoint to connect to',
         default='127.0.0.1:6653')
@@ -17,6 +17,11 @@ def _arg_parser():
         type=int,
         default=10,
         help='Number of datapaths to simulate')
+    parser.add_argument(
+        '--sim-port-count',
+        type=int,
+        default=5,
+        help='Number of ports per datapath')
     parser.add_argument(
         '--sim-timeout',
         type=float,
@@ -159,22 +164,23 @@ class Simulator(object):
             'type': 'REPLY.DESC',
             'xid': event.xid,
             'msg': {
-                'hw_desc': 'hw_desc',
-                'mfr_desc': 'mfr_desc',
-                'sw_desc': 'sw_desc',
-                'serial_num': '',
-                'dp_desc': ''
+                'hw_desc': 'sim hw_desc',
+                'mfr_desc': 'sim mfr_desc',
+                'sw_desc': 'sim sw_desc',
+                'serial_num': 'sim serial_num',
+                'dp_desc': 'sim dp_desc'
             }
         }
         zof.compile(msg).send()
 
     def _portdescs(self):
-        return [self._portdesc(i) for i in range(1, 5)]
+        return [self._portdesc(i + 1) for i in range(APP.args.sim_port_count)]
 
     def _portdesc(self, port_no):  # pylint: disable=no-self-use
+        macaddr = '%12.12x' % port_no
         return {
             'port_no': port_no,
-            'hw_addr': '00:00:00:00:00:FF',
+            'hw_addr': macaddr,
             'name': 'port %d' % port_no,
             'config': [],
             'state': [],

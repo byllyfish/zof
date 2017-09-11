@@ -161,7 +161,9 @@ class ObjectViewTestCase(unittest.TestCase):
                 ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
                     '2001::1')
             ]))
-        self.assertEqual(repr(obj), "{'a': [IPv4Address('10.1.2.3'), IPv6Address('2001::1')]}")
+        self.assertEqual(
+            repr(obj),
+            "{'a': [IPv4Address('10.1.2.3'), IPv6Address('2001::1')]}")
 
     def test_argparse_namespace(self):
         args = argparse.Namespace(b=3)

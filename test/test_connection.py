@@ -307,7 +307,6 @@ class ConnectionTestCase(AsyncTestCase):
 
 
 class ConnectionMiscTestCase(unittest.TestCase):
-
     def test_find_oftr_path(self):
         path = Connection.find_oftr_path()
         self.assertTrue(path)

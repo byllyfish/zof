@@ -6,6 +6,7 @@ import sys
 from .api_args import common_args
 from .controller import Controller
 from .logging import init_logging
+from .pidfile import PidFile
 
 
 def run(*, args=None):
@@ -29,8 +30,9 @@ def run(*, args=None):
         import asyncio
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-    controller = Controller.singleton()
-    exit_status = controller.run_loop(args=args)
+    with PidFile(args.pidfile):
+        controller = Controller.singleton()
+        exit_status = controller.run_loop(args=args)
 
     if not args.x_under_test:
         sys.exit(exit_status)
