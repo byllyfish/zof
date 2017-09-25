@@ -3,6 +3,7 @@ import codecs
 from ctypes import cdll, c_void_p, c_size_t, c_uint32, create_string_buffer
 from zof.connection import Connection
 from zof.objectview import to_json, ObjectView
+from zof.exception import CodecError
 
 OFTR_DLL = None
 
@@ -45,10 +46,10 @@ def _oftr_call(opcode, data, buflen=2048):
 
     if result >= -buflen:
         # Buffer contains error message.
-        raise ValueError('error: %s' % buf[:-result].decode('utf-8'))
+        raise CodecError(buf[:-result].decode('utf-8'))
 
     # Result buffer is not big enough; this shouldn't happen.
-    raise ValueError('error: _oftr_call failed: %r bytes needed' % result)
+    raise CodecError('_oftr_call failed: %r bytes needed' % result)
 
 
 def encode(text, version=4):
@@ -75,13 +76,13 @@ def decode(binary):
 
 def _of_encode(text, errors='strict'):
     if errors != 'strict':
-        raise ValueError('invalid errors argument: %s' % errors)
+        raise CodecError('invalid errors argument: %s' % errors)
     return encode(text), len(text)
 
 
 def _of_decode(binary, errors='strict'):
     if errors != 'strict':
-        raise ValueError('invalid errors argument: %s' % errors)
+        raise CodecError('invalid errors argument: %s' % errors)
     return decode(binary), len(binary)
 
 
