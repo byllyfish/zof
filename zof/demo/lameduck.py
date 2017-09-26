@@ -6,6 +6,7 @@ APP = zof.Application('lameduck')
 
 FLOW_MOD = zof.compile('''
 type: FLOW_MOD
+flags: [NO_ALERT]
 msg:
   table_id: 0
   command: ADD
