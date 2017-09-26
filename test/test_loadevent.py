@@ -83,6 +83,13 @@ class LoadEventTestCase(unittest.TestCase):
         self.assertFalse("pkt" in event)
         self.assertTrue("_pkt" in event)
 
+    def test_event_payload(self):
+        event = load_event(b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}')
+        self.assertEqual(event.foo, 27)
+        self.assertEqual(event.data, b'\xff\x07')
+        self.assertEqual(event.pkt, {'a':9, 'x_pkt_pos': 1, 'payload': b'\x07'})
+        self.assertEqual(event.pkt.payload, b'\x07')
+
     def test_event_str(self):
         # Test that str(event) produces the expected json.
         event = load_event(b'{"foo":"bar"}')
