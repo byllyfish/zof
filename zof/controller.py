@@ -160,7 +160,11 @@ class Controller(object):
             line = await self.conn.readline()
             if not line:
                 break
+            # TODO(bfish): If queue is empty, can we just dispatch the event
+            # from here?
             self.post_event(load_event(line))
+            # Give _event_loop time to run now.
+            await asyncio.sleep(0)
         LOGGER.debug('_read_loop exited')
 
     async def _start(self):
