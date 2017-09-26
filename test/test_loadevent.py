@@ -101,3 +101,10 @@ class LoadEventTestCase(unittest.TestCase):
         event = load_event(b'{"foo":"bar"}')
         s = to_json(event)
         self.assertEqual(s, '{"foo":"bar"}')
+
+    def test_load_event_time(self):
+        import timeit
+        result = timeit.timeit("""load_event(b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}')""", 
+            setup='from zof.event import load_event',
+            number=10000)
+        print('[test_load_event_time=%r]' % result)
