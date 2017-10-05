@@ -48,7 +48,7 @@ async def get_portstats(dpid, port_no):
 @WEB.get_json('/stats/port/{dpid}')
 async def get_portstats(dpid):
     result = await PORTSTATS_REQ.request(
-        datapath_id=_parse_dpid(dpid), port_no='ALL')
+        datapath_id=_parse_dpid(dpid), port_no='ANY')
     return {dpid: result.msg}
 
 
