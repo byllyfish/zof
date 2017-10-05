@@ -63,6 +63,12 @@ async def modify_portdesc(post_data):
     return result.msg
 
 
+@WEB.get_json('/stats/portdesc/{dpid}')
+async def get_portdesc(dpid):
+    result = await PORTDESC_REQ.request(datapath_id=_parse_dpid(dpid))
+    return {dpid: result.msg}
+
+
 FLOW_REQ = zof.compile('''
     type: REQUEST.FLOW
     msg:
@@ -82,6 +88,10 @@ PORTSTATS_REQ = zof.compile('''
     type: REQUEST.PORT_STATS
     msg:
         port_no: $port_no
+''')
+
+PORTDESC_REQ = zof.compile('''
+    type: REQUEST.PORT_DESC
 ''')
 
 PORTMOD_REQ = zof.compile('''
