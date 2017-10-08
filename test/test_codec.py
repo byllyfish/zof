@@ -1,7 +1,9 @@
 import unittest
 import zof
+import codecs
 from zof.objectview import make_objectview
-from zof.codec import encode, decode
+from zof.codec import encode, decode, OFTR_ENCODE, _oftr_call
+from zof.exception import CodecError
 
 
 class CodecTestCase(unittest.TestCase):
@@ -13,6 +15,11 @@ class CodecTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     r'YAML:1:1: error: not a document'):
             encode('---\n\n...\n')
+
+    def test_oftr_call(self):
+        result = _oftr_call(OFTR_ENCODE, b'type: HELLO', 4)
+        self.assertEqual(result, b'\x06\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00~')
+
 
     def test_hello(self):
         result = encode('type: HELLO\nversion: 1')
@@ -95,3 +102,16 @@ msg:
   versions:        [  ]
 ...
 """)
+
+    def test_codec_exception(self):
+        try:
+            'type: PACKET_IN'.encode('openflow')
+        except ValueError as ex:
+            self.assertIsNone(ex.__cause__)
+            self.assertIsInstance(ex, CodecError)
+
+        try:
+            codecs.encode('type: PACKET_IN', 'openflow')
+        except ValueError as ex:
+            self.assertIsNone(ex.__cause__)
+            self.assertIsInstance(ex, CodecError)

@@ -45,6 +45,13 @@ async def get_portstats(dpid, port_no):
     return {dpid: result.msg}
 
 
+@WEB.get_json('/stats/port/{dpid}')
+async def get_portstats(dpid):
+    result = await PORTSTATS_REQ.request(
+        datapath_id=_parse_dpid(dpid), port_no='ANY')
+    return {dpid: result.msg}
+
+
 @WEB.post_json('/stats/portdesc/modify')
 async def modify_portdesc(post_data):
     dpid = _parse_dpid(post_data.dpid)
@@ -61,6 +68,12 @@ async def modify_portdesc(post_data):
     # just a cheap trick to verify that the portmod *should* have been acted on.
     result = await BARRIER_REQ.request(datapath_id=dpid)
     return result.msg
+
+
+@WEB.get_json('/stats/portdesc/{dpid}')
+async def get_portdesc(dpid):
+    result = await PORTDESC_REQ.request(datapath_id=_parse_dpid(dpid))
+    return {dpid: result.msg}
 
 
 FLOW_REQ = zof.compile('''
@@ -82,6 +95,10 @@ PORTSTATS_REQ = zof.compile('''
     type: REQUEST.PORT_STATS
     msg:
         port_no: $port_no
+''')
+
+PORTDESC_REQ = zof.compile('''
+    type: REQUEST.PORT_DESC
 ''')
 
 PORTMOD_REQ = zof.compile('''

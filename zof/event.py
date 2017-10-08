@@ -6,18 +6,20 @@ class Event(ObjectView):
     """Concrete class that represents an Event."""
 
     def __init__(self, d):
-        super().__init__(d)
         try:
             # Any value with key 'data' MUST be a binary type.
             # If there's no `data` key, the rest of this is skipped.
-            self.data = bytes.fromhex(d['data'])
+            data = bytes.fromhex(d['data'])
+            d['data'] = data
             # If there's no `_pkt` key, the rest is skipped.
-            self.pkt = pktview_from_list(d['_pkt'])
-            del d['_pkt']
-            # If there's no 'x_pkt_pos' key in self.pkt, the rest is skipped.
-            self.pkt.payload = self.data[self.pkt['x_pkt_pos']:]
+            pkt = pktview_from_list(d.pop('_pkt'))
+            d['pkt'] = pkt
+            # If there's no 'x_pkt_pos' key in pkt, the rest is skipped.
+            pkt.payload = data[pkt['x_pkt_pos']:]
         except KeyError:
             pass
+        finally:
+            self.__dict__ = d
 
 
 def load_event(event):

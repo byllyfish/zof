@@ -17,6 +17,10 @@ class HttpTestCase(AsyncTestCase):
         async def _get_root():
             return 'Blah\n\u1E03lah'
 
+        @web.get_text('/test/text')
+        async def _get_text():
+            return 'test text1'
+
         @web.get_json('/test/{var1}?{var2}')
         async def _get(var1, var2):
             return {'var1': var1, 'var2': var2}
@@ -57,6 +61,9 @@ class HttpTestCase(AsyncTestCase):
                 'x': 1
             }
         })
+
+        data = await client.get_text('http://127.0.0.1:9010/test/text')
+        self.assertEqual(data, 'test text1')
 
         # "/test" fails because {var1} is required.
         with self.assertRaises(ClientResponseError):

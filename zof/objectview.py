@@ -1,8 +1,28 @@
 """Implements the ObjectView class."""
 
-import json
 import argparse
+import json
 from ipaddress import IPv4Address, IPv6Address
+
+
+def make_objectview(obj):
+    """Return a full ObjectView representation of `obj`.
+    """
+    if isinstance(obj, ObjectView):
+        return obj
+    if isinstance(obj, argparse.Namespace):
+        obj = vars(obj)
+    return _make_objectview(obj)
+
+
+def _make_objectview(obj):
+    assert isinstance(obj, dict)
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = _make_objectview(value)
+        elif isinstance(value, list) and value and isinstance(value[0], dict):
+            obj[key] = [_make_objectview(item) for item in value]
+    return ObjectView(obj)
 
 
 class ObjectView(object):
@@ -30,6 +50,8 @@ class ObjectView(object):
 
     This implementation uses getattr, setattr, and delattr instead of __dict__
     where possible, so subclasses can define alias properties (see PktView).
+
+    TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
     """
 
     def __init__(self, d):
@@ -105,15 +127,23 @@ class ObjectView(object):
         """
         if len(format_spec) == 2 and format_spec[1] == 's':
             indent = int(format_spec[0])
-            return json.dumps(
-                self,
-                ensure_ascii=False,
-                default=_json_serialize,
-                indent=indent)
+            return to_json_pretty(self, indent)
         raise ValueError('ObjectView does not support format_spec: %s' %
                          format_spec)
 
-    # TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
+
+# ------------------------------------------------------------------------------
+# JSON Utilities are defined here because of interdependency with ObjectView.
+# ------------------------------------------------------------------------------
+
+
+def from_json(text, object_hook=ObjectView):
+    """Parse text as json.
+    """
+    # If `text` is a byte string, decode it as utf-8.
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
+    return json.loads(text, object_hook=object_hook)
 
 
 def to_json(obj):
@@ -126,13 +156,11 @@ def to_json(obj):
         default=_json_serialize)
 
 
-def from_json(text, object_hook=ObjectView):
-    """Parse text as json.
+def to_json_pretty(obj, indent=4):
+    """Return string with indented json representation of an object.
     """
-    # If `text` is a byte string, decode it as utf-8.
-    if isinstance(text, bytes):
-        text = text.decode('utf-8')
-    return json.loads(text, object_hook=object_hook)
+    return json.dumps(
+        obj, ensure_ascii=False, default=_json_serialize, indent=indent)
 
 
 def _json_serialize(obj):
@@ -147,23 +175,3 @@ def _json_serialize(obj):
     except AttributeError:
         raise TypeError('Value "%s" of type %s is not JSON serializable' %
                         (repr(obj), type(obj)))
-
-
-def make_objectview(obj):
-    """Return a full ObjectView representation of `obj`.
-    """
-    if isinstance(obj, ObjectView):
-        return obj
-    if isinstance(obj, argparse.Namespace):
-        obj = vars(obj)
-    return _make_objectview(obj)
-
-
-def _make_objectview(obj):
-    assert isinstance(obj, dict)
-    for key, value in obj.items():
-        if isinstance(value, dict):
-            obj[key] = _make_objectview(value)
-        elif isinstance(value, list) and value and isinstance(value[0], dict):
-            obj[key] = [_make_objectview(item) for item in value]
-    return ObjectView(obj)

@@ -82,6 +82,7 @@ def start(_):
 
 @APP.message('channel_up')
 @APP.message('flow_mod')
+@APP.message('packet_out')
 def ignore(_):
     return
 

@@ -98,3 +98,16 @@ class PreflightUnloadException(ControlFlowException):
 
     def __str__(self):
         return '[PreflightUnloadException]'
+
+
+class CodecError(ValueError):
+    """Exception class used in codec failures.
+
+
+    """
+
+    def __init__(self, msg):
+        super().__init__(msg, None)
+
+    def __str__(self):
+        return self.args[0]
