@@ -50,6 +50,8 @@ class ObjectView(object):
 
     This implementation uses getattr, setattr, and delattr instead of __dict__
     where possible, so subclasses can define alias properties (see PktView).
+
+    TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
     """
 
     def __init__(self, d):
@@ -129,8 +131,6 @@ class ObjectView(object):
         raise ValueError('ObjectView does not support format_spec: %s' %
                          format_spec)
 
-    # TODO(bfish): Implement __copy__ and __deepcopy__? Implement __getstate__?
-
 
 # ------------------------------------------------------------------------------
 # JSON Utilities are defined here because of interdependency with ObjectView.
@@ -160,10 +160,7 @@ def to_json_pretty(obj, indent=4):
     """Return string with indented json representation of an object.
     """
     return json.dumps(
-        obj,
-        ensure_ascii=False,
-        default=_json_serialize,
-        indent=indent)
+        obj, ensure_ascii=False, default=_json_serialize, indent=indent)
 
 
 def _json_serialize(obj):
