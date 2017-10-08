@@ -15,10 +15,9 @@ async def start(event):
             await CONTROLLER.rpc_call('OFP.DESCRIPTION')
         end_time = time.time()
         elapsed = end_time - start_time
-        print('Elapsed %r/%r' % (elapsed, elapsed/N))
+        print('Elapsed %r/%r' % (elapsed, elapsed / N))
     zof.post_event('EXIT')
 
 
 if __name__ == '__main__':
     zof.run()
-

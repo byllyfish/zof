@@ -1,8 +1,6 @@
 import zof
 
-
 APP = zof.Application('cbenchreply')
-
 
 FLOW_MOD = zof.compile('''
 type: FLOW_MOD

@@ -121,7 +121,6 @@ async def _get_ports(datapath):
         APP.logger.warning('_get_ports failed: %s', ex)
 
 
-
 def _post_channel_up(datapath):
     datapath.user_data[READY_FLAG] = 1
 

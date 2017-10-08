@@ -2,14 +2,12 @@ import zof
 import asyncio
 from zof.demo.simulator import APP as SIM
 
-
-APP = zof.Application(
-    'zbench',
-    exception_fatal=True)
+APP = zof.Application('zbench', exception_fatal=True)
 
 APP.flowmod_count = 0
 APP.packetout_count = 0
 APP.packetin_count = 0
+
 
 @APP.event('start')
 async def start(event):
@@ -18,14 +16,18 @@ async def start(event):
     run_zbench()
     while True:
         await asyncio.sleep(0.25)
-        APP.logger.info('%d packetin, %d flowmod, %d packetout', APP.packetin_count, APP.flowmod_count, APP.packetout_count)
+        APP.logger.info('%d packetin, %d flowmod, %d packetout',
+                        APP.packetin_count, APP.flowmod_count,
+                        APP.packetout_count)
         #if APP.flowmod_count and APP.flowmod_count >= APP.packetin_count:
         #    break
+
 
 @APP.message('flow_mod', datapath_id=None)
 def flowmod(event):
     #APP.logger.info('flowmod: %r', event)
     APP.flowmod_count += 1
+
 
 @APP.message('packet_out', datapath_id=None)
 def packet_out(event):
