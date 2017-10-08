@@ -1,7 +1,7 @@
 import zof
 
 
-APP = zof.Application('lameduck')
+APP = zof.Application('cbenchreply')
 
 
 FLOW_MOD = zof.compile('''
