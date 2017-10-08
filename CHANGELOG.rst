@@ -2,6 +2,17 @@ CHANGELOG
 =========
 
 
+Version 0.6.0
+-------------
+
+- Add rest_api demo handlers for /stats/portdesc, /stats/port/{dpid} (needed for faucet).
+- Minor performance improvements. Fix cooperative yielding behavior.
+- Add experimental demos for benchmarking (cbenchreply, zbench, oftr_bench).
+- Include milliseconds in log timestamp.
+- Add CodecError exception for use by zof codec.
+- Add alpine docker image.
+
+
 Version 0.5.0
 -------------
 
