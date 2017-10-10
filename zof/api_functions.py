@@ -1,7 +1,6 @@
 import asyncio
 from .controller import Controller
 from .service.datapath import APP as DATAPATH_APP
-from .event import Event, make_event
 
 
 def get_apps():
@@ -37,17 +36,12 @@ def find_port(*, datapath_id, port_no):
     return DATAPATH_APP.find_port(datapath_id, port_no)
 
 
-def post_event(event, **kwds):
+def post_event(event):
     """Function used to send an internal event to all app modules.
 
     Args:
-        event (str | Event): event type or event object
-        kwds (dict): keyword arguments for make_event
+        event (dict): event object
     """
-    if isinstance(event, str):
-        event = make_event(event=event.upper(), **kwds)
-    elif not isinstance(event, Event) or kwds:
-        raise ValueError('Invalid arguments to post_event')
     Controller.singleton().post_event(event)
 
 

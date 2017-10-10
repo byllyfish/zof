@@ -24,10 +24,10 @@ class Event(ObjectView):
 
 def load_event(event):
     try:
-        return from_json(event, object_hook=Event)
+        return from_json(event)
     except ValueError as ex:
         # Report malformed JSON input.
-        return make_event(event='EXCEPTION', reason=str(ex), input=event)
+        return {'event': 'EXCEPTION', 'reason': str(ex), 'input': event}
 
 
 def dump_event(event):

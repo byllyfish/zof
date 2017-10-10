@@ -6,8 +6,9 @@ import sys
 import functools
 import inspect
 from collections import defaultdict
-from .event import load_event, dump_event, make_event, Event
+from .event import load_event, dump_event
 from .objectview import make_objectview
+from .pktview import pktview_from_list
 from .connection import Connection
 from .run_server import run_server
 from . import exception as _exc
@@ -92,7 +93,7 @@ class Controller(object):
         """
         LOGGER.info('Signal Received: %s (qsize=%d)', signame,
                     self._event_queue.qsize())
-        self.post_event(make_event(event='SIGNAL', signal=signame, exit=True))
+        self.post_event({'event': 'SIGNAL', 'signal': signame, 'exit': True})
 
     async def _run(self):
         """Async task for running the controller."""
@@ -182,8 +183,8 @@ class Controller(object):
             self._set_phase('START')
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller._start')
-            self.post_event(make_event(event='STARTFAIL'))
-            self.post_event(make_event(event='EXIT', exit_status=11))
+            self.post_event({'event': 'STARTFAIL'})
+            self.post_event({'event': 'EXIT', 'exit_status': 11})
 
     async def _get_description(self):
         """Check the api version used by oftr.
@@ -193,12 +194,12 @@ class Controller(object):
         try:
             result = await self.rpc_call('OFP.DESCRIPTION')
             # Check API version.
-            if float(result.api_version) != _API_VERSION:
-                LOGGER.error('Unsupported API version %s', result.api_version)
+            if float(result['api_version']) != _API_VERSION:
+                LOGGER.error('Unsupported API version %s', result['api_version'])
                 raise ValueError('Unsupported API version')
 
-            self._supported_versions = result.versions
-            LOGGER.info('Connected to oftr %s', result.sw_desc)
+            self._supported_versions = result['versions']
+            LOGGER.info('Connected to oftr %s', result['sw_desc'])
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to get description from oftr %s', ex)
@@ -214,7 +215,7 @@ class Controller(object):
                 privkey=self.args.listen_privkey)
             # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
-            self._tls_id = result.tls_id
+            self._tls_id = result['tls_id']
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to create TLS identity: %s', ex.message)
@@ -236,7 +237,7 @@ class Controller(object):
                     tls_id=self._tls_id,
                     options=options)
                 LOGGER.info('Listening on %s [conn_id=%d, versions=%s]', endpt,
-                            result.conn_id, versions)
+                            result['conn_id'], versions)
 
         except _exc.ControllerException as ex:
             LOGGER.error('Unable to listen on %s: %s', endpt, ex.message)
@@ -244,8 +245,8 @@ class Controller(object):
 
     def post_event(self, event):
         """Post an event to our event queue."""
-        if not isinstance(event, Event):
-            raise ValueError('Not an event: %r' % event)
+        if not isinstance(event, dict):
+            raise ValueError('%s not a dictionary: %r' % (type(event), event))
         self._event_queue.put_nowait(event)
 
     def _dispatch_event(self, event):
@@ -256,8 +257,8 @@ class Controller(object):
                 self._handle_internal_event(event)
             elif 'id' in event:
                 self._handle_rpc_reply(event)
-            elif event.method == 'OFP.MESSAGE':
-                self._handle_message(event.params)
+            elif event['method'] == 'OFP.MESSAGE':
+                self._handle_message(event['params'])
             else:
                 LOGGER.warning('Unhandled event: %r', event)
         except _exc.StopPropagationException:
@@ -322,61 +323,58 @@ class Controller(object):
 
     def _handle_internal_event(self, event):
         """Called when an internal event is received."""
-        if event.event == 'MESSAGE':
+        event_type = event['event']
+        if event_type == 'MESSAGE':
             self._handle_message(event)
             return
         # Immediately begin shutting down if there is an 'EXIT' event.
-        if event.event == 'EXIT':
-            raise _exc.ExitException(event('exit_status', default=0))
+        if event_type == 'EXIT':
+            raise _exc.ExitException(event.get('exit_status', 0))
         # Let apps handle the event.
         for app in self.apps:
             app.handle_event(event, 'event')
         # Check for SIGNAL event asking for exit.
-        if event.event == 'SIGNAL' and event.exit:
-            raise _exc.ExitException(_negative_signal_number(event.signal))
+        if event_type == 'SIGNAL' and event['exit']:
+            raise _exc.ExitException(_negative_signal_number(event['signal']))
 
     def _handle_rpc_reply(self, event):
         """Called when a RPC reply is received."""
-        if 'result' in event:
-            result = event.result
-            except_class = None
-        else:
-            result = event
-            except_class = _exc.RPCException
-        known_xid = self._handle_xid(result, event.id, except_class)
+        result = event.get('result', event)
+        except_class = _exc.RPCException if result is event else None
+        known_xid = self._handle_xid(result, event['id'], except_class)
         if not known_xid:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
 
     def _handle_message(self, message):
         """Called when a `OFP.MESSAGE` is received."""
-        msg_type = message.type
+        msg_type = message['type']
         if msg_type.startswith('CHANNEL_'):
             self._handle_channel(message)
             return
-        if msg_type == 'ERROR':
-            except_class = _exc.ErrorException
-        else:
-            except_class = None
+        if msg_type == 'PACKET_IN' or msg_type == 'PACKET_OUT':
+            _convert_pkt(message['msg'])
+        except_class = _exc.ErrorException if msg_type == 'ERROR' else None
         # If the message does not have a datapath_id, don't attempt to handle
         # replies based on xid.
         known_xid = False
         if 'datapath_id' in message:
-            known_xid = self._handle_xid(message, message.xid, except_class)
+            known_xid = self._handle_xid(message, message['xid'], except_class)
 
         if not known_xid:
             for app in self.apps:
                 app.handle_event(message, 'message')
             # Log all OpenFlow error messages not associated with requests.
             if msg_type == 'ERROR':
-                LOGGER.error('ERROR: %s', message)
+                LOGGER.error('ERROR: %r', message)
 
     def _handle_channel(self, message):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_*'."""
-        if message.type == 'CHANNEL_ALERT':
+        msg_type = message['type']
+        if msg_type == 'CHANNEL_ALERT':
             self._handle_alert(message)
             return
-        if message.type == 'CHANNEL_DOWN':
-            scope_key = _make_scope_key(message.conn_id)
+        if msg_type == 'CHANNEL_DOWN':
+            scope_key = _make_scope_key(message['conn_id'])
             self._cancel_tasks(scope_key)
         for app in self.apps:
             app.handle_event(message, 'message')
@@ -384,18 +382,19 @@ class Controller(object):
     def _handle_alert(self, message):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'."""
         # First check if this alert was sent in response to something we said.
-        if message.xid and self._handle_xid(message, message.xid,
-                                            _exc.DeliveryException):
+        msg_xid = message['xid']
+        if msg_xid and self._handle_xid(message, msg_xid, _exc.DeliveryException):
             return
         # Otherwise, we need to report it.
-        data = message.data.hex()
+        msg_data = message['data']
+        data = msg_data.hex()
         if len(data) > 100:
             data = '%s...' % data[:100]
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-            message.alert, data,
-            len(message.data), message.conn_id,
-            message('datapath_id'), message.xid)
+            message['alert'], data,
+            len(msg_data), message['conn_id'],
+            message.get('datapath_id'), msg_xid)
 
         for app in self.apps:
             app.handle_event(message, 'message')
@@ -424,7 +423,7 @@ class Controller(object):
         if self.phase != 'PRESTART':
             self._cancel_tasks(self.phase)
         self.phase = phase
-        event = make_event(event=phase)
+        event = {'event': phase}
         if phase in ('STOP', 'POSTSTOP'):
             self._dispatch_event(event)
         elif self._event_queue:
@@ -433,7 +432,7 @@ class Controller(object):
     def _preflight(self):
         """Called at the end of the INIT phase.
         """
-        event = make_event(event='PREFLIGHT')
+        event = {'event': 'PREFLIGHT'}
         for app in list(self.apps):
             try:
                 app.handle_event(event, 'event')
@@ -655,3 +654,24 @@ def _negative_signal_number(signame):
         return -getattr(signal, signame)
     except AttributeError:
         return -99
+
+
+def _convert_pkt(msg):
+    """Convert (data, _pkt) to (payload, pkt).
+
+    We also convert msg['data'] from hex string to bytes.
+
+    This method is needed because there's a mismatch between the oftr schema
+    and the desired zof schema.
+    """
+    try:
+        # If there's no `data` key, the rest of this is skipped.
+        data = bytes.fromhex(msg['data'])
+        msg['data'] = data
+        # If there's no `_pkt` key, the rest is skipped.
+        pkt = pktview_from_list(msg.pop('_pkt'))
+        msg['pkt'] = pkt
+        # If there's no 'x_pkt_pos' key in pkt, the rest is skipped.
+        pkt.payload = data[pkt['x_pkt_pos']:]
+    except KeyError:
+        pass
