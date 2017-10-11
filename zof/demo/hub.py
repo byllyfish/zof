@@ -5,17 +5,17 @@ APP = zof.Application('hub')
 
 @APP.message('channel_up')
 def channel_up(event):
-    APP.logger.info('Channel UP datapath_id=%s', event.datapath_id)
-    FLOW_MOD_TABLE_MISS.send(datapath_id=event.datapath_id)
+    APP.logger.info('Channel UP datapath_id=%s', event['datapath_id'])
+    FLOW_MOD_TABLE_MISS.send()
 
 
 @APP.message('packet_in')
 def packet_in(event):
     APP.logger.info('Packet_in %r', event)
+    msg = event['msg']
     PACKET_OUT.send(
-        datapath_id=event.datapath_id,
-        in_port=event.msg.in_port,
-        data=event.msg.data)
+        in_port=msg['in_port'],
+        data=msg['data'])
 
 
 FLOW_MOD_TABLE_MISS = zof.compile('''

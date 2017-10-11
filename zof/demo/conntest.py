@@ -12,9 +12,9 @@ async def start(_):
         conns = await zof.get_connections()
         for conn in conns:
             # If the connection has an associated datapath_id, close it.
-            if conn.datapath_id:
-                APP.logger.info('close %d %s', conn.conn_id, conn.datapath_id)
-                count = await zof.close(datapath_id=conn.datapath_id)
+            if conn['datapath_id']:
+                APP.logger.info('close %d %s', conn['conn_id'], conn['datapath_id'])
+                count = await zof.close(datapath_id=conn['datapath_id'])
                 assert count == 1
 
 

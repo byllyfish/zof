@@ -101,22 +101,23 @@ class PortMetrics:
         ]
 
     def update(self, dpid, stat):
+        port_no = stat['port_no']
         if self.include_instance:
-            labels = [str(stat.port_no), dpid]
+            labels = [str(port_no), dpid]
         else:
-            labels = [str(stat.port_no)]
-        for counter, value in [(self.tx_bytes, stat.tx_bytes),
-                               (self.rx_bytes, stat.rx_bytes),
-                               (self.tx_packets, stat.tx_packets),
-                               (self.rx_packets, stat.rx_packets),
-                               (self.tx_dropped, stat.tx_dropped),
-                               (self.rx_dropped, stat.rx_dropped),
-                               (self.rx_errors, stat.rx_errors)]:
+            labels = [str(port_no)]
+        for counter, value in [(self.tx_bytes, stat['tx_bytes']),
+                               (self.rx_bytes, stat['rx_bytes']),
+                               (self.tx_packets, stat['tx_packets']),
+                               (self.rx_packets, stat['rx_packets']),
+                               (self.tx_dropped, stat['tx_dropped']),
+                               (self.rx_dropped, stat['rx_dropped']),
+                               (self.rx_errors, stat['rx_errors'])]:
             if _supported_counter(value):
                 counter.add_metric(labels, value)
-        if stat.duration != '0':
-            self.duration.add_metric(labels, float(stat.duration))
-        port = zof.find_port(datapath_id=dpid, port_no=stat.port_no)
+        if stat['duration'] != '0':
+            self.duration.add_metric(labels, float(stat['duration']))
+        port = zof.find_port(datapath_id=dpid, port_no=port_no)
         if port:
             self.port_up.add_metric(labels, int(port.up))
 
@@ -124,8 +125,8 @@ class PortMetrics:
 async def _collect_port_stats(dpid, metric):
     try:
         reply = await PORT_STATS.request(datapath_id=dpid)
-        for stat in reply.msg:
-            metric.update(reply.datapath_id, stat)
+        for stat in reply['msg']:
+            metric.update(reply['datapath_id'], stat)
     except _exc.ControllerException as ex:
         APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid,
                            ex)
@@ -135,8 +136,8 @@ async def _collect_port_stats_all(metric):
     async for reply in PORT_STATS.request_all(parallelism=5):
         try:
             reply = await reply
-            for stat in reply.msg:
-                metric.update(reply.datapath_id, stat)
+            for stat in reply['msg']:
+                metric.update(reply['datapath_id'], stat)
         except _exc.ControllerException:
             pass
 

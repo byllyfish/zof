@@ -27,29 +27,29 @@ def get_switches():
 @WEB.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
 async def get_flows(dpid):
     result = await FLOW_REQ.request(datapath_id=_parse_dpid(dpid))
-    _translate_flows(result.msg)
-    return {dpid: result.msg}
+    _translate_flows(result['msg'])
+    return {dpid: result['msg']}
 
 
 @WEB.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
-    _translate_groups(result.msg)
-    return {dpid: result.msg}
+    _translate_groups(result['msg'])
+    return {dpid: result['msg']}
 
 
 @WEB.get_json('/stats/port/{dpid}/{port_no}')
 async def get_portstats(dpid, port_no):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
-    return {dpid: result.msg}
+    return {dpid: result['msg']}
 
 
 @WEB.get_json('/stats/port/{dpid}')
 async def get_portstats(dpid):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no='ANY')
-    return {dpid: result.msg}
+    return {dpid: result['msg']}
 
 
 @WEB.post_json('/stats/portdesc/modify')
@@ -67,13 +67,13 @@ async def modify_portdesc(post_data):
     # message. Any errors returned will only show up in the log. The barrier here is
     # just a cheap trick to verify that the portmod *should* have been acted on.
     result = await BARRIER_REQ.request(datapath_id=dpid)
-    return result.msg
+    return result['msg']
 
 
 @WEB.get_json('/stats/portdesc/{dpid}')
 async def get_portdesc(dpid):
     result = await PORTDESC_REQ.request(datapath_id=_parse_dpid(dpid))
-    return {dpid: result.msg}
+    return {dpid: result['msg']}
 
 
 FLOW_REQ = zof.compile('''
@@ -137,16 +137,16 @@ def _parse_port(port_no):
 def _translate_flows(msgs):
     for msg in msgs:
         if 'match' in msg:
-            msg.match = pktview_from_list(msg.match, slash_notation=True)
+            msg['match'] = pktview_from_list(msg['match'], slash_notation=True)
         if 'instructions' in msg:
-            msg.actions = _translate_instructions(msg.instructions)
+            msg['actions'] = _translate_instructions(msg['instructions'])
 
 
 def _translate_groups(msgs):
     for msg in msgs:
-        for bkt in msg.buckets:
+        for bkt in msg['buckets']:
             if 'actions' in bkt:
-                bkt.actions = _translate_actions(bkt.actions)
+                bkt['actions'] = _translate_actions(bkt['actions'])
 
 
 def _translate_instructions(instrs):
@@ -158,7 +158,7 @@ def _translate_instructions(instrs):
 
 def _translate_instruction(instr):
     if instr.instruction == 'APPLY_ACTIONS':
-        return _translate_actions(instr.actions)
+        return _translate_actions(instr['actions'])
     return [str(instr)]
 
 
@@ -167,14 +167,15 @@ def _translate_actions(actions):
 
 
 def _translate_action(action):
-    if action.action == 'OUTPUT':
-        return 'OUTPUT:%s' % action.port_no
-    if action.action == 'GROUP':
-        return 'GROUP:%s' % action.group_id
-    if action.action == 'SET_FIELD':
-        return 'SET_FIELD: {%s:%s}' % (action.field.lower(), action.value)
+    action_type = action['action']
+    if action_type == 'OUTPUT':
+        return 'OUTPUT:%s' % action['port_no']
+    if action_type == 'GROUP':
+        return 'GROUP:%s' % action['group_id']
+    if action_type == 'SET_FIELD':
+        return 'SET_FIELD: {%s:%s}' % (action['field'].lower(), action['value'])
     if len(action) == 1:
-        return '%s' % action.action
+        return '%s' % action_type
     return str(action)
 
 
