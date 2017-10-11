@@ -16,7 +16,7 @@ msg:
 
 @APP.message('packet_in')
 def packet_in(event):
-    FLOW_MOD.send(eth_dst=event.msg.pkt.eth_dst)
+    FLOW_MOD.send(eth_dst=event['msg']['pkt'].eth_dst)
 
 
 if __name__ == '__main__':

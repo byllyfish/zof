@@ -72,7 +72,7 @@ async def connect(endpoint, *, options=(), versions=(), tls_id=0):
         tls_id=tls_id,
         options=options,
         versions=versions)
-    return result.conn_id
+    return result['conn_id']
 
 
 async def close(*, conn_id=0, datapath_id=None):
@@ -80,14 +80,14 @@ async def close(*, conn_id=0, datapath_id=None):
     """
     result = await _rpc_call(
         'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
-    return result.count
+    return result['count']
 
 
 async def get_connections(*, conn_id=0):
     """Get list of OpenFlow connections.
     """
     result = await _rpc_call('OFP.LIST_CONNECTIONS', conn_id=conn_id)
-    return result.stats
+    return result['stats']
 
 
 async def add_identity(*, cert, cacert, privkey):
@@ -98,4 +98,4 @@ async def add_identity(*, cert, cacert, privkey):
     """
     result = await _rpc_call(
         'OFP.ADD_IDENTITY', cert=cert, cacert=cacert, privkey=privkey)
-    return result.tls_id
+    return result['tls_id']

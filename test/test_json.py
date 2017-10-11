@@ -25,10 +25,10 @@ def _test_performance(data):
 class JsonTestCase(unittest.TestCase):
 
     def test_from_json(self):
-        obj = from_json('{"b":2}', object_hook=None)
+        obj = from_json('{"b":2}')
         self.assertEqual(obj, {'b': 2})
 
-        obj = from_json(b'{"a":1}', object_hook=None)
+        obj = from_json(b'{"a":1}')
         self.assertEqual(obj, {'a': 1})
 
     @unittest.skip("skip speed test")

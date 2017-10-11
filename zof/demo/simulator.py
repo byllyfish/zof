@@ -53,13 +53,13 @@ APP.connect_count = 0
 
 async def _exit_timeout(timeout):
     await asyncio.sleep(timeout)
-    zof.post_event('SIM_TIMEOUT')
+    zof.post_event({'event': 'SIM_TIMEOUT'})
 
 
 @APP.event('sim_timeout')
 def sim_timeout(_):
     exit_status = 20 if APP.connect_count < APP.args.sim_count else 0
-    zof.post_event('EXIT', exit_status=exit_status)
+    zof.post_event({'event': 'EXIT', 'exit_status': exit_status})
 
 
 @APP.event('prestart')
@@ -90,27 +90,27 @@ def ignore(_):
 @APP.message('features_request')
 def features_request(event):
     APP.connect_count += 1
-    APP.conn_to_sim[event.conn_id].features_request(event)
+    APP.conn_to_sim[event['conn_id']].features_request(event)
 
 
 @APP.message('barrier_request')
 def barrier_request(event):
-    APP.conn_to_sim[event.conn_id].barrier_request(event)
+    APP.conn_to_sim[event['conn_id']].barrier_request(event)
 
 
 @APP.message('request.port_desc')
 def request_portdesc(event):
-    APP.conn_to_sim[event.conn_id].request_portdesc(event)
+    APP.conn_to_sim[event['conn_id']].request_portdesc(event)
 
 
 @APP.message('request.desc')
 def request_desc(event):
-    APP.conn_to_sim[event.conn_id].request_desc(event)
+    APP.conn_to_sim[event['conn_id']].request_desc(event)
 
 
 @APP.message('channel_down')
 def channel_down(event):
-    sim = APP.conn_to_sim.pop(event.conn_id, None)
+    sim = APP.conn_to_sim.pop(event['conn_id'], None)
     if sim:
         APP.sims.remove(sim)
 
@@ -136,26 +136,26 @@ class Simulator(object):
     def features_request(self, event):
         msg = {
             'type': 'FEATURES_REPLY',
-            'xid': event.xid,
+            'xid': event['xid'],
             'flags': ['NO_ALERT'],
             'msg': {
                 'datapath_id': self.datapath_id,
                 'n_buffers': 0,
                 'n_tables': 32,
                 'capabilities': [],
-                'ports': self._portdescs() if event.version < 4 else []
+                'ports': self._portdescs() if event['version'] < 4 else []
             }
         }
         zof.compile(msg).send()
 
     def barrier_request(self, event):
-        msg = {'type': 'BARRIER_REPLY', 'xid': event.xid}
+        msg = {'type': 'BARRIER_REPLY', 'xid': event['xid']}
         zof.compile(msg).send()
 
     def request_portdesc(self, event):
         msg = {
             'type': 'REPLY.PORT_DESC',
-            'xid': event.xid,
+            'xid': event['xid'],
             'msg': self._portdescs()
         }
         zof.compile(msg).send()
@@ -163,7 +163,7 @@ class Simulator(object):
     def request_desc(self, event):  # pylint: disable=no-self-use
         msg = {
             'type': 'REPLY.DESC',
-            'xid': event.xid,
+            'xid': event['xid'],
             'msg': {
                 'hw_desc': 'sim hw_desc',
                 'mfr_desc': 'sim mfr_desc',
