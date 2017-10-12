@@ -54,15 +54,15 @@ async def get_portstats(dpid):
 
 @WEB.post_json('/stats/portdesc/modify')
 async def modify_portdesc(post_data):
-    dpid = _parse_dpid(post_data.dpid)
-    port_no = _parse_port(post_data.port_no)
+    dpid = _parse_dpid(post_data['dpid'])
+    port_no = _parse_port(post_data['port_no'])
     port = zof.find_port(datapath_id=dpid, port_no=port_no)
     PORTMOD_REQ.send(
         datapath_id=dpid,
         port_no=port_no,
         hw_addr=port.hw_addr,
-        config=post_data.config,
-        mask=post_data.mask)
+        config=post_data['config'],
+        mask=post_data['mask'])
     # FIXME(bfish): This code does not handle OpenFlow errors elicited from the PortMod
     # message. Any errors returned will only show up in the log. The barrier here is
     # just a cheap trick to verify that the portmod *should* have been acted on.
