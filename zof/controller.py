@@ -526,8 +526,8 @@ def _timestamp():
 
 def _event_has_more(event):
     try:
-        return event.type.startswith('REPLY.') and 'MORE' in event.flags
-    except AttributeError:
+        return event['type'].startswith('REPLY.') and 'MORE' in event['flags']
+    except KeyError:
         return False
 
 
@@ -604,7 +604,7 @@ class _ReplyFuture:
             self._future = asyncio.Future()
             return self._future.__await__()
 
-    async def __aiter__(self):
+    def __aiter__(self):
         return self
 
     async def __anext__(self):
