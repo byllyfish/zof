@@ -157,7 +157,7 @@ def _translate_instructions(instrs):
 
 
 def _translate_instruction(instr):
-    if instr.instruction == 'APPLY_ACTIONS':
+    if instr['instruction'] == 'APPLY_ACTIONS':
         return _translate_actions(instr['actions'])
     return [str(instr)]
 
