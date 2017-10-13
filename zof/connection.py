@@ -4,6 +4,7 @@ import asyncio
 import logging
 import shutil
 import shlex
+from zof.protocol import Protocol
 
 _DEFAULT_LIMIT = 2**20  # max line length is 1MB
 
@@ -36,6 +37,7 @@ class Connection(object):
         self._conn = None
         self._input = None
         self._output = None
+        self._protocol = None
 
         oftr_path = self.find_oftr_path(oftr_options.get('path'))
         oftr_subcmd = oftr_options.get('subcmd') or 'jsonrpc'
@@ -86,17 +88,50 @@ class Connection(object):
             LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)
             raise
 
+    async def connect_protocol(self, post_event):
+        """Set up connection to oftr driver (using Protocol implementation).
+
+        Returns:
+            (int) process id of oftr process
+        """
+        LOGGER.debug("Launch oftr %r", self._oftr_cmd)
+
+        try:
+            # When we create the subprocess, make it a session leader.
+            # We do not want SIGINT signals sent from the terminal to reach
+            # the subprocess.
+            loop = asyncio.get_event_loop()
+            transport, protocol = await loop.subprocess_exec(
+                lambda: Protocol(post_event),
+                *self._oftr_cmd,
+                start_new_session=True)
+            self._conn = transport
+            self._protocol = protocol
+            self._input = transport.get_pipe_transport(1)
+            self._output = transport.get_pipe_transport(0)
+            return transport.get_pid()
+
+        except (PermissionError, FileNotFoundError):
+            LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)
+            raise
+
     async def disconnect(self):
         """Wait for oftr connection to close.
         """
         if self._conn is None:
             return 0
-        return_code = await self._conn.wait()
+        if self._protocol:
+            await self._protocol.exit_future
+            self._conn.close()
+            return_code = self._conn.get_returncode()
+        else:
+            return_code = await self._conn.wait()
         if return_code:
             LOGGER.error("oftr exited with return code %s", return_code)
         self._input = None
         self._output = None
         self._conn = None
+        self._protocol = None
         return return_code
 
     async def readline(self, delimiter=b'\x00'):

@@ -1,18 +1,13 @@
 import asyncio
+from zof.event import load_event
 
 
 class Protocol(asyncio.SubprocessProtocol):
-    buf = b''
-    transport = None
 
     def __init__(self, post_event):
         self.post_event = post_event
-
-    def connection_made(self, transport):
-        self.transport = transport
-
-    def connection_lost(self, exc):
-        pass
+        self.buf = b''
+        self.exit_future = asyncio.Future()
 
     def pipe_data_received(self, fd, data):
         begin = 0
@@ -23,9 +18,10 @@ class Protocol(asyncio.SubprocessProtocol):
             if offset < 0:
                 self.buf = self.buf[begin:]
                 return
-            self.post_event(self.buf[begin:offset])
+            if begin != offset:
+                self.post_event(load_event(self.buf[begin:offset]))
             offset += 1
             begin = offset
 
     def process_exited(self):
-        pass
+        self.exit_future.set_result(0)
