@@ -30,7 +30,7 @@ class Controller(object):
         apps (List[ControllerApp]): List of apps ordered by precedence.
         args (argparse.Namespace): Arguments parsed by argparse module.
         phase (str): Lifecycle phase.
-        conn (Connection): oftr connection
+        conn (Connection): oftr connection.
     """
 
     _singleton = None
@@ -106,6 +106,8 @@ class Controller(object):
                 'args': self.args('x_oftr_args'),
                 'prefix': self.args('x_oftr_prefix')
             })
+            # TODO(bfish): Call connect() with "self.post_message" to use 
+            # protocol based api.
             await self.conn.connect()
 
             self._event_queue = asyncio.Queue()
@@ -244,10 +246,29 @@ class Controller(object):
             raise
 
     def post_event(self, event):
-        """Post an event to our event queue."""
+        """Post an internal event to our event queue."""
         if not isinstance(event, dict):
             raise ValueError('%s not a dictionary: %r' % (type(event), event))
         self._event_queue.put_nowait(event)
+
+    def post_message(self, event):
+        """Post a message event to our event queue.
+
+        This private api differs from post_event in that we may dispatch the
+        event directly when the event queue is empty.
+        """
+        try:
+            if self._event_queue.empty():
+                # When there are no other events in line, direct dispatch.
+                self._dispatch_event(event)
+            else:
+                LOGGER.debug('post_message: indirect dispatch: %r', event)
+                self._event_queue.put_nowait(event)
+        except _exc.StopPropagationException:
+            LOGGER.debug('post_message: StopPropagationException caught')
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception('Exception in Controller.post_message')
+            sys.exit(1)
 
     def _dispatch_event(self, event):
         """Dispatch an event we receive from the queue."""

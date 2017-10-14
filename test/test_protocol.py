@@ -51,6 +51,7 @@ class ProtocolConnectionTestCase(AsyncTestCase):
         self.conn = Connection(oftr_options=oftr_options)
         self.controller = MockController()
         await self.conn.connect_protocol(self.controller.post_event)
+        assert self.conn.pid > 0
 
     async def tearDown(self):
         self.conn.close(True)

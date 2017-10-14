@@ -14,6 +14,10 @@ LOGGER = logging.getLogger(__package__)
 class Connection(object):
     """Concrete class representing a connection to the `oftr` driver.
 
+    This class supports both the stream and protocol API's. If you pass a
+    'post_message' function argument to `connect()`, you will use the protocol
+    API which may be faster.
+
     Keyword Args:
         oftr_options (Dict[str, str]): Dictionary with options:
                 path: Path to oftr executable (default=<local system path>)
@@ -38,6 +42,7 @@ class Connection(object):
         self._input = None
         self._output = None
         self._protocol = None
+        self._pid = None
 
         oftr_path = self.find_oftr_path(oftr_options.get('path'))
         oftr_subcmd = oftr_options.get('subcmd') or 'jsonrpc'
@@ -53,21 +58,27 @@ class Connection(object):
     def pid(self):
         """Return process ID for oftr process.
 
-        Raises:
-            RuntimeError if process is not running.
+        Returns:
+            (int) process id of oftr process (or None if not running)
         """
-        try:
-            return self._conn.pid
-        except:
-            raise RuntimeError('oftr process is not running')
+        return self._pid
 
-    async def connect(self):
+    async def connect(self, post_message=None):
         """Set up connection to the oftr driver.
 
+        If the 'post_message' argument is present, use the faster protocol api.
+
+        Args:
+            post_message (function): single arg function to post received
+                message events
         Returns:
             (int) process id of oftr process
         """
         LOGGER.debug("Launch oftr %r", self._oftr_cmd)
+
+        # If a callback is provided, use the asyncio protocol api.
+        if post_message:
+            return await self._connect_protocol(post_message)
 
         try:
             # When we create the subprocess, make it a session leader.
@@ -82,34 +93,34 @@ class Connection(object):
             self._conn = proc
             self._input = proc.stdout
             self._output = proc.stdin
-            return proc.pid
+            self._pid = proc.pid
+            return self._pid
 
         except (PermissionError, FileNotFoundError):
             LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)
             raise
 
-    async def connect_protocol(self, post_event):
-        """Set up connection to oftr driver (using Protocol implementation).
+    async def _connect_protocol(self, post_message):
+        """Set up connection to oftr driver (using the Protocol api).
 
         Returns:
             (int) process id of oftr process
         """
-        LOGGER.debug("Launch oftr %r", self._oftr_cmd)
-
         try:
             # When we create the subprocess, make it a session leader.
             # We do not want SIGINT signals sent from the terminal to reach
             # the subprocess.
             loop = asyncio.get_event_loop()
             transport, protocol = await loop.subprocess_exec(
-                lambda: Protocol(post_event),
+                lambda: Protocol(post_message),
                 *self._oftr_cmd,
                 start_new_session=True)
             self._conn = transport
             self._protocol = protocol
             self._input = transport.get_pipe_transport(1)
             self._output = transport.get_pipe_transport(0)
-            return transport.get_pid()
+            self._pid = transport.get_pid()
+            return self._pid
 
         except (PermissionError, FileNotFoundError):
             LOGGER.error('Unable to find executable: "%r"', self._oftr_cmd)
@@ -132,6 +143,7 @@ class Connection(object):
         self._output = None
         self._conn = None
         self._protocol = None
+        self._pid = None
         return return_code
 
     async def readline(self, delimiter=b'\x00'):
