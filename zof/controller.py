@@ -253,7 +253,7 @@ class Controller(object):
         assert isinstance(event, dict)
         self._event_queue.put_nowait(event)
 
-'''
+    '''
     def post_message(self, event):
         """Post a message event to our event queue.
 
@@ -272,7 +272,7 @@ class Controller(object):
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller.post_message')
             sys.exit(1)
-'''
+    '''
 
     def _dispatch_event(self, event):
         """Dispatch an event we receive from the queue."""
