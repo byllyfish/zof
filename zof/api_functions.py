@@ -42,6 +42,8 @@ def post_event(event):
     Args:
         event (dict): event object
     """
+    if not isinstance(event, dict):
+        raise ValueError('%s not a dictionary: %r' % (type(event), event))
     Controller.singleton().post_event(event)
 
 

@@ -91,6 +91,8 @@ def common_args(*, under_test=False, include_x_modules=False):
 
     x_group = parser.add_argument_group('experimental')
     x_group.add_argument('--x-uvloop', action='store_true', help='use uvloop')
+    x_group.add_argument('--x-ujson', action='store_true', help='use ujson')
+    x_group.add_argument('--x-protocol', action='store_true', help='use protocol implementation')
     x_group.add_argument(
         '--x-oftr-path',
         help='path to oftr executable',

@@ -26,9 +26,16 @@ def run(*, args=None):
         init_logging(args.loglevel, args.logfile)
 
     if args.x_uvloop:
+        # Replace default asyncio event loop with uvloop.
         import uvloop  # pylint: disable=import-error
         import asyncio
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+    if args.x_ujson:
+        # Replace default json deserializer with ujson.
+        import ujson  # pylint: disable=import-error
+        import zof.objectview as _ov
+        _ov.from_json = ujson.loads
 
     with PidFile(args.pidfile):
         controller = Controller.singleton()

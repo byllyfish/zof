@@ -3,9 +3,10 @@ from zof.event import load_event
 
 
 class Protocol(asyncio.SubprocessProtocol):
-
-    def __init__(self, post_message):
-        self.post_message = post_message
+    """Implements an asyncio Protocol for parsing data received from oftr.
+    """
+    def __init__(self, post_event):
+        self.post_event = post_event
         self.buf = b''
         self.exit_future = asyncio.Future()
 
@@ -19,7 +20,7 @@ class Protocol(asyncio.SubprocessProtocol):
                 self.buf = self.buf[begin:]
                 return
             if begin != offset:
-                self.post_message(load_event(self.buf[begin:offset]))
+                self.post_event(load_event(self.buf[begin:offset]))
             offset += 1
             begin = offset
 

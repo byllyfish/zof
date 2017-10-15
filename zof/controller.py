@@ -15,7 +15,7 @@ from . import exception as _exc
 
 _XID_TIMEOUT = 10.0  # Seconds
 _IDLE_INTERVAL = 1.0
-_MIN_XID = 8092
+_MIN_XID = 10000
 _MAX_XID = 0xFFFFFFFF
 _API_VERSION = 0.9
 _VERSION = '0.1.0'
@@ -106,15 +106,18 @@ class Controller(object):
                 'args': self.args('x_oftr_args'),
                 'prefix': self.args('x_oftr_prefix')
             })
-            # TODO(bfish): Call connect() with "self.post_message" to use 
-            # protocol based api.
-            await self.conn.connect()
+            # Call connect() with "self.post_event" to use protocol based api.
+            proto_callback = self.post_event if self.args.x_protocol else None
+            await self.conn.connect(proto_callback)
 
             self._event_queue = asyncio.Queue()
             self._set_phase('PRESTART')
 
             asyncio.ensure_future(self._start())
-            asyncio.ensure_future(self._read_loop())
+            if not proto_callback:
+                # Schedule the read loop to read from the stream, if we're not 
+                # using the protocol api.
+                asyncio.ensure_future(self._read_loop())
             idle = asyncio.ensure_future(self._idle_task())
 
             await self._event_loop()
@@ -155,8 +158,8 @@ class Controller(object):
     async def _read_loop(self):
         """Read messages from the driver and push them onto the event queue.
 
-        TODO(bfish): Could be implemented as a lower-level Protocol via
-        Connection class.
+        This method assumes we're using the stream API. When we use the protocol
+        API, this method is not called.
         """
         LOGGER.debug('_read_loop entered')
         while True:
@@ -247,10 +250,10 @@ class Controller(object):
 
     def post_event(self, event):
         """Post an internal event to our event queue."""
-        if not isinstance(event, dict):
-            raise ValueError('%s not a dictionary: %r' % (type(event), event))
+        assert isinstance(event, dict)
         self._event_queue.put_nowait(event)
 
+'''
     def post_message(self, event):
         """Post a message event to our event queue.
 
@@ -269,6 +272,7 @@ class Controller(object):
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception('Exception in Controller.post_message')
             sys.exit(1)
+'''
 
     def _dispatch_event(self, event):
         """Dispatch an event we receive from the queue."""
@@ -407,14 +411,14 @@ class Controller(object):
         if msg_xid and self._handle_xid(message, msg_xid, _exc.DeliveryException):
             return
         # Otherwise, we need to report it.
-        msg_data = message['data']
-        data = msg_data.hex()
-        if len(data) > 100:
-            data = '%s...' % data[:100]
+        data_hex = message['data']
+        data_len = len(data_hex)/2
+        if len(data_hex) > 100:
+            data_hex = '%s...' % data_hex[:100]
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-            message['alert'], data,
-            len(msg_data), message['conn_id'],
+            message['alert'], data_hex,
+            data_len, message['conn_id'],
             message.get('datapath_id'), msg_xid)
 
         for app in self.apps:
