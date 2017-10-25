@@ -14,6 +14,9 @@ fi
 echo "Test layer2 demo with unknown argument."
 $CMD -m zof.demo.layer2 --unknown-argument || true
 
+echo "Test layer2 demo help."
+$CMD -m zof.demo.layer2 --help | grep "use asyncio protocol implementation"
+
 echo "Test layer2 demo with simulator (count=50)"
 $CMD -m zof.demo.simulator \
         --listen-endpoints=6653 \

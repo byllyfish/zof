@@ -49,7 +49,8 @@ def common_args(*, under_test=False, include_x_modules=False):
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
     parser = parser_class(add_help=False, parents=_parent_args())
 
-    parser.add_argument('--pidfile', help='PID file')
+    parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
+    parser.add_argument('--pidfile', help='save pid file')
 
     log_group = parser.add_argument_group('log arguments')
     log_group.add_argument(
@@ -90,9 +91,6 @@ def common_args(*, under_test=False, include_x_modules=False):
         help='private key')
 
     x_group = parser.add_argument_group('experimental')
-    x_group.add_argument('--x-uvloop', action='store_true', help='use uvloop')
-    x_group.add_argument('--x-ujson', action='store_true', help='use ujson')
-    x_group.add_argument('--x-protocol', action='store_true', help='use protocol implementation')
     x_group.add_argument(
         '--x-oftr-path',
         help='path to oftr executable',
@@ -119,6 +117,12 @@ def common_args(*, under_test=False, include_x_modules=False):
             type=csv_list_type('module'),
             metavar='MODULE,...',
             help='modules to import')
+
+    # Various options to control performance experiments.
+    xp_group = parser.add_argument_group('performance')
+    xp_group.add_argument('--xp-uvloop', action='store_true', help='use uvloop for asyncio')
+    xp_group.add_argument('--xp-ujson', action='store_true', help='use ujson for parsing JSON')
+    xp_group.add_argument('--xp-protocol', action='store_true', help='use asyncio protocol implementation')
 
     return parser
 
