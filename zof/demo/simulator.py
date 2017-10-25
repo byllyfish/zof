@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import zof
 from zof.api_args import file_contents_type
+import zof.exception as _exc
 
 
 def _arg_parser():
@@ -37,6 +38,7 @@ def _arg_parser():
         '--sim-cacert',
         type=file_contents_type(),
         help='Simulator CA certificate')
+    parser.add_argument('--sim-reconnect', type=float, default=0, help='Reconnect retry interval (0=never)')
     return parser
 
 
@@ -46,7 +48,6 @@ APP = zof.Application(
     arg_parser=_arg_parser(),
     has_datapath_id=False)
 APP.tls_id = 0
-APP.sims = []
 APP.conn_to_sim = {}
 APP.connect_count = 0
 
@@ -108,11 +109,19 @@ def request_desc(event):
     APP.conn_to_sim[event['conn_id']].request_desc(event)
 
 
+@APP.message('request.port_stats')
+def request_portstats(event):
+    APP.conn_to_sim[event['conn_id']].request_portstats(event)
+
+
 @APP.message('channel_down')
 def channel_down(event):
-    sim = APP.conn_to_sim.pop(event['conn_id'], None)
-    if sim:
-        APP.sims.remove(sim)
+    APP.conn_to_sim[event['conn_id']].channel_down()
+
+
+@APP.message('role_request')
+def role_request(event):
+    APP.conn_to_sim[event['conn_id']].role_request()
 
 
 @APP.message(any)
@@ -126,12 +135,21 @@ class Simulator(object):
 
     def __init__(self, datapath_id):
         self.datapath_id = datapath_id
-        APP.sims.append(self)
+        self.conn_id = None
 
     async def start(self):
-        conn_id = await zof.connect(
-            APP.args.sim_endpoint, versions=[4], tls_id=APP.tls_id)
-        APP.conn_to_sim[conn_id] = self
+        try:
+            self.conn_id = await zof.connect(
+                APP.args.sim_endpoint, versions=[4], tls_id=APP.tls_id)
+            APP.conn_to_sim[self.conn_id] = self
+        except _exc.RPCException:
+            self.channel_down()
+
+    def channel_down(self):
+        APP.conn_to_sim.pop(self.conn_id, None)
+        # If there's a reconnect interval, then schedule the restart.
+        if APP.args.sim_reconnect:
+            zof.ensure_future(self._restart(APP.args.sim_reconnect))
 
     def features_request(self, event):
         msg = {
@@ -174,6 +192,14 @@ class Simulator(object):
         }
         zof.compile(msg).send()
 
+    def request_portstats(self, event):
+        msg = {
+            'type': 'REPLY.PORT_STATS',
+            'xid': event['xid'],
+            'msg': self._portstats()
+        }
+        zof.compile(msg).send()
+
     def _portdescs(self):
         return [self._portdesc(i + 1) for i in range(APP.args.sim_port_count)]
 
@@ -194,6 +220,35 @@ class Simulator(object):
                 'max_speed': 0
             }
         }
+
+    def _portstats(self):
+        return [self._portstat(i + 1) for i in range(APP.args.sim_port_count)]
+
+    def _portstat(self, port_no):
+        return {
+            'port_no': port_no,
+            'duration': 0,
+            'rx_packets': 0,
+            'tx_packets': 0,
+            'rx_bytes': 0,
+            'tx_bytes': 0,
+            'rx_dropped': 0,
+            'tx_dropped': 0,
+            'rx_errors': 0,
+            'tx_errors': 0,
+            'ethernet': {
+                'rx_frame_err': 0,
+                'rx_over_err': 0,
+                'rx_crc_err': 0,
+                'collisions': 0
+            },
+            'properties': []
+        }
+
+    async def _restart(self, interval):
+        APP.logger.info('_restart in %d seconds', interval)
+        await asyncio.sleep(interval)
+        await self.start()
 
 
 def main():
