@@ -47,19 +47,18 @@ def common_args(*, under_test=False, include_x_modules=False):
         _import_extra_modules()
 
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
-    parser = parser_class(add_help=False, parents=_parent_args())
+    parser = parser_class(add_help=False, parents=_parent_args(), conflict_handler='resolve')
 
-    parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
-    parser.add_argument('--pidfile', help='save pid file')
-
-    log_group = parser.add_argument_group('log arguments')
-    log_group.add_argument(
+    common_group = parser.add_argument_group('common arguments')
+    common_group.add_argument('-h', '--help', action='help', help='show this help message and exit')
+    common_group.add_argument(
         '--loglevel',
         metavar='LEVEL',
         help='log level',
         default=DEFAULT_LOGLEVEL)
-    log_group.add_argument(
+    common_group.add_argument(
         '--logfile', metavar='FILE', help='log file', default=DEFAULT_LOGFILE)
+    common_group.add_argument('--pidfile', help='save pid file')
 
     listen_group = parser.add_argument_group('listen arguments')
     listen_group.add_argument(
