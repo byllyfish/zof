@@ -60,4 +60,10 @@ $CMD -m zof.demo.simulator \
         --sim-cacert="$SCRIPT_DIR/ss-cntl.cert" \
         --x-modules=zof.demo.layer2 
 
+echo "Test table_features demo with simulator (1 multipart reply)"
+$CMD -m zof.demo.simulator \
+        --listen-endpoints=6653 \
+        --sim-count=1 \
+        --x-modules=zof.demo.table_features &> /dev/null
+
 exit 0

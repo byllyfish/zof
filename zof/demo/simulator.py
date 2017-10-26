@@ -114,6 +114,11 @@ def request_portstats(event):
     APP.conn_to_sim[event['conn_id']].request_portstats(event)
 
 
+@APP.message('request.table_features')
+def request_tablefeatures(event):
+    APP.conn_to_sim[event['conn_id']].request_tablefeatures(event)
+
+
 @APP.message('channel_down')
 def channel_down(event):
     APP.conn_to_sim[event['conn_id']].channel_down()
@@ -200,6 +205,15 @@ class Simulator(object):
         }
         zof.compile(msg).send()
 
+    def request_tablefeatures(self, event):
+        # This code currently ignores the contents of the TableFeatures request.
+        msg = {
+            'type': 'REPLY.TABLE_FEATURES',
+            'xid': event['xid'],
+            'msg': self._tablefeatures()
+        }
+        zof.compile(msg).send()
+
     def _portdescs(self):
         return [self._portdesc(i + 1) for i in range(APP.args.sim_port_count)]
 
@@ -243,6 +257,30 @@ class Simulator(object):
                 'collisions': 0
             },
             'properties': []
+        }
+
+    def _tablefeatures(self):
+        # FIXME(bfish): > 20, breaking into multipart request not working?
+        return [self._tablefeature(i) for i in range(20)]
+
+    def _tablefeature(self, table_id):
+        actions = [hex(i) for i in range(100)]
+        tables = list(range(table_id+1, 254))
+        return {
+            'table_id': table_id,
+            'name': 'Table %d' % table_id,
+            'metadata_match': 0,
+            'metadata_write': 0,
+            'config': [0],
+            'max_entries': 1024,
+            'instructions': actions,
+            'next_tables': tables,
+            'write_actions': actions,
+            'apply_actions': actions,
+            'match': actions,
+            'wildcards': actions,
+            'write_set_field': actions,
+            'apply_set_field': actions
         }
 
     async def _restart(self, interval):
