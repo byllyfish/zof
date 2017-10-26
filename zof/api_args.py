@@ -121,7 +121,7 @@ def common_args(*, under_test=False, include_x_modules=False):
     xp_group = parser.add_argument_group('performance')
     xp_group.add_argument('--xp-uvloop', action='store_true', help='use uvloop for asyncio')
     xp_group.add_argument('--xp-ujson', action='store_true', help='use ujson for parsing JSON')
-    xp_group.add_argument('--xp-protocol', action='store_true', help='use asyncio protocol implementation')
+    xp_group.add_argument('--xp-streams', action='store_true', help='use streams implementation (deprecated)')
 
     return parser
 

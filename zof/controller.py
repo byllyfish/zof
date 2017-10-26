@@ -107,7 +107,7 @@ class Controller(object):
                 'prefix': self.args('x_oftr_prefix')
             })
             # Call connect() with "self.post_event" to use protocol based api.
-            proto_callback = self.post_event if self.args.xp_protocol else None
+            proto_callback = self.post_event if not self.args.xp_streams else None
             await self.conn.connect(proto_callback)
 
             self._event_queue = asyncio.Queue()

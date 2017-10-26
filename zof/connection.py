@@ -74,11 +74,11 @@ class Connection(object):
         Returns:
             (int) process id of oftr process
         """
-        LOGGER.debug("Launch oftr %r", self._oftr_cmd)
-
         # If a callback is provided, use the asyncio protocol api.
         if post_message:
             return await self._connect_protocol(post_message)
+
+        LOGGER.debug("Launch oftr %r (stream API)", self._oftr_cmd)
 
         try:
             # When we create the subprocess, make it a session leader.
@@ -106,6 +106,8 @@ class Connection(object):
         Returns:
             (int) process id of oftr process
         """
+        LOGGER.debug("Launch oftr %r (protocol API)", self._oftr_cmd)
+        
         try:
             # When we create the subprocess, make it a session leader.
             # We do not want SIGINT signals sent from the terminal to reach
