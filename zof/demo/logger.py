@@ -10,8 +10,8 @@ APP.logger.info('phase = %r', APP.phase)
 def preflight(event):
     APP.logger.info('event = %r', event)
 
-@APP.event('POSTSTOP')
-def poststop(event):
+@APP.event('POSTFLIGHT')
+def postflight(event):
     APP.logger.info('event = %r', event)
 
 

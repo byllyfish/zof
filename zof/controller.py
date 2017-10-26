@@ -75,7 +75,7 @@ class Controller(object):
                 signals=['SIGTERM', 'SIGINT', 'SIGHUP'],
                 signal_handler=self._handle_signal,
                 logger=LOGGER)
-            self._set_phase('POSTSTOP')
+            self._set_phase('POSTFLIGHT')
 
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(ex)
@@ -442,14 +442,16 @@ class Controller(object):
     def _set_phase(self, phase):
         """Called as the run loop changes phase:
 
-            INIT -> PRESTART -> START -> STOP -> POSTSTOP.
+            INIT -> PRESTART -> START -> STOP -> POSTFLIGHT.
+
+        N.B. The PREFLIGHT event is delivered at the end of the INIT phase.
         """
         LOGGER.debug('Change phase from "%s" to "%s"', self.phase, phase)
         if self.phase != 'PRESTART':
             self._cancel_tasks(self.phase)
         self.phase = phase
         event = {'event': phase}
-        if phase in ('STOP', 'POSTSTOP'):
+        if phase in ('STOP', 'POSTFLIGHT'):
             self._dispatch_event(event)
         elif self._event_queue:
             self.post_event(event)
