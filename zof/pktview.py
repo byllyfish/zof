@@ -167,12 +167,17 @@ def pktview_to_list(pkt):
     return [_make_field(k, v) for k, v in _iter_items(pkt) if k != PAYLOAD]
 
 
-def pktview_from_ofctl(ofctl):
-    """Convert an 'ofctl' dict to a PktView object."""
+def pktview_from_ofctl(ofctl, *, validate=False):
+    """Convert an 'ofctl' dict to a PktView object.
+
+    Args:
+        ofctl (dict): ofctl match dictionary
+        validate (bool): raise exception on unrecognized match field
+    """
     if not isinstance(ofctl, dict):
         raise ValueError('Expected a dict')
 
-    return PktView(convert_from_ofctl(ofctl))
+    return PktView(convert_from_ofctl(ofctl, validate=validate))
 
 
 def _make_field(name, value):

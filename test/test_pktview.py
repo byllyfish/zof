@@ -131,11 +131,11 @@ class PktViewTestCase(unittest.TestCase):
 
     def test_pktview_from_ofctl(self):
         data = dict(dl_type=0x0800, nw_proto=6, tp_dst=80)
-        pkt = pktview_from_ofctl(data)
+        pkt = pktview_from_ofctl(data, validate=True)
         self.assertEqual(pkt, {'ip_proto': 6, 'eth_type': 2048, 'tcp_dst': 80})
 
         data = dict(dl_dst='ab:cd:00:00:00:00/ff:ff:00:00:00:00')
-        pkt = pktview_from_ofctl(data)
+        pkt = pktview_from_ofctl(data, validate=True)
         self.assertEqual(pkt,
                          {'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'})
         items = pktview_to_list(pkt)
@@ -144,6 +144,17 @@ class PktViewTestCase(unittest.TestCase):
             'field': 'ETH_DST',
             'mask': 'ff:ff:00:00:00:00'
         }])
+
+        data = dict(tcp_dst='80/0xff')
+        pkt = pktview_from_ofctl(data, validate=True)
+        self.assertEqual(pkt, {'tcp_dst': '80/0xff'})
+        items = pktview_to_list(pkt)
+        self.assertEqual(items, [{
+            'value': '80',
+            'field': 'TCP_DST',
+            'mask': '0xff'
+        }])
+
 
     def test_convert_slash_notation(self):
         self.assertEqual(

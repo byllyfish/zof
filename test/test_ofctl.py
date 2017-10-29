@@ -44,7 +44,7 @@ class TestOfctl(unittest.TestCase):
             'dl_vlan': '0x123',
             'dl_type': 0x0800
         }
-        result = convert_from_ofctl(ofctl)
+        result = convert_from_ofctl(ofctl, validate=True)
         self.assertEqual(result, {
             'eth_src': '00:00:00:00:00:01',
             'eth_dst': '00:00:00:00:00:02',
@@ -102,3 +102,56 @@ class TestOfctl(unittest.TestCase):
 
         result = convert_from_ofctl({})
         self.assertEqual(result, {})
+
+    def test_arp(self):
+        ofctl = {
+            'dl_src': '00:00:00:00:00:01',
+            'dl_dst': '00:00:00:00:00:02',
+            'dl_type': 0x0806,
+            'arp_op': 1,
+            'nw_src': '192.168.1.1',
+            'nw_dst': '192.168.1.2'
+        }
+        result = convert_from_ofctl(ofctl)
+        self.assertEqual(result, {
+            'eth_src': '00:00:00:00:00:01',
+            'eth_dst': '00:00:00:00:00:02',
+            'eth_type': 0x0806,
+            'arp_op': 1,
+            'arp_spa': '192.168.1.1',
+            'arp_tpa': '192.168.1.2',
+        })
+
+    def test_validate_invalid(self):
+        ofctl = {
+            'dl_src': '00:00:00:00:00:01',
+            'dl_dst': '00:00:00:00:00:02',
+            'dl_type': 0x0800,
+            'nw_src': '192.168.1.1',
+            'nw_dst': '192.168.1.2',
+            'nw_proto': 6,
+            'tp_src': 1001,
+            'tp_dst': 1002,
+            'other_field': 'other_value'
+        }
+        with self.assertRaisesRegex(ValueError, 'other_field'):
+            convert_from_ofctl(ofctl, validate=True)
+
+        ofctl = {
+            'udp_src': 'x'
+        }
+        with self.assertRaisesRegex(ValueError, 'udp_src: x'):
+            convert_from_ofctl(ofctl, validate=True)
+
+    def test_validate_masked(self):
+        ofctl = {
+            'udp_src': '123/0xFF'
+        }
+        result = convert_from_ofctl(ofctl, validate=True)
+        self.assertEqual(result, {'udp_src': '123/0xFF'})
+
+        ofctl = {
+            'udp_src': '123/70/12'
+        }
+        with self.assertRaisesRegex(ValueError, 'udp_src: 123/70/12'):
+            convert_from_ofctl(ofctl, validate=True)
