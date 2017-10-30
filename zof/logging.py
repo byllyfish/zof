@@ -47,10 +47,12 @@ def init_logging(loglevel, logfile=EXT_STDERR):
 
         # Log stack traces with all warnings.
         _formatwarning = warnings.formatwarning
+
         def _formatwarning_tb(*args, **kwargs):
             out = _formatwarning(*args, **kwargs)
             out += ''.join(traceback.format_stack()[:-1])
             return out
+
         warnings.formatwarning = _formatwarning_tb
 
     else:

@@ -47,10 +47,12 @@ def common_args(*, under_test=False, include_x_modules=False):
         _import_extra_modules()
 
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
-    parser = parser_class(add_help=False, parents=_parent_args(), conflict_handler='resolve')
+    parser = parser_class(
+        add_help=False, parents=_parent_args(), conflict_handler='resolve')
 
     common_group = parser.add_argument_group('common arguments')
-    common_group.add_argument('-h', '--help', action='help', help='show this help message and exit')
+    common_group.add_argument(
+        '-h', '--help', action='help', help='show this help message and exit')
     common_group.add_argument(
         '--loglevel',
         metavar='LEVEL',
@@ -119,9 +121,14 @@ def common_args(*, under_test=False, include_x_modules=False):
 
     # Various options to control performance experiments.
     xp_group = parser.add_argument_group('performance')
-    xp_group.add_argument('--xp-uvloop', action='store_true', help='use uvloop for asyncio')
-    xp_group.add_argument('--xp-ujson', action='store_true', help='use ujson for parsing JSON')
-    xp_group.add_argument('--xp-streams', action='store_true', help='use streams implementation (deprecated)')
+    xp_group.add_argument(
+        '--xp-uvloop', action='store_true', help='use uvloop for asyncio')
+    xp_group.add_argument(
+        '--xp-ujson', action='store_true', help='use ujson for parsing JSON')
+    xp_group.add_argument(
+        '--xp-streams',
+        action='store_true',
+        help='use streams implementation (deprecated)')
 
     return parser
 

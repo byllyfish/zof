@@ -107,7 +107,7 @@ class Connection(object):
             (int) process id of oftr process
         """
         LOGGER.debug("Launch oftr %r (protocol API)", self._oftr_cmd)
-        
+
         try:
             # When we create the subprocess, make it a session leader.
             # We do not want SIGINT signals sent from the terminal to reach

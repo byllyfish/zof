@@ -200,7 +200,8 @@ class Controller(object):
             result = await self.rpc_call('OFP.DESCRIPTION')
             # Check API version.
             if float(result['api_version']) != _API_VERSION:
-                LOGGER.error('Unsupported API version %s', result['api_version'])
+                LOGGER.error('Unsupported API version %s',
+                             result['api_version'])
                 raise ValueError('Unsupported API version')
 
             self._supported_versions = result['versions']
@@ -408,17 +409,17 @@ class Controller(object):
         """Called when `OFP.MESSAGE` is received with type 'CHANNEL_ALERT'."""
         # First check if this alert was sent in response to something we said.
         msg_xid = message['xid']
-        if msg_xid and self._handle_xid(message, msg_xid, _exc.DeliveryException):
+        if msg_xid and self._handle_xid(message, msg_xid,
+                                        _exc.DeliveryException):
             return
         # Otherwise, we need to report it.
         data_hex = message['data']
-        data_len = len(data_hex)/2
+        data_len = len(data_hex) / 2
         if len(data_hex) > 100:
             data_hex = '%s...' % data_hex[:100]
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-            message['alert'], data_hex,
-            data_len, message['conn_id'],
+            message['alert'], data_hex, data_len, message['conn_id'],
             message.get('datapath_id'), msg_xid)
 
         for app in self.apps:

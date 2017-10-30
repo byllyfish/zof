@@ -5,6 +5,7 @@ from zof.event import load_event
 class Protocol(asyncio.SubprocessProtocol):
     """Implements an asyncio Protocol for parsing data received from oftr.
     """
+
     def __init__(self, post_event):
         self.post_event = post_event
         self.buf = b''

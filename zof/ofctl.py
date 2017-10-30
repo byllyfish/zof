@@ -99,13 +99,16 @@ def _validate_ofctl(ofctl):
     for key, value in ofctl.items():
         valid_fn = _VALID_FIELDS.get(key)
         if not valid_fn:
-            raise ValueError('validate_ofctl: "%s" is not a valid field name' % key)
+            raise ValueError('validate_ofctl: "%s" is not a valid field name' %
+                             key)
         if not valid_fn(value):
-            raise ValueError('validate_ofctl: field "%s: %s" is not valid' % (key, value))
+            raise ValueError('validate_ofctl: field "%s: %s" is not valid' %
+                             (key, value))
 
 
 def _valid_port_no(value):
     return True
+
 
 def _valid_int(value):
     try:
@@ -114,20 +117,25 @@ def _valid_int(value):
         return False
     return True
 
+
 def _valid_int_mask(value):
     if isinstance(value, str) and '/' in value:
         value, mask = value.split('/', 1)
         return _valid_int(value) and _valid_int(mask)
     return _valid_int(value)
 
+
 def _valid_macaddr(value):
     return True
+
 
 def _valid_ipv4(value):
     return True
 
+
 def _valid_ipv6(value):
     return True
+
 
 def _valid_vlan(value):
     return _valid_int_mask(value)
