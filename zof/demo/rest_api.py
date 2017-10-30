@@ -173,7 +173,8 @@ def _translate_action(action):
     if action_type == 'GROUP':
         return 'GROUP:%s' % action['group_id']
     if action_type == 'SET_FIELD':
-        return 'SET_FIELD: {%s:%s}' % (action['field'].lower(), action['value'])
+        return 'SET_FIELD: {%s:%s}' % (action['field'].lower(),
+                                       action['value'])
     if len(action) == 1:
         return '%s' % action_type
     return str(action)

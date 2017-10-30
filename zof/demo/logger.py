@@ -10,6 +10,7 @@ APP.logger.info('phase = %r', APP.phase)
 def preflight(event):
     APP.logger.info('event = %r', event)
 
+
 @APP.event('POSTFLIGHT')
 def postflight(event):
     APP.logger.info('event = %r', event)
@@ -39,7 +40,6 @@ async def stop(event):
 @APP.event(any)
 def other(event):
     APP.logger.warning('event = %r', event)
-
 
 
 async def logger(event):

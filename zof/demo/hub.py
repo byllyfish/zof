@@ -13,9 +13,7 @@ def channel_up(event):
 def packet_in(event):
     APP.logger.info('Packet_in %r', event)
     msg = event['msg']
-    PACKET_OUT.send(
-        in_port=msg['in_port'],
-        data=msg['data'])
+    PACKET_OUT.send(in_port=msg['in_port'], data=msg['data'])
 
 
 FLOW_MOD_TABLE_MISS = zof.compile('''

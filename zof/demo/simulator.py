@@ -38,7 +38,11 @@ def _arg_parser():
         '--sim-cacert',
         type=file_contents_type(),
         help='Simulator CA certificate')
-    parser.add_argument('--sim-reconnect', type=float, default=0, help='Reconnect retry interval (0=never)')
+    parser.add_argument(
+        '--sim-reconnect',
+        type=float,
+        default=0,
+        help='Reconnect retry interval (0=never)')
     return parser
 
 
@@ -265,7 +269,7 @@ class Simulator(object):
 
     def _tablefeature(self, table_id):
         actions = [hex(i) for i in range(100)]
-        tables = list(range(table_id+1, 254))
+        tables = list(range(table_id + 1, 254))
         return {
             'table_id': table_id,
             'name': 'Table %d' % table_id,
