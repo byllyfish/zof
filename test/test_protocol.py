@@ -1,4 +1,4 @@
-import unittest 
+import unittest
 import asyncio
 from zof.protocol import Protocol
 from zof.connection import Connection
@@ -14,7 +14,6 @@ class MockController:
 
 
 class ProtocolTestCase(unittest.TestCase):
-
     def test_data_received(self):
         controller = MockController()
         proto = Protocol(controller.post_event)
@@ -45,7 +44,6 @@ OFTR_ARGS = ''  # '--trace=rpc,msg --loglevel=debug'
 
 
 class ProtocolConnectionTestCase(AsyncTestCase):
-
     async def setUp(self):
         oftr_options = {'args': OFTR_ARGS}
         self.conn = Connection(oftr_options=oftr_options)

@@ -155,7 +155,6 @@ class PktViewTestCase(unittest.TestCase):
             'mask': '0xff'
         }])
 
-
     def test_convert_slash_notation(self):
         self.assertEqual(
             convert_slash_notation('ETH_SRC',

@@ -137,21 +137,15 @@ class TestOfctl(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'other_field'):
             convert_from_ofctl(ofctl, validate=True)
 
-        ofctl = {
-            'udp_src': 'x'
-        }
+        ofctl = {'udp_src': 'x'}
         with self.assertRaisesRegex(ValueError, 'udp_src: x'):
             convert_from_ofctl(ofctl, validate=True)
 
     def test_validate_masked(self):
-        ofctl = {
-            'udp_src': '123/0xFF'
-        }
+        ofctl = {'udp_src': '123/0xFF'}
         result = convert_from_ofctl(ofctl, validate=True)
         self.assertEqual(result, {'udp_src': '123/0xFF'})
 
-        ofctl = {
-            'udp_src': '123/70/12'
-        }
+        ofctl = {'udp_src': '123/70/12'}
         with self.assertRaisesRegex(ValueError, 'udp_src: 123/70/12'):
             convert_from_ofctl(ofctl, validate=True)

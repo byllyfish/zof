@@ -39,7 +39,8 @@ class LoadEventTestCase(unittest.TestCase):
         # Test that multiple empty events fail.
         event = load_event(b'{}{}')
         self.assertEqual('EXCEPTION', event['event'])
-        self.assertEqual('Extra data: line 1 column 3 (char 2)', event['reason'])
+        self.assertEqual('Extra data: line 1 column 3 (char 2)',
+                         event['reason'])
 
     def test_truncated_input(self):
         # Test that truncated input is detected.
@@ -84,7 +85,9 @@ class LoadEventTestCase(unittest.TestCase):
         self.assertTrue("_pkt" in event)
 
     def test_event_payload(self):
-        event = load_event(b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}')
+        event = load_event(
+            b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}'
+        )
         self.assertEqual(event['foo'], 27)
         self.assertEqual(event['data'], 'ff07')
         #self.assertEqual(event['pkt'], {'a':9, 'x_pkt_pos': 1, 'payload': b'\x07'})
@@ -98,7 +101,8 @@ class LoadEventTestCase(unittest.TestCase):
 
     def test_load_event_time(self):
         import timeit
-        result = timeit.timeit("""load_event(b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}')""", 
+        result = timeit.timeit(
+            """load_event(b'{"foo": 27, "data": "ff07", "_pkt": [{"field":"a", "value":9}, {"field": "X_PKT_POS", "value":1}]}')""",
             setup='from zof.event import load_event',
             number=10000)
         print('[test_load_event_time=%r]' % result)
