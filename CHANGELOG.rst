@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+Version 0.7.0
+-------------
+
+- Use regular Python dictionary for events instead of wrapping them in Event object.
+- Fix _ReplyFuture in controller.py to handle asyncio API change, and fix streaming multipart requests.
+- Change underlying oftr connection to use protocol-based implementation (instead of streams).
+- Add -xp prefix to experimental performance command line arguments: -xp-uvloop, -xp-ujson, -xp-streams. 
+- Add command line arguments to conntest demo.
+- Add reconnect interval command line option and more features to simulator demo.
+- Fix support for --help command line argument.
+- Rename "poststop" phase to "postflight".
+- ofctl processing code now supports validation of field names and values.
+
 
 Version 0.6.0
 -------------
