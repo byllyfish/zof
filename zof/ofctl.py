@@ -1,3 +1,5 @@
+# N.B. This module must remain compatibile with Python 2.7.
+
 try:
     # For Python 2.x compatibility.
     _BASESTRING = basestring
@@ -38,7 +40,7 @@ _LEGACY_FIELDS = dict(
     tp_src=_convert_tp_src)
 
 
-def convert_from_ofctl(ofctl, *, validate=False):
+def convert_from_ofctl(ofctl, validate=False):
     """Convert ofctl legacy field names."""
     if ofctl is None:
         return None
