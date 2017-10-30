@@ -21,9 +21,9 @@ APP.forwarding_table = {}
 def channel_up(event):
     """Set up datapath when switch connects."""
     APP.logger.info('%s Connected from %s (%d ports, version %d)',
-                    event.datapath_id, event.endpoint,
-                    len(event.datapath), event.version)
-    APP.logger.info('%s Remove all flows', event.datapath_id)
+                    event['datapath_id'], event['endpoint'],
+                    len(event['datapath']), event['version'])
+    APP.logger.info('%s Remove all flows', event['datapath_id'])
 
     DELETE_FLOWS.send()
     BARRIER.send()
@@ -33,8 +33,8 @@ def channel_up(event):
 @APP.message('channel_down')
 def channel_down(event):
     """Clean up when switch disconnects."""
-    APP.logger.info('%s Disconnected', event.datapath_id)
-    APP.forwarding_table.pop(event.datapath_id, None)
+    APP.logger.info('%s Disconnected', event['datapath_id'])
+    APP.forwarding_table.pop(event['datapath_id'], None)
 
 
 @APP.message('packet_in', eth_type=0x88cc)
@@ -47,55 +47,59 @@ def lldp_packet_in(_event):
 def packet_in(event):
     """Handle incoming packets."""
     APP.logger.debug('packet in %r', event)
-    msg = event.msg
+    datapath_id = event['datapath_id']
+    msg = event['msg']
+    time = event['time']
+    data = msg['data']
 
     # Check for incomplete packet data.
-    if len(msg.data) < msg.total_len:
+    if len(data) < msg['total_len']:
         APP.logger.warning('Incomplete packet data: %r', event)
         return
 
-    in_port = msg.in_port
-    pkt = msg.pkt
+    in_port = msg['in_port']
+    pkt = msg['pkt']
     vlan_vid = pkt('vlan_vid', default=0)
 
     # Retrieve fwd_table for this datapath.
-    fwd_table = APP.forwarding_table.setdefault(event.datapath_id, {})
+    fwd_table = APP.forwarding_table.setdefault(datapath_id, {})
 
     # Update fwd_table based on eth_src and in_port.
     if (pkt.eth_src, vlan_vid) not in fwd_table:
-        APP.logger.info('%s Learn %s vlan %s on port %s', event.datapath_id,
+        APP.logger.info('%s Learn %s vlan %s on port %s', datapath_id,
                         pkt.eth_src, vlan_vid, in_port)
-        fwd_table[(pkt.eth_src, vlan_vid)] = (in_port, event.time)
+        fwd_table[(pkt.eth_src, vlan_vid)] = (in_port, time)
 
     # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
     out_port, _ = fwd_table.get((pkt.eth_dst, vlan_vid), ('ALL', None))
 
     if out_port != 'ALL':
-        APP.logger.info('%s Forward %s vlan %s to port %s', event.datapath_id,
+        APP.logger.info('%s Forward %s vlan %s to port %s', datapath_id,
                         pkt.eth_dst, vlan_vid, out_port)
         LEARN_MAC_FLOW.send(
             vlan_vid=vlan_vid, eth_dst=pkt.eth_dst, out_port=out_port)
-        PACKET_OUT.send(out_port=out_port, data=msg.data)
+        PACKET_OUT.send(out_port=out_port, data=data)
 
     else:
         # Send packet back out all ports (except the one it came in).
-        APP.logger.info('%s Flood %s to %s vlan %s', event.datapath_id,
+        APP.logger.info('%s Flood %s to %s vlan %s', datapath_id,
                         pkt.get_description(), pkt.eth_dst, vlan_vid)
-        PACKET_FLOOD.send(in_port=in_port, data=msg.data)
+        PACKET_FLOOD.send(in_port=in_port, data=data)
 
 
 @APP.message('flow_removed')
 def flow_removed(event):
     """Handle flow removed message."""
-    match = pktview_from_list(event.msg.match)
+    datapath_id = event['datapath_id']
+    match = pktview_from_list(event['msg']['match'])
     eth_dst = match.eth_dst
     vlan_vid = match.vlan_vid
-    reason = event.msg.reason
+    reason = event['msg']['reason']
 
-    APP.logger.info('%s Remove %s vlan %s (%s)', event.datapath_id, eth_dst,
+    APP.logger.info('%s Remove %s vlan %s (%s)', datapath_id, eth_dst,
                     vlan_vid, reason)
 
-    fwd_table = APP.forwarding_table.get(event.datapath_id)
+    fwd_table = APP.forwarding_table.get(datapath_id)
     if fwd_table:
         fwd_table.pop((eth_dst, vlan_vid), None)
 

@@ -2,6 +2,7 @@ import logging.config
 import os
 import warnings
 import sys
+import traceback
 
 EXT_STDERR = 'ext://stderr'
 
@@ -41,7 +42,22 @@ def init_logging(loglevel, logfile=EXT_STDERR):
     warnings.simplefilter('always')
 
     if loglevel.lower() == 'debug':
+        # Make sure that asyncio debugging is enabled.
         os.environ['PYTHONASYNCIODEBUG'] = '1'
+
+        # Log stack traces with all warnings.
+        _formatwarning = warnings.formatwarning
+
+        def _formatwarning_tb(*args, **kwargs):
+            out = _formatwarning(*args, **kwargs)
+            out += ''.join(traceback.format_stack()[:-1])
+            return out
+
+        warnings.formatwarning = _formatwarning_tb
+
+    else:
+        # When loglevel > debug, ignore ImportWarning's from uvloop.
+        warnings.filterwarnings("ignore", category=ImportWarning)
 
     asyncio_logger = logging.getLogger('asyncio')
     asyncio_logger.setLevel('WARNING')

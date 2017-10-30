@@ -37,9 +37,9 @@ class RPCException(ControllerException):
     """Exception that indicates an error response to an RPC request."""
 
     def __init__(self, event):
-        super().__init__(event.id)
-        self.message = event.error.message
-        self.code = event.error.code
+        super().__init__(event['id'])
+        self.message = event['error']['message']
+        self.code = event['error']['code']
 
     def __str__(self):
         return '[RPCException xid=%s message=%s]' % (self.xid, self.message)
@@ -49,7 +49,7 @@ class ErrorException(ControllerException):
     """Exception that indicates an OpenFlow error reply."""
 
     def __init__(self, event):
-        super().__init__(event.xid)
+        super().__init__(event['xid'])
         self.event = event
 
     def __str__(self):
@@ -60,7 +60,7 @@ class DeliveryException(ControllerException):
     """Exception that indicates an OpenFlow message couldn't be delivered."""
 
     def __init__(self, event):
-        super().__init__(event.xid)
+        super().__init__(event['xid'])
         self.event = event
 
     def __str__(self):

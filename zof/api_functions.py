@@ -1,7 +1,6 @@
 import asyncio
 from .controller import Controller
 from .service.datapath import APP as DATAPATH_APP
-from .event import Event, make_event
 
 
 def get_apps():
@@ -37,17 +36,14 @@ def find_port(*, datapath_id, port_no):
     return DATAPATH_APP.find_port(datapath_id, port_no)
 
 
-def post_event(event, **kwds):
+def post_event(event):
     """Function used to send an internal event to all app modules.
 
     Args:
-        event (str | Event): event type or event object
-        kwds (dict): keyword arguments for make_event
+        event (dict): event object
     """
-    if isinstance(event, str):
-        event = make_event(event=event.upper(), **kwds)
-    elif not isinstance(event, Event) or kwds:
-        raise ValueError('Invalid arguments to post_event')
+    if not isinstance(event, dict):
+        raise ValueError('%s not a dictionary: %r' % (type(event), event))
     Controller.singleton().post_event(event)
 
 
@@ -78,7 +74,7 @@ async def connect(endpoint, *, options=(), versions=(), tls_id=0):
         tls_id=tls_id,
         options=options,
         versions=versions)
-    return result.conn_id
+    return result['conn_id']
 
 
 async def close(*, conn_id=0, datapath_id=None):
@@ -86,14 +82,14 @@ async def close(*, conn_id=0, datapath_id=None):
     """
     result = await _rpc_call(
         'OFP.CLOSE', conn_id=conn_id, datapath_id=datapath_id)
-    return result.count
+    return result['count']
 
 
 async def get_connections(*, conn_id=0):
     """Get list of OpenFlow connections.
     """
     result = await _rpc_call('OFP.LIST_CONNECTIONS', conn_id=conn_id)
-    return result.stats
+    return result['stats']
 
 
 async def add_identity(*, cert, cacert, privkey):
@@ -104,4 +100,4 @@ async def add_identity(*, cert, cacert, privkey):
     """
     result = await _rpc_call(
         'OFP.ADD_IDENTITY', cert=cert, cacert=cacert, privkey=privkey)
-    return result.tls_id
+    return result['tls_id']

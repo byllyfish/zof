@@ -18,8 +18,9 @@ class CodecTestCase(unittest.TestCase):
 
     def test_oftr_call(self):
         result = _oftr_call(OFTR_ENCODE, b'type: HELLO', 4)
-        self.assertEqual(result, b'\x06\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00~')
-
+        self.assertEqual(
+            result,
+            b'\x06\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00~')
 
     def test_hello(self):
         result = encode('type: HELLO\nversion: 1')

@@ -100,11 +100,11 @@ class Datapath:
             port_descs (List[ObjectView]): list of OpenFlow port desc's.
         """
         for port_desc in port_descs:
-            port = self.add_port(port_no=port_desc.port_no)
-            port.hw_addr = port_desc.hw_addr
-            port.name = port_desc.name
-            port.state = port_desc.state
-            port.config = port_desc.config
+            port = self.add_port(port_no=port_desc['port_no'])
+            port.hw_addr = port_desc['hw_addr']
+            port.name = port_desc['name']
+            port.state = port_desc['state']
+            port.config = port_desc['config']
 
     def close(self):
         """Close connection to datapath; i.e. hang up.

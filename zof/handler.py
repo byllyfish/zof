@@ -61,8 +61,8 @@ class BaseHandler(object):
 
     def __call__(self, event, app):
         """Invoke handler and ignore the return value."""
-        datapath_id = event('datapath_id')
-        conn_id = event('conn_id')
+        datapath_id = event.get('datapath_id')
+        conn_id = event.get('conn_id')
         if asyncio.iscoroutinefunction(self.callback):
             app.ensure_future(
                 self.callback(event), datapath_id=datapath_id, conn_id=conn_id)
@@ -102,10 +102,11 @@ class BaseHandler(object):
 class MessageHandler(BaseHandler):
     def match(self, event):
         # Check subtype to see if we can return False immediately.
+        event_type = event['type']
         if callable(self.subtype):
-            if not self.subtype(event.type):
+            if not self.subtype(event_type):
                 return False
-        elif self.subtype != event.type:
+        elif self.subtype != event_type:
             return False
         # Check for events that don't have a datapath_id. For these, the app
         # must explicitly opt in using `datapath_id=None`.
@@ -180,12 +181,12 @@ def _match_message(key, value, event):
     if key == 'datapath_id' and value is None:
         return True
     val = str(value).upper()
-    if key in event.msg:
-        return str(event.msg[key]).upper() == val
-    if 'pkt' in event.msg:
-        pkt = event.msg.pkt
-        if key in pkt:
-            return str(pkt[key]).upper() == val
+    msg = event['msg']
+    if key in msg:
+        return str(msg[key]).upper() == val
+    pkt = msg.get('pkt')
+    if pkt is not None and key in pkt:
+        return str(pkt[key]).upper() == val
     return False
 
 

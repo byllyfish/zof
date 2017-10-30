@@ -21,7 +21,7 @@ class SimulatorTester(zof.Application):
         self.count += 1
         if self.count == self.sim_app.args.sim_count:
             self.logger.info('all channels up')
-            zof.post_event('EXIT', exit_status=0)
+            zof.post_event({'event': 'EXIT', 'exit_status': 0})
 
     def channel_down(self, event):
         self.logger.info('channel_down')

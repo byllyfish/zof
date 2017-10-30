@@ -47,18 +47,20 @@ def common_args(*, under_test=False, include_x_modules=False):
         _import_extra_modules()
 
     parser_class = _ArgParserTest if under_test else argparse.ArgumentParser
-    parser = parser_class(add_help=False, parents=_parent_args())
+    parser = parser_class(
+        add_help=False, parents=_parent_args(), conflict_handler='resolve')
 
-    parser.add_argument('--pidfile', help='PID file')
-
-    log_group = parser.add_argument_group('log arguments')
-    log_group.add_argument(
+    common_group = parser.add_argument_group('common arguments')
+    common_group.add_argument(
+        '-h', '--help', action='help', help='show this help message and exit')
+    common_group.add_argument(
         '--loglevel',
         metavar='LEVEL',
         help='log level',
         default=DEFAULT_LOGLEVEL)
-    log_group.add_argument(
+    common_group.add_argument(
         '--logfile', metavar='FILE', help='log file', default=DEFAULT_LOGFILE)
+    common_group.add_argument('--pidfile', help='save pid file')
 
     listen_group = parser.add_argument_group('listen arguments')
     listen_group.add_argument(
@@ -90,7 +92,6 @@ def common_args(*, under_test=False, include_x_modules=False):
         help='private key')
 
     x_group = parser.add_argument_group('experimental')
-    x_group.add_argument('--x-uvloop', action='store_true', help='use uvloop')
     x_group.add_argument(
         '--x-oftr-path',
         help='path to oftr executable',
@@ -117,6 +118,17 @@ def common_args(*, under_test=False, include_x_modules=False):
             type=csv_list_type('module'),
             metavar='MODULE,...',
             help='modules to import')
+
+    # Various options to control performance experiments.
+    xp_group = parser.add_argument_group('performance')
+    xp_group.add_argument(
+        '--xp-uvloop', action='store_true', help='use uvloop for asyncio')
+    xp_group.add_argument(
+        '--xp-ujson', action='store_true', help='use ujson for parsing JSON')
+    xp_group.add_argument(
+        '--xp-streams',
+        action='store_true',
+        help='use streams implementation (deprecated)')
 
     return parser
 

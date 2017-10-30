@@ -1,0 +1,7 @@
+  echo "can you read me now?"
+  oftr version
+  pwd
+  ls
+  oftr decode faucet-422-of.cap
+  oftr decode --pcap-filter='' faucet-422-of.cap
+  oftr decode --pcap-filter='' --msg-exclude='ECHO*' faucet-422-of.cap

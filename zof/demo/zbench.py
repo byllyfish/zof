@@ -11,7 +11,7 @@ APP.packetin_count = 0
 
 @APP.event('start')
 async def start(event):
-    await asyncio.sleep(3)
+    await asyncio.sleep(1)
     APP.flowmod_count = 0
     run_zbench()
     while True:

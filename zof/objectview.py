@@ -137,13 +137,13 @@ class ObjectView(object):
 # ------------------------------------------------------------------------------
 
 
-def from_json(text, object_hook=ObjectView):
+def from_json(text):
     """Parse text as json.
     """
     # If `text` is a byte string, decode it as utf-8.
     if isinstance(text, bytes):
         text = text.decode('utf-8')
-    return json.loads(text, object_hook=object_hook)
+    return json.loads(text)
 
 
 def to_json(obj):

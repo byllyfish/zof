@@ -9,7 +9,7 @@ preflight (sync)
 prestart
 start
 stop
-poststop (sync)
+postflight (sync)
 
 message
 
