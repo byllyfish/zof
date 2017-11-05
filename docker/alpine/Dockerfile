@@ -1,4 +1,4 @@
-FROM byllyfish/oftr:v0.37.0-alpine3.6
+FROM byllyfish/oftr:v0.39.0-alpine3.6
 
 MAINTAINER William W. Fisher "william.w.fisher@gmail.com"
 
