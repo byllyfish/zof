@@ -1,8 +1,7 @@
 import unittest
 import ipaddress
-import argparse
 import json
-from zof.objectview import ObjectView, to_json, from_json, make_objectview
+from zof.objectview import ObjectView, to_json, from_json
 
 
 def _test_dict():
@@ -165,34 +164,9 @@ class ObjectViewTestCase(unittest.TestCase):
             repr(obj),
             "{'a': [IPv4Address('10.1.2.3'), IPv6Address('2001::1')]}")
 
-    def test_argparse_namespace(self):
-        args = argparse.Namespace(b=3)
-        obj = ObjectView(dict(a=args))
-        self.assertEqual(to_json(obj), '{"a":{"b":3}}')
-
-    def test_make_objectview(self):
-        data = dict(a=1, b=2)
-        obj = make_objectview(data)
-        self.assertEqual(obj, data)
-
-        data = dict(a=dict(b=5), b=[dict(c=6), dict(c=7)])
-        obj = make_objectview(data)
-        self.assertEqual(obj.a.b, 5)
-        self.assertEqual(obj.b[1].c, 7)
-
-        # Object is already an ObjectView
-        new_obj = make_objectview(obj)
-        self.assertIs(new_obj, obj)
-
-    def test_make_objecview_argparse(self):
-        args = argparse.Namespace(x=1, y='2')
-        obj = make_objectview(args)
-        self.assertEqual(obj.x, 1)
-        self.assertEqual(obj.y, '2')
-
     def test_format(self):
         data = dict(x=dict(a=1))
-        obj = make_objectview(data)
+        obj = ObjectView(data)
         self.assertEqual('{:2s}'.format(obj),
                          '{\n  "x": {\n    "a": 1\n  }\n}')
         with self.assertRaisesRegex(ValueError,
@@ -201,7 +175,7 @@ class ObjectViewTestCase(unittest.TestCase):
 
     def test_std_json(self):
         data = dict(c=5)
-        obj = make_objectview(data)
+        obj = ObjectView(data)
         with self.assertRaisesRegex(TypeError, 'is not JSON serializable'):
             # python's standard json module does not support objectview.
             json.dumps(obj)

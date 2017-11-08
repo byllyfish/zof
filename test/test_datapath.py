@@ -1,6 +1,6 @@
 import unittest
 from zof.datapath import DatapathList, Datapath, normalize_datapath_id, normalize_port_no
-from zof.objectview import make_objectview, to_json
+from zof.objectview import to_json
 
 
 class DatapathTestCase(unittest.TestCase):
@@ -128,13 +128,13 @@ class DatapathTestCase(unittest.TestCase):
 
     def test_add_ports(self):
         dp1 = Datapath(datapath_id='00:00:00:00:00:00:00:01', conn_id=1001)
-        port1_desc = make_objectview({
+        port1_desc = {
             'port_no': 9,
             'hw_addr': '00:00:00:00:00:01',
             'name': 'Port 1',
             'state': ['LINK_DOWN'],
             'config': ['PORT_DOWN']
-        })
+        }
         dp1.add_ports([port1_desc])
 
         port1 = dp1[9]

@@ -1,7 +1,6 @@
 import unittest
 import zof
 import codecs
-from zof.objectview import make_objectview
 from zof.codec import encode, decode, OFTR_ENCODE, _oftr_call
 from zof.exception import CodecError
 
@@ -48,11 +47,6 @@ class CodecTestCase(unittest.TestCase):
 
     def test_hello_object(self):
         result = encode({'type': 'HELLO', 'version': 4})
-        self.assertEqual(
-            result,
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10')
-
-        result = encode(make_objectview({'type': 'HELLO', 'version': 4}))
         self.assertEqual(
             result,
             b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10')
