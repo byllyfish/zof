@@ -310,3 +310,27 @@ class ConnectionMiscTestCase(unittest.TestCase):
     def test_find_oftr_path(self):
         path = Connection.find_oftr_path()
         self.assertTrue(path)
+
+
+class ConnectionProtocolTestCase(AsyncTestCase):
+    async def setUp(self):
+        oftr_options = {'args': '--trace=rpc'}
+        self.queue = asyncio.Queue()
+        self.conn = Connection(oftr_options=oftr_options)
+        await self.conn.connect(self.queue.put_nowait)
+
+    async def tearDown(self):
+        self.conn.close()
+        return_code = await self.conn.disconnect()
+        if return_code:
+            raise Exception('oftr exited with return code %d' % return_code)
+
+    async def test_rpc(self):
+        # If we write a valid JSON-RPC method, we should get a result back
+        # on the queue.
+        msg = b'{"id":1237,"method":"OFP.DESCRIPTION"}'
+        self.conn.write(msg)
+        result = await self.queue.get()
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['id'], 1237)
+        self.assertEqual(result['result']['api_version'], '0.9')
