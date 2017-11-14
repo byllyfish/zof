@@ -26,9 +26,11 @@ def get_switches():
 
 @WEB.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
 async def get_flows(dpid):
-    result = await FLOW_REQ.request(datapath_id=_parse_dpid(dpid))
-    _translate_flows(result['msg'])
-    return {dpid: result['msg']}
+    result = []
+    async for ofmsg in FLOW_REQ.request(datapath_id=_parse_dpid(dpid)):
+        _translate_flows(ofmsg['msg'])
+        result.extend(ofmsg['msg'])
+    return {dpid: result}
 
 
 @WEB.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
