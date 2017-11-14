@@ -5,10 +5,11 @@ Version 0.8.0
 -------------
 
 - Fix rest_api demo handler for /stats/flow to stream multipart replies.
-- Fix ready flag usage for manully closed datapaths.
+- Fix ready flag usage for manually closed datapaths.
 - Remove Event class, make_event and make_objectview API's.
 - Fix stderr logging in oftr Protocol implementation.
 - Update oftr version in alpine docker file.
+
 
 Version 0.7.0
 -------------
