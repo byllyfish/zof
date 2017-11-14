@@ -8,7 +8,7 @@ This app modifies message events to include the source `datapath` object.
 """
 
 import zof
-from zof.datapath import DatapathList, CHANNEL_UP_MSG, FEATURES_MSG, READY_FLAG
+from zof.datapath import DatapathList, CHANNEL_UP_MSG, FEATURES_MSG
 import zof.exception as _exc
 
 
@@ -18,15 +18,12 @@ class DatapathApp(zof.Application):
         self.datapaths = DatapathList()
 
     def get_datapaths(self):
-        return [
-            datapath for datapath in self.datapaths
-            if READY_FLAG in datapath.user_data
-        ]
+        return [datapath for datapath in self.datapaths if datapath.ready]
 
     def find_datapath(self, datapath_id):
         try:
             datapath = self.datapaths[datapath_id]
-            if READY_FLAG in datapath.user_data:
+            if datapath.ready:
                 return datapath
         except KeyError:
             pass
@@ -49,7 +46,7 @@ PORTS_REQUEST = zof.compile('type: REQUEST.PORT_DESC')
 def channel_up(event):
     datapath = APP.datapaths.add_datapath(
         datapath_id=event['datapath_id'], conn_id=event['conn_id'])
-    if READY_FLAG in datapath.user_data:
+    if datapath.ready:
         event['datapath'] = datapath
         return
     datapath.user_data[CHANNEL_UP_MSG] = event
@@ -60,7 +57,7 @@ def channel_up(event):
 def channel_down(event):
     datapath = APP.datapaths.delete_datapath(datapath_id=event['datapath_id'])
     datapath.up = False
-    if READY_FLAG in datapath.user_data:
+    if datapath.ready:
         event['datapath'] = datapath
         return
     raise _exc.StopPropagationException()
@@ -69,7 +66,7 @@ def channel_down(event):
 @APP.message('features_reply')
 def features_reply(event):
     datapath = APP.datapaths[event['datapath_id']]
-    if READY_FLAG in datapath.user_data:
+    if datapath.ready:
         event['datapath'] = datapath
         return
 
@@ -124,7 +121,7 @@ async def _get_ports(datapath):
 
 
 def _post_channel_up(datapath):
-    datapath.user_data[READY_FLAG] = 1
+    datapath.ready = True
 
     channel_event = datapath.user_data.pop(CHANNEL_UP_MSG)
     channel_event['event'] = 'MESSAGE'

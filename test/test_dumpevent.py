@@ -1,17 +1,11 @@
 import unittest
-from zof.event import dump_event, Event
+from zof.event import dump_event
 
 
 class DumpEventTestCase(unittest.TestCase):
     def test_empty_dict(self):
         # Test empty event as Python object.
         data = dump_event({})
-        self.assertIsInstance(data, bytes)
-        self.assertEqual(data, b'{}')
-
-    def test_empty_dict2(self):
-        # Test empty event as Event object.
-        data = dump_event(Event({}))
         self.assertIsInstance(data, bytes)
         self.assertEqual(data, b'{}')
 

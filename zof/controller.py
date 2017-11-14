@@ -7,7 +7,6 @@ import functools
 import inspect
 from collections import defaultdict
 from .event import load_event, dump_event
-from .objectview import make_objectview
 from .pktview import pktview_from_list
 from .connection import Connection
 from .run_server import run_server
@@ -67,7 +66,7 @@ class Controller(object):
         if not self.apps:
             LOGGER.warning('No apps are loaded.')
 
-        self.args = make_objectview(args)
+        self.args = args
 
         try:
             asyncio.ensure_future(self._run())
@@ -102,9 +101,9 @@ class Controller(object):
             self._preflight()
 
             self.conn = Connection(oftr_options={
-                'path': self.args('x_oftr_path'),
-                'args': self.args('x_oftr_args'),
-                'prefix': self.args('x_oftr_prefix')
+                'path': self.args.x_oftr_path,
+                'args': self.args.x_oftr_args,
+                'prefix': self.args.x_oftr_prefix
             })
             # Call connect() with "self.post_event" to use protocol based api.
             proto_callback = self.post_event if not self.args.xp_streams else None

@@ -5,26 +5,6 @@ import json
 from ipaddress import IPv4Address, IPv6Address
 
 
-def make_objectview(obj):
-    """Return a full ObjectView representation of `obj`.
-    """
-    if isinstance(obj, ObjectView):
-        return obj
-    if isinstance(obj, argparse.Namespace):
-        obj = vars(obj)
-    return _make_objectview(obj)
-
-
-def _make_objectview(obj):
-    assert isinstance(obj, dict)
-    for key, value in obj.items():
-        if isinstance(value, dict):
-            obj[key] = _make_objectview(value)
-        elif isinstance(value, list) and value and isinstance(value[0], dict):
-            obj[key] = [_make_objectview(item) for item in value]
-    return ObjectView(obj)
-
-
 class ObjectView(object):
     """Wraps a Python dictionary so its attributes can be accessed/assigned
     using dot notation `obj.attr` or `obj['spacey attr']`.
@@ -42,8 +22,7 @@ class ObjectView(object):
     present, e.g. `obj('foo', default='bar')`.
 
     This class does _not_ recursively wrap sub-objects; it's designed to be
-    used as a `json.loads` object_hook. Use `make_objectview` to recursively
-    wrap a dictionary.
+    used as a `json.loads` object_hook.
 
     This class does not define any non-dunder methods to avoid conflict
     with attribute names.

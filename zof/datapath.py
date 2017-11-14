@@ -4,7 +4,6 @@ from .controller import Controller
 # Keys for datapath.user_data dictionary. Used by datapath service.
 CHANNEL_UP_MSG = '_datapath.channel_up'
 FEATURES_MSG = '_datapath.features_reply'
-READY_FLAG = '_datapath.ready'
 
 
 class DatapathList:
@@ -61,6 +60,8 @@ class Datapath:
         self.conn_id = conn_id
         self.ports = OrderedDict()
         self.up = True
+        self.ready = False
+        self.closed = False
         self.user_data = {}
 
     def add_port(self, *, port_no):
@@ -112,9 +113,8 @@ class Datapath:
         This function coordinates with the datapath service to make sure no
         apps receive any further events from this datapath.
         """
-        if self.up:
-            self.up = False
-            self.user_data.pop(READY_FLAG, None)
+        if not self.closed:
+            self.closed = True
             Controller.singleton().rpc_call(
                 'OFP.CLOSE', ignore_result=True, conn_id=self.conn_id)
 

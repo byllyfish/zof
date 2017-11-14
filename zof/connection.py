@@ -116,6 +116,7 @@ class Connection(object):
             transport, protocol = await loop.subprocess_exec(
                 lambda: Protocol(post_message),
                 *self._oftr_cmd,
+                stderr=None,
                 start_new_session=True)
             self._conn = transport
             self._protocol = protocol
