@@ -5,6 +5,8 @@ import zof
 class CompileTestCase(unittest.TestCase):
 
     def test_compile_string(self):
+        """Test that a YAML string compiles to an OF message.
+        """
         ofmsg = zof.compile('type: HELLO')
         self.assertEqual('''\
 <zof.CompiledString args=['conn_id', 'datapath_id', 'xid']>
@@ -17,6 +19,8 @@ params:
 </zof.CompiledString>''', repr(ofmsg))
 
     def test_compile_object(self):
+        """Test that an object compiles to an OF message.
+        """
         ofmsg = zof.compile({'type': 'HELLO'})
         self.assertEqual('''\
 <zof.CompiledObject>
@@ -26,6 +30,8 @@ params:
 </zof.CompiledObject>''', repr(ofmsg))
 
     def test_compile_object_packetout(self):
+        """Test that an object of type PACKET_IN/OUT compiles to an OF message.
+        """
         ofmsg = zof.compile({
             'type': 'PACKET_OUT',
             'msg': {
@@ -48,3 +54,14 @@ params:
     "type": "PACKET_OUT"
 }
 </zof.CompiledObject>''', repr(ofmsg))
+
+    def test_compile_rpc_object(self):
+        """Test that an object compiles to an OF message.
+        """
+        rpc_msg = zof.compile({'method': 'OFP.DESCRIPTION'})
+        self.assertEqual('''\
+<zof.CompiledObjectRPC>
+{
+    "method": "OFP.DESCRIPTION"
+}
+</zof.CompiledObjectRPC>''', repr(rpc_msg))

@@ -25,7 +25,9 @@ def compile(msg):
     controller = Controller.singleton()
     if isinstance(msg, str):
         return CompiledString(controller, msg)
-    return CompiledObject(controller, msg)
+    if 'type' in msg:
+        return CompiledObject(controller, msg)
+    return CompiledObjectRPC(controller, msg)
 
 
 class CompiledMessage:
@@ -172,8 +174,7 @@ class CompiledObject(CompiledMessage):
                 'conn_id') is None:
             raise ValueError('Must specify either datapath_id or conn_id.')
 
-        # TODO(bfish): Handle conn_id.
-        return to_json(dict(method='OFP.SEND', params=self._obj))
+        return to_json({'method': 'OFP.SEND', 'params': self._obj})
 
     def _convert_pkt(self):
         """Convert high level API `pkt` to low level API."""
@@ -190,6 +191,28 @@ class CompiledObject(CompiledMessage):
         """String representation (used for testing)
         """
         return '<zof.CompiledObject>\n%s\n</zof.CompiledObject>' % to_json_pretty(self._obj)
+
+
+class CompiledObjectRPC(CompiledMessage):
+    """Concrete class representing a compiled RPC message."""
+
+    def __init__(self, controller, obj):
+        assert isinstance(obj, (dict, ObjectView))
+        assert 'method' in obj
+        self._controller = controller
+        self._obj = obj
+
+    def _complete(self, kwds, task_locals):
+        """Substitute keywords into object template, and compile to JSON.
+        """
+        if 'id' not in self._obj:
+            self._obj['id'] = kwds['xid']
+        return to_json(self._obj)
+
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledObjectRPC>\n%s\n</zof.CompiledObjectRPC>' % to_json_pretty(self._obj)
 
 
 class MyTemplate(string.Template):
