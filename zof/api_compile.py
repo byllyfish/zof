@@ -138,6 +138,11 @@ class CompiledString(CompiledMessage):
             if key not in self._template_args:
                 raise ValueError('Unknown keyword argument "%s"' % key)
 
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledString args=%r>\n%s\n</zof.CompiledString>' % (sorted(self._template_args), self._template.template)
+
 
 class CompiledObject(CompiledMessage):
     """Concrete class representing a compiled OpenFlow object template."""
@@ -180,6 +185,11 @@ class CompiledObject(CompiledMessage):
             msg['_pkt'] = pktview_to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
+
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledObject>\n%r\n</zof.CompiledObject>' % self._obj
 
 
 class MyTemplate(string.Template):
