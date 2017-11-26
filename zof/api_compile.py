@@ -4,7 +4,7 @@ import asyncio
 import logging
 import zof
 from .controller import Controller
-from .objectview import ObjectView, to_json
+from .objectview import ObjectView, to_json, to_json_pretty
 from .pktview import pktview_to_list
 from .asyncmap import asyncmap
 
@@ -189,7 +189,7 @@ class CompiledObject(CompiledMessage):
     def __repr__(self):
         """String representation (used for testing)
         """
-        return '<zof.CompiledObject>\n%r\n</zof.CompiledObject>' % self._obj
+        return '<zof.CompiledObject>\n%s\n</zof.CompiledObject>' % to_json_pretty(self._obj)
 
 
 class MyTemplate(string.Template):

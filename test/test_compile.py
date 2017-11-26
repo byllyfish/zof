@@ -20,7 +20,9 @@ params:
         ofmsg = zof.compile({'type': 'HELLO'})
         self.assertEqual('''\
 <zof.CompiledObject>
-{'type': 'HELLO'}
+{
+    "type": "HELLO"
+}
 </zof.CompiledObject>''', repr(ofmsg))
 
     def test_compile_object_packetout(self):
@@ -34,5 +36,15 @@ params:
         })
         self.assertEqual('''\
 <zof.CompiledObject>
-{'type': 'PACKET_OUT', 'msg': {'_pkt': [{'field': 'ETH_TYPE', 'value': 2048}]}}
+{
+    "msg": {
+        "_pkt": [
+            {
+                "field": "ETH_TYPE",
+                "value": 2048
+            }
+        ]
+    },
+    "type": "PACKET_OUT"
+}
 </zof.CompiledObject>''', repr(ofmsg))

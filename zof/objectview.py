@@ -139,7 +139,7 @@ def to_json_pretty(obj, indent=4):
     """Return string with indented json representation of an object.
     """
     return json.dumps(
-        obj, ensure_ascii=False, default=_json_serialize, indent=indent)
+        obj, ensure_ascii=False, default=_json_serialize, indent=indent, sort_keys=True)
 
 
 def _json_serialize(obj):
