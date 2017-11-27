@@ -202,11 +202,17 @@ class CompiledObjectRPC(CompiledMessage):
         self._controller = controller
         self._obj = obj
 
+    def send(self, **kwds):
+        """Send an OpenFlow message (fire and forget).
+
+        Args:
+            kwds (dict): Template argument values.
+        """
+        self._controller.write(self._complete(kwds, _task_locals()))
+
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.
         """
-        if 'id' not in self._obj:
-            self._obj['id'] = kwds['xid']
         return to_json(self._obj)
 
     def __repr__(self):
