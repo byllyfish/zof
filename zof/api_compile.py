@@ -4,7 +4,7 @@ import asyncio
 import logging
 import zof
 from .controller import Controller
-from .objectview import ObjectView, to_json
+from .objectview import ObjectView, to_json, to_json_pretty
 from .pktview import pktview_to_list
 from .asyncmap import asyncmap
 
@@ -25,7 +25,9 @@ def compile(msg):
     controller = Controller.singleton()
     if isinstance(msg, str):
         return CompiledString(controller, msg)
-    return CompiledObject(controller, msg)
+    if 'type' in msg:
+        return CompiledObject(controller, msg)
+    return CompiledObjectRPC(controller, msg)
 
 
 class CompiledMessage:
@@ -138,6 +140,11 @@ class CompiledString(CompiledMessage):
             if key not in self._template_args:
                 raise ValueError('Unknown keyword argument "%s"' % key)
 
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledString args=%r>\n%s\n</zof.CompiledString>' % (sorted(self._template_args), self._template.template)
+
 
 class CompiledObject(CompiledMessage):
     """Concrete class representing a compiled OpenFlow object template."""
@@ -167,8 +174,7 @@ class CompiledObject(CompiledMessage):
                 'conn_id') is None:
             raise ValueError('Must specify either datapath_id or conn_id.')
 
-        # TODO(bfish): Handle conn_id.
-        return to_json(dict(method='OFP.SEND', params=self._obj))
+        return to_json({'method': 'OFP.SEND', 'params': self._obj})
 
     def _convert_pkt(self):
         """Convert high level API `pkt` to low level API."""
@@ -180,6 +186,39 @@ class CompiledObject(CompiledMessage):
             msg['_pkt'] = pktview_to_list(msg['pkt'])
             del msg['pkt']
             self._obj['msg'] = msg
+
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledObject>\n%s\n</zof.CompiledObject>' % to_json_pretty(self._obj)
+
+
+class CompiledObjectRPC(CompiledMessage):
+    """Concrete class representing a compiled RPC message."""
+
+    def __init__(self, controller, obj):
+        assert isinstance(obj, (dict, ObjectView))
+        assert 'method' in obj
+        self._controller = controller
+        self._obj = obj
+
+    def send(self, **kwds):
+        """Send an OpenFlow message (fire and forget).
+
+        Args:
+            kwds (dict): Template argument values.
+        """
+        self._controller.write(self._complete(kwds, _task_locals()))
+
+    def _complete(self, kwds, task_locals):
+        """Substitute keywords into object template, and compile to JSON.
+        """
+        return to_json(self._obj)
+
+    def __repr__(self):
+        """String representation (used for testing)
+        """
+        return '<zof.CompiledObjectRPC>\n%s\n</zof.CompiledObjectRPC>' % to_json_pretty(self._obj)
 
 
 class MyTemplate(string.Template):
