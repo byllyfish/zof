@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Version 0.9.0
+-------------
+
+- zof.compile can be used to create RPC message events from Python objects.
+- Update oftr version in alpine docker file.
+- Add autoresponder demo app.
+
 Version 0.8.0
 -------------
 
