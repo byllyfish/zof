@@ -86,10 +86,13 @@ def start(_):
 
 
 @APP.message('channel_up')
+@APP.message('channel_alert')
 @APP.message('flow_mod')
 @APP.message('packet_out')
-def ignore(_):
-    return
+@APP.message('set_config')
+@APP.message('set_async')
+def ignore(event):
+    APP.logger.warning('ignored %s msg', event['type'])
 
 
 @APP.message('features_request')
