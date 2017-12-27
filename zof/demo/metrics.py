@@ -39,14 +39,14 @@ async def stop(_):
     APP.logger.info('Stop listening on %s', APP.args.metrics_endpoint)
 
 
-@WEB.get_text('/')
-@WEB.get_text('/metrics')
-@WEB.get_text('/metrics/')
+@WEB.get('/', 'text')
+@WEB.get('/metrics', 'text')
+@WEB.get('/metrics/', 'text')
 async def metrics():
     return generate_latest(REGISTRY)
 
 
-@WEB.get_text('/metrics/ports?{target}')
+@WEB.get('/metrics/ports?{target}', 'text')
 async def ports(target):
     if target:
         met = PortMetrics()

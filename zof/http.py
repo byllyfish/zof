@@ -1,3 +1,6 @@
+"""Simple API for async web server and web client.
+"""
+
 import asyncio
 import re
 import aiohttp
@@ -13,6 +16,22 @@ ClientResponseError = aiohttp.ClientResponseError
 
 class HttpServer:
     """Simple async web server.
+
+    Usage:
+
+        web = HttpServer()
+
+        @web.get('/foo')
+        async def get_foo():
+            return 'foo'
+
+        @web.get('/foo/{arg}/foo.json', 'json')
+        async def get_foo_json(arg):
+            return { 'foo': arg }
+
+        await web.start()
+        ...
+        await web.stop()
     """
 
     def __init__(self, *, logger=None):
@@ -23,6 +42,11 @@ class HttpServer:
         self.web_server = None
 
     async def start(self, endpoint):
+        """Start web server listening on endpoint.
+
+        Args:
+            endpoint (str): Listening endpoint "address:port".
+        """
         self.endpoint = Endpoint(endpoint)
         loop = asyncio.get_event_loop()
         self.web_handler = self.web_app.make_handler(
@@ -37,6 +61,7 @@ class HttpServer:
                              self.endpoint)
 
     async def stop(self):
+        """Stop web server."""
         self.web_server.close()
         await self.web_server.wait_closed()
 
@@ -47,40 +72,29 @@ class HttpServer:
         if self.logger:
             self.logger.info('HttpServer: Stop listening on %s', self.endpoint)
 
-    def get_json(self, path):
+    def get(self, path, payload_type='text'):
+        """Decorator for routing HTTP GET requests."""
         route_path, route_vars = _split_route(path)
+        route_get = _ROUTE_GET[payload_type]
 
         def _wrap(func):
-            get = _route_get_json(route_vars, func)
-            self.web_app.router.add_get(route_path, get)
-
-        return _wrap
-
-    def post_json(self, path):
-        route_path, route_vars = _split_route(path)
-
-        def _wrap(func):
-            post = _route_post_json(route_vars, func)
-            self.web_app.router.add_post(route_path, post)
-
-        return _wrap
-
-    def get_text(self, path):
-        route_path, route_vars = _split_route(path)
-
-        def _wrap(func):
-            get = _route_get_text(route_vars, func)
+            assert func is not None
+            get = route_get(route_vars, func)
             self.web_app.router.add_get(route_path, get)
             return func
 
         return _wrap
 
-    def post_text(self, path):
-        route_path = route_vars = _split_route(path)
+    def post(self, path, payload_type):
+        """Decorator for routing HTTP POST requests."""
+        route_path, route_vars = _split_route(path)
+        route_post = _ROUTE_POST[payload_type]
 
         def _wrap(func):
-            post = _route_post_text(route_vars, func)
+            assert func is not None
+            post = route_post(route_vars, func)
             self.web_app.router.add_post(route_path, post)
+            return func
 
         return _wrap
 
@@ -136,6 +150,18 @@ def _route_post_text(route_vars, func):
     return _post
 
 
+_ROUTE_GET = { 
+    'json': _route_get_json,
+    'text': _route_get_text
+}
+
+
+_ROUTE_POST = {
+    'json': _route_post_json,
+    'text': _route_post_text
+}
+
+
 def _build_kwds(request, route_vars, post_data=None):
     kwds = request.match_info.copy()
     for var in route_vars:
@@ -180,35 +206,39 @@ class HttpClient:
         print(result)
 
         await client.stop()
-
-
     """
 
     def __init__(self):
         self._client = None
 
     async def start(self):
+        """Start async web client."""
         assert self._client is None
         self._client = aiohttp.ClientSession(
             raise_for_status=True, json_serialize=to_json, conn_timeout=15)
 
     async def stop(self):
+        """Stop async web client."""
         # The following line requires aiohttp 2.2.2 or later.
         await self._client.close()
         self._client = None
 
+    async def get(self, url):
+        """Fetch text contents of given url."""
+        async with self._client.get(url) as response:
+            return await response.text()
+
+    async def post(self, url, *, post_data):
+        """Post to url with text."""
+        async with self._client.post(url, text=post_data) as response:
+            return await response.text()
+
     async def get_json(self, url):
+        """Fetch JSON contents of given url."""
         async with self._client.get(url) as response:
             return await response.json(loads=from_json)
 
     async def post_json(self, url, *, post_data):
+        """Post to url with JSON data."""
         async with self._client.post(url, json=post_data) as response:
             return await response.json(loads=from_json)
-
-    async def get_text(self, url):
-        async with self._client.get(url) as response:
-            return await response.text()
-
-    async def post_text(self, url, *, post_data):
-        async with self._client.post(url, text=post_data) as response:
-            return await response.text()

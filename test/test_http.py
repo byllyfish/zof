@@ -12,20 +12,20 @@ class HttpTestCase(AsyncTestCase):
         logger = logging.getLogger('zof.test_http')
         web = HttpServer(logger=logger)
 
-        @web.get_text('/')
-        @web.get_text('/abc')
+        @web.get('/', 'text')
+        @web.get('/abc', 'text')
         async def _get_root():
             return 'Blah\n\u1E03lah'
 
-        @web.get_text('/test/text')
+        @web.get('/test/text', 'text')
         async def _get_text():
             return 'test text1'
 
-        @web.get_json('/test/{var1}?{var2}')
+        @web.get('/test/{var1}?{var2}', 'json')
         async def _get(var1, var2):
             return {'var1': var1, 'var2': var2}
 
-        @web.post_json('/test/{var1}?{var2}&{var3}')
+        @web.post('/test/{var1}?{var2}&{var3}', 'json')
         async def _post(var1, var2, var3, post_data):
             return {
                 'var1': var1,
@@ -39,10 +39,10 @@ class HttpTestCase(AsyncTestCase):
         client = HttpClient()
         await client.start()
 
-        data = await client.get_text('http://127.0.0.1:9010/')
+        data = await client.get('http://127.0.0.1:9010/')
         self.assertEqual(data, 'Blah\n\u1E03lah')
 
-        data = await client.get_text('http://127.0.0.1:9010/abc')
+        data = await client.get('http://127.0.0.1:9010/abc')
         self.assertEqual(data, 'Blah\n\u1E03lah')
 
         data = await client.get_json('http://127.0.0.1:9010/test/foo?var2=bar')
@@ -62,7 +62,7 @@ class HttpTestCase(AsyncTestCase):
             }
         })
 
-        data = await client.get_text('http://127.0.0.1:9010/test/text')
+        data = await client.get('http://127.0.0.1:9010/test/text')
         self.assertEqual(data, 'test text1')
 
         # "/test" fails because {var1} is required.
