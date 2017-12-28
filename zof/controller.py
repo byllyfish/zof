@@ -48,7 +48,7 @@ class Controller(object):
         self.conn = None
         self._xid = _MIN_XID
         self._reqs = {}
-        self._event_queue = None
+        self._event_queue = asyncio.Queue()
         self._supported_versions = []
         self._tls_id = 0
         self._tasks = defaultdict(list)
@@ -109,7 +109,6 @@ class Controller(object):
             proto_callback = self.post_event if not self.args.xp_streams else None
             await self.conn.connect(proto_callback)
 
-            self._event_queue = asyncio.Queue()
             self._set_phase('PRESTART')
 
             asyncio.ensure_future(self._start())
@@ -448,7 +447,7 @@ class Controller(object):
         event = {'event': phase}
         if phase in ('STOP', 'POSTFLIGHT'):
             self._dispatch_event(event)
-        elif self._event_queue:
+        else:
             self.post_event(event)
 
     def _preflight(self):
