@@ -253,27 +253,6 @@ class Controller(object):
         assert isinstance(event, dict)
         self._event_queue.put_nowait(event)
 
-    '''
-    def post_message(self, event):
-        """Post a message event to our event queue.
-
-        This private api differs from post_event in that we may dispatch the
-        event directly when the event queue is empty.
-        """
-        try:
-            if self._event_queue.empty():
-                # When there are no other events in line, direct dispatch.
-                self._dispatch_event(event)
-            else:
-                LOGGER.debug('post_message: indirect dispatch: %r', event)
-                self._event_queue.put_nowait(event)
-        except _exc.StopPropagationException:
-            LOGGER.debug('post_message: StopPropagationException caught')
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception('Exception in Controller.post_message')
-            sys.exit(1)
-    '''
-
     def _dispatch_event(self, event):
         """Dispatch an event we receive from the queue."""
         LOGGER.debug('_dispatch_event %r', event)
@@ -355,6 +334,10 @@ class Controller(object):
         # Immediately begin shutting down if there is an 'EXIT' event.
         if event_type == 'EXIT':
             raise _exc.ExitException(event.get('exit_status', 0))
+        # Handle RPC connection failure.
+        if event_type == 'EXCEPTION':
+            self._handle_rpc_fail(event)
+            return
         # Let apps handle the event.
         for app in self.apps:
             app.handle_event(event, 'event')
@@ -369,6 +352,18 @@ class Controller(object):
         known_xid = self._handle_xid(result, event['id'], except_class)
         if not known_xid:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
+
+    def _handle_rpc_fail(self, event):
+        """Called when RPC connection fails."""
+        LOGGER.error('RPC connection raised exception: %s', event['reason'])
+        # Cancel all pending requests with a special ClosedException.
+        for (xid, (fut, expiration, timeout)) in self._reqs.items():
+            if not fut.cancelled():
+                fut.set_exception(_exc.ClosedException(xid, timeout))
+        self._reqs.clear()
+        # TODO(bfish): Restart the RPC connection if this happens in START
+        # phase.
+        raise _exc.ExitException(11)
 
     def _handle_message(self, message):
         """Called when a `OFP.MESSAGE` is received."""

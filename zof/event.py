@@ -6,6 +6,8 @@ def load_event(event):
         return from_json(event)
     except ValueError as ex:
         # Report malformed JSON input.
+        if event == b'':
+            return {'event': 'EXCEPTION', 'reason': 'EOF', 'input': event}
         return {'event': 'EXCEPTION', 'reason': str(ex), 'input': event}
 
 
