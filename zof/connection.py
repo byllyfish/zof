@@ -187,6 +187,11 @@ class Connection(object):
                 # Ignore failure when process already died.
                 pass
 
+    def is_closed(self):
+        """Return true if connection is closed.
+        """
+        return self._output is None
+
     def get_write_buffer_size(self):
         """Get size of the write buffer.
         """

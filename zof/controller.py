@@ -274,6 +274,8 @@ class Controller(object):
         If `xid` is specified, return a `_ReplyFuture` to await the response.
         Otherwise, return None.
         """
+        if self.conn.is_closed() and xid is not None:
+            raise _exc.ClosedException(xid, _XID_TIMEOUT)
         self.conn.write(dump_event(event))
         if xid is None:
             return

@@ -3,6 +3,7 @@
 #     Exception (built into Python)
 #       +-- zof.ControllerException
 #       |     +-- zof.TimeoutException
+#       |     +-- zof.ClosedException
 #       |     +-- zof.RPCException
 #       |     +-- zof.ErrorException
 #       |     +-- zof.DeliveryException
