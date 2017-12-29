@@ -48,7 +48,7 @@ class Controller(object):
         self.conn = None
         self._xid = _MIN_XID
         self._reqs = {}
-        self._event_queue = asyncio.Queue()
+        self._event_queue = None
         self._supported_versions = []
         self._tls_id = 0
         self._tasks = defaultdict(list)
@@ -98,6 +98,7 @@ class Controller(object):
         """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
+            self._event_queue = asyncio.Queue()
             self._preflight()
 
             self.conn = Connection(oftr_options={
@@ -447,7 +448,7 @@ class Controller(object):
         event = {'event': phase}
         if phase in ('STOP', 'POSTFLIGHT'):
             self._dispatch_event(event)
-        else:
+        elif self._event_queue:
             self.post_event(event)
 
     def _preflight(self):
