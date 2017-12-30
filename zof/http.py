@@ -186,6 +186,7 @@ async def _respond_text(func, kwds):
         result = func(**kwds)
     # If result is a 2-tuple, treat it as (result, status)
     if isinstance(result, tuple):
+        assert len(result) == 2
         result, status = result
     else:
         status = 200

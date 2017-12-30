@@ -54,7 +54,7 @@ async def ports(target):
     else:
         met = PortMetrics(include_instance=True)
         await _collect_port_stats_all(met)
-    return _dump_prometheus(met.metrics())
+    return _dump_prometheus(met)
 
 
 PORT_STATS = zof.compile('''
@@ -69,8 +69,10 @@ def _supported_counter(value):
 
 
 class PortMetrics:
+
     def __init__(self, include_instance=False):
         self.include_instance = include_instance
+        self.error = None
         if include_instance:
             labels = ['port_no', 'instance']
         else:
@@ -93,7 +95,7 @@ class PortMetrics:
             'port_duration_seconds_total', 'duration in seconds', None, labels)
         self.port_up = GaugeMetricFamily('port_up', 'port is up', None, labels)
 
-    def metrics(self):
+    def collect(self):
         return [
             self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets,
             self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration,
@@ -130,6 +132,7 @@ async def _collect_port_stats(dpid, metric):
     except _exc.ControllerException as ex:
         APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid,
                            ex)
+        metric.error = ('Unable to retrieve stats for dpid "%s"' % dpid, 404)
 
 
 async def _collect_port_stats_all(metric):
@@ -142,17 +145,11 @@ async def _collect_port_stats_all(metric):
             pass
 
 
-class _MyCollector:
-    def __init__(self, stats):
-        self.stats = stats
-
-    def collect(self):
-        return self.stats
-
-
 def _dump_prometheus(stats):
+    if stats.error:
+        return stats.error
     registry = CollectorRegistry()
-    registry.register(_MyCollector(stats))
+    registry.register(stats)
     return generate_latest(registry)
 
 
