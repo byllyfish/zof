@@ -101,11 +101,12 @@ class Controller(object):
             self._event_queue = asyncio.Queue()
             self._preflight()
 
-            self.conn = Connection(oftr_options={
-                'path': self.args.x_oftr_path,
-                'args': self.args.x_oftr_args,
-                'prefix': self.args.x_oftr_prefix
-            })
+            self.conn = Connection(
+                oftr_options={
+                    'path': self.args.x_oftr_path,
+                    'args': self.args.x_oftr_args,
+                    'prefix': self.args.x_oftr_prefix
+                })
             # Call connect() with "self.post_event" to use protocol based api.
             proto_callback = self.post_event if not self.args.xp_streams else None
             await self.conn.connect(proto_callback)
@@ -114,7 +115,7 @@ class Controller(object):
 
             asyncio.ensure_future(self._start())
             if not proto_callback:
-                # Schedule the read loop to read from the stream, if we're not 
+                # Schedule the read loop to read from the stream, if we're not
                 # using the protocol api.
                 asyncio.ensure_future(self._read_loop())
             idle = asyncio.ensure_future(self._idle_task())
@@ -426,11 +427,10 @@ class Controller(object):
         while True:
             await asyncio.sleep(_IDLE_INTERVAL)
             now = _timestamp()
-            timed_out = [
-                (xid, fut, timeout)
-                for (xid, (fut, expiration, timeout)) in self._reqs.items()
-                if expiration <= now
-            ]
+            timed_out = [(xid, fut, timeout)
+                         for (xid, (fut, expiration,
+                                    timeout)) in self._reqs.items()
+                         if expiration <= now]
             for xid, fut, timeout in timed_out:
                 if not fut.cancelled():
                     fut.set_exception(_exc.TimeoutException(xid, timeout))
@@ -510,8 +510,7 @@ class Controller(object):
         task.zof_task_scope = scope_key
         task.zof_task_locals = task_locals
         task.add_done_callback(
-            functools.partial(
-                self._task_callback, scope_key=scope_key))
+            functools.partial(self._task_callback, scope_key=scope_key))
         return task
 
     def _cancel_tasks(self, scope_key):

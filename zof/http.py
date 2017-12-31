@@ -150,16 +150,9 @@ def _route_post_text(route_vars, func):
     return _post
 
 
-_ROUTE_GET = { 
-    'json': _route_get_json,
-    'text': _route_get_text
-}
+_ROUTE_GET = {'json': _route_get_json, 'text': _route_get_text}
 
-
-_ROUTE_POST = {
-    'json': _route_post_json,
-    'text': _route_post_text
-}
+_ROUTE_POST = {'json': _route_post_json, 'text': _route_post_text}
 
 
 def _build_kwds(request, route_vars, post_data=None):

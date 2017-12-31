@@ -99,8 +99,8 @@ def _validate_ofctl(ofctl):
     for key, value in ofctl.items():
         valid_fn = _VALID_FIELDS.get(key)
         if not valid_fn:
-            raise ValueError('validate_ofctl: "%s" is not a valid field name' %
-                             key)
+            raise ValueError(
+                'validate_ofctl: "%s" is not a valid field name' % key)
         if not valid_fn(value):
             raise ValueError('validate_ofctl: field "%s: %s" is not valid' %
                              (key, value))

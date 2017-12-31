@@ -33,6 +33,7 @@ class TimeoutException(ControllerException):
         return '[TimeoutException xid=%s timeout=%s]' % (self.xid,
                                                          self.timeout)
 
+
 class ClosedException(ControllerException):
     """Exception that indicates an RPC or OpenFlow request failed because
     the underlying RPC channel went down.
