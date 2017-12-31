@@ -1,12 +1,22 @@
 CHANGELOG
 =========
 
+Version 0.10.0
+--------------
+
+- Clean up HTTP decorator api.
+- Improved handling of RPC connection failure; add ClosedException (Issue #2).
+- Metrics demo app: /metrics/ports unknown target returns HTTP status 404 (Issue #1).
+- Small fixes to the simulator demo app.
+
+
 Version 0.9.0
 -------------
 
 - zof.compile can be used to create RPC message events from Python objects.
 - Update oftr version in alpine docker file.
 - Add autoresponder demo app.
+
 
 Version 0.8.0
 -------------
