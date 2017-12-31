@@ -1,9 +1,9 @@
 import argparse
+from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
+from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 import zof
 from zof import exception as _exc
 from zof.http import HttpServer
-from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
-from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 
 
 def arg_parser():

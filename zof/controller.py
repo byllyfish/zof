@@ -279,7 +279,7 @@ class Controller(object):
             raise _exc.ClosedException(xid, _XID_TIMEOUT)
         self.conn.write(dump_event(event))
         if xid is None:
-            return
+            return None
 
         # Register future to track the response.
         assert xid > 0
@@ -360,7 +360,7 @@ class Controller(object):
         """Called when RPC connection fails."""
         LOGGER.error('RPC connection raised exception: %s', event['reason'])
         # Cancel all pending requests with a special ClosedException.
-        for (xid, (fut, expiration, timeout)) in self._reqs.items():
+        for (xid, (fut, _, timeout)) in self._reqs.items():
             if not fut.cancelled():
                 fut.set_exception(_exc.ClosedException(xid, timeout))
         self._reqs.clear()

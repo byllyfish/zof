@@ -41,7 +41,7 @@ async def get_groupdesc(dpid):
 
 
 @WEB.get('/stats/port/{dpid}/{port_no}', 'json')
-async def get_portstats(dpid, port_no):
+async def get_portstats_specific(dpid, port_no):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
     return {dpid: result['msg']}
