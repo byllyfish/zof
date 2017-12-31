@@ -16,17 +16,18 @@ class TestOfctl(unittest.TestCase):
             'other_field': 'other_value'
         }
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result, {
-            'eth_src': '00:00:00:00:00:01',
-            'eth_dst': '00:00:00:00:00:02',
-            'eth_type': 0x0800,
-            'ipv4_src': '192.168.1.1',
-            'ipv4_dst': '192.168.1.2',
-            'ip_proto': 6,
-            'tcp_src': 1001,
-            'tcp_dst': 1002,
-            'other_field': 'other_value'
-        })
+        self.assertEqual(
+            result, {
+                'eth_src': '00:00:00:00:00:01',
+                'eth_dst': '00:00:00:00:00:02',
+                'eth_type': 0x0800,
+                'ipv4_src': '192.168.1.1',
+                'ipv4_dst': '192.168.1.2',
+                'ip_proto': 6,
+                'tcp_src': 1001,
+                'tcp_dst': 1002,
+                'other_field': 'other_value'
+            })
 
     def test_nw_src_dup(self):
         # Test duplicate field (nw_src = ipv4_src)
@@ -45,12 +46,13 @@ class TestOfctl(unittest.TestCase):
             'dl_type': 0x0800
         }
         result = convert_from_ofctl(ofctl, validate=True)
-        self.assertEqual(result, {
-            'eth_src': '00:00:00:00:00:01',
-            'eth_dst': '00:00:00:00:00:02',
-            'eth_type': 0x0800,
-            'vlan_vid': 0x1123
-        })
+        self.assertEqual(
+            result, {
+                'eth_src': '00:00:00:00:00:01',
+                'eth_dst': '00:00:00:00:00:02',
+                'eth_type': 0x0800,
+                'vlan_vid': 0x1123
+            })
 
     def test_vlan_zero(self):
         ofctl = {'dl_vlan': '0x0'}
@@ -77,24 +79,27 @@ class TestOfctl(unittest.TestCase):
         # UDP
         ofctl = {'dl_type': 0x0800, 'nw_proto': 17, 'tp_dst': 53}
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result,
-                         {'eth_type': 0x0800,
-                          'ip_proto': 17,
-                          'udp_dst': 53})
+        self.assertEqual(result, {
+            'eth_type': 0x0800,
+            'ip_proto': 17,
+            'udp_dst': 53
+        })
 
         ofctl['nw_proto'] = 6  # TCP
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result,
-                         {'eth_type': 0x0800,
-                          'ip_proto': 6,
-                          'tcp_dst': 53})
+        self.assertEqual(result, {
+            'eth_type': 0x0800,
+            'ip_proto': 6,
+            'tcp_dst': 53
+        })
 
         ofctl['nw_proto'] = 132  # SCTP
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(
-            result, {'eth_type': 0x0800,
-                     'ip_proto': 132,
-                     'sctp_dst': 53})
+        self.assertEqual(result, {
+            'eth_type': 0x0800,
+            'ip_proto': 132,
+            'sctp_dst': 53
+        })
 
     def test_empty(self):
         result = convert_from_ofctl(None)
@@ -113,14 +118,15 @@ class TestOfctl(unittest.TestCase):
             'nw_dst': '192.168.1.2'
         }
         result = convert_from_ofctl(ofctl)
-        self.assertEqual(result, {
-            'eth_src': '00:00:00:00:00:01',
-            'eth_dst': '00:00:00:00:00:02',
-            'eth_type': 0x0806,
-            'arp_op': 1,
-            'arp_spa': '192.168.1.1',
-            'arp_tpa': '192.168.1.2',
-        })
+        self.assertEqual(
+            result, {
+                'eth_src': '00:00:00:00:00:01',
+                'eth_dst': '00:00:00:00:00:02',
+                'eth_type': 0x0806,
+                'arp_op': 1,
+                'arp_spa': '192.168.1.1',
+                'arp_tpa': '192.168.1.2',
+            })
 
     def test_validate_invalid(self):
         ofctl = {

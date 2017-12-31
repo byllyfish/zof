@@ -52,7 +52,9 @@ class HttpTestCase(AsyncTestCase):
         self.assertEqual(data, {'var1': 'xyz', 'var2': None})
 
         data = await client.post_json(
-            'http://127.0.0.1:9010/test/a?var2=3&var3=4', post_data={'x': 1})
+            'http://127.0.0.1:9010/test/a?var2=3&var3=4', post_data={
+                'x': 1
+            })
         self.assertEqual(data, {
             'var1': 'a',
             'var2': '3',

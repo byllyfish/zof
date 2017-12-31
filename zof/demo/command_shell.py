@@ -86,7 +86,7 @@ async def command_shell(_event):
             if command:
                 await run_command(command)
         except EOFError:
-            zof.post_event({'event':'EXIT'})
+            zof.post_event({'event': 'EXIT'})
             break
     APP.foreground_task = None
 

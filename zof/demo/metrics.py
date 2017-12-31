@@ -69,7 +69,6 @@ def _supported_counter(value):
 
 
 class PortMetrics:
-
     def __init__(self, include_instance=False):
         self.include_instance = include_instance
         self.error = None
@@ -109,12 +108,15 @@ class PortMetrics:
         else:
             labels = [str(port_no)]
         for counter, value in [(self.tx_bytes, stat['tx_bytes']),
-                               (self.rx_bytes, stat['rx_bytes']),
-                               (self.tx_packets, stat['tx_packets']),
-                               (self.rx_packets, stat['rx_packets']),
-                               (self.tx_dropped, stat['tx_dropped']),
-                               (self.rx_dropped, stat['rx_dropped']),
-                               (self.rx_errors, stat['rx_errors'])]:
+                               (self.rx_bytes,
+                                stat['rx_bytes']), (self.tx_packets,
+                                                    stat['tx_packets']),
+                               (self.rx_packets,
+                                stat['rx_packets']), (self.tx_dropped,
+                                                      stat['tx_dropped']),
+                               (self.rx_dropped,
+                                stat['rx_dropped']), (self.rx_errors,
+                                                      stat['rx_errors'])]:
             if _supported_counter(value):
                 counter.add_metric(labels, value)
         if stat['duration'] != '0':

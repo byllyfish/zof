@@ -28,7 +28,8 @@ class CodecTestCase(unittest.TestCase):
         result = encode('type: HELLO')
         self.assertEqual(
             result,
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10')
+            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+        )
 
         result = encode('type: HELLO', version=0)
         self.assertEqual(
@@ -42,14 +43,16 @@ class CodecTestCase(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 ValueError,
-                r'YAML:1:7: error: unknown value "HELO" Did you mean "HELLO"?'):
+                r'YAML:1:7: error: unknown value "HELO" Did you mean "HELLO"?'
+        ):
             encode('type: HELO')
 
     def test_hello_object(self):
         result = encode({'type': 'HELLO', 'version': 4})
         self.assertEqual(
             result,
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10')
+            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+        )
 
     def test_decode_hello(self):
         result = decode(b'\x01\x00\x00\x08\x00\x00\x00\x00')
@@ -63,7 +66,8 @@ msg:
 """)
 
         result = decode(
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10')
+            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+        )
         self.assertEqual(result, """---
 type:            HELLO
 xid:             0x00000000

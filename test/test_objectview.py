@@ -147,8 +147,8 @@ class ObjectViewTestCase(unittest.TestCase):
     def test_ip_address(self):
         obj = ObjectView(
             dict(a=[
-                ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
-                    '2001::1')
+                ipaddress.ip_address('10.1.2.3'),
+                ipaddress.ip_address('2001::1')
             ]))
         self.assertEqual(to_json(obj), '{"a":["10.1.2.3","2001::1"]}')
 
@@ -157,8 +157,8 @@ class ObjectViewTestCase(unittest.TestCase):
         # yield valid YAML.
         obj = ObjectView(
             dict(a=[
-                ipaddress.ip_address('10.1.2.3'), ipaddress.ip_address(
-                    '2001::1')
+                ipaddress.ip_address('10.1.2.3'),
+                ipaddress.ip_address('2001::1')
             ]))
         self.assertEqual(
             repr(obj),
