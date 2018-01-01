@@ -26,7 +26,7 @@ class AsyncMapTestCase(AsyncTestCase):
             output = set()
             max_parallel = 0
             async for next_result in asyncmap(
-                _test, targets, parallelism=parallelism):
+                    _test, targets, parallelism=parallelism):
                 try:
                     assert next_result.done()
                     result = await next_result

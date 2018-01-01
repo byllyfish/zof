@@ -16,8 +16,8 @@ def pktview_alias(name, converter=(lambda x: x)):
         try:
             return converter(self.__dict__[name])
         except KeyError:
-            raise AttributeError('PktView object has no attribute "%s"' %
-                                 name) from None
+            raise AttributeError(
+                'PktView object has no attribute "%s"' % name) from None
 
     def _fset(self, value):
         self.__dict__[name] = value
@@ -26,8 +26,8 @@ def pktview_alias(name, converter=(lambda x: x)):
         try:
             del self.__dict__[name]
         except KeyError:
-            raise AttributeError('PktView object has no attribute "%s"' %
-                                 name) from None
+            raise AttributeError(
+                'PktView object has no attribute "%s"' % name) from None
 
     return property(fget=_fget, fset=_fset, fdel=_fdel)
 

@@ -71,8 +71,7 @@ def common_args(*, under_test=False, include_x_modules=False):
         default=DEFAULT_ENDPOINTS)
     listen_group.add_argument(
         '--listen-versions',
-        type=csv_list_type(
-            'version', item_type=int),
+        type=csv_list_type('version', item_type=int),
         metavar='VERSION,...',
         help='listen versions (1-6) separated by commas')
     listen_group.add_argument(

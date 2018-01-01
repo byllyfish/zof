@@ -3,6 +3,7 @@
 #     Exception (built into Python)
 #       +-- zof.ControllerException
 #       |     +-- zof.TimeoutException
+#       |     +-- zof.ClosedException
 #       |     +-- zof.RPCException
 #       |     +-- zof.ErrorException
 #       |     +-- zof.DeliveryException
@@ -31,6 +32,19 @@ class TimeoutException(ControllerException):
     def __str__(self):
         return '[TimeoutException xid=%s timeout=%s]' % (self.xid,
                                                          self.timeout)
+
+
+class ClosedException(ControllerException):
+    """Exception that indicates an RPC or OpenFlow request failed because
+    the underlying RPC channel went down.
+    """
+
+    def __init__(self, xid, timeout):
+        super().__init__(xid)
+        self.timeout = timeout
+
+    def __str__(self):
+        return '[ClosedException xid=%s timeout=%s]' % (self.xid, self.timeout)
 
 
 class RPCException(ControllerException):

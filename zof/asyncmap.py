@@ -44,7 +44,6 @@ else:
             for _ in self.done:
                 if self.next_idx < len(self.seq):
                     self.pending.add(
-                        self.ensure_future(
-                            self.coro(self.seq[self.next_idx])))
+                        self.ensure_future(self.coro(self.seq[self.next_idx])))
                     self.next_idx += 1
             return self.done.pop()

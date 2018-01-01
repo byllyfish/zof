@@ -79,7 +79,7 @@ def _map_arp_fields(ofctl):
     """Translate nw_src/ipv4_src and nw_dst/ipv4_dst in the special case of
     an ARP match.
 
-    At the point this function is called, nw_src/nw_dst has already been 
+    At the point this function is called, nw_src/nw_dst has already been
     renamed to ipv4_src/ipv4_dst.
     """
     if 'ipv4_src' in ofctl and 'arp_spa' not in ofctl:
@@ -99,8 +99,8 @@ def _validate_ofctl(ofctl):
     for key, value in ofctl.items():
         valid_fn = _VALID_FIELDS.get(key)
         if not valid_fn:
-            raise ValueError('validate_ofctl: "%s" is not a valid field name' %
-                             key)
+            raise ValueError(
+                'validate_ofctl: "%s" is not a valid field name' % key)
         if not valid_fn(value):
             raise ValueError('validate_ofctl: field "%s: %s" is not valid' %
                              (key, value))

@@ -26,8 +26,8 @@ async def table_features_match_fields1():
             for field in tfm_entry['match']:
                 fields.add(field)
 
-    print('Processed %d entries in %d TableFeatures messages' %
-          (entry_count, tfm_count))
+    print('Processed %d entries in %d TableFeatures messages' % (entry_count,
+                                                                 tfm_count))
     return fields
 
 
@@ -45,16 +45,16 @@ async def table_features_match_fields2():
         for field in tfm_entry['match']:
             fields.add(field)
 
-    print('Processed %d entries in %d TableFeatures messages' %
-          (entry_count, tfm_count))
+    print('Processed %d entries in %d TableFeatures messages' % (entry_count,
+                                                                 tfm_count))
     return fields
 
 
 @APP.message('channel_up')
 async def channel_up(event):
     info = await DESC.request()
-    print('Description: %s %s' %
-          (info['msg']['hw_desc'], info['msg']['sw_desc']))
+    print('Description: %s %s' % (info['msg']['hw_desc'],
+                                  info['msg']['sw_desc']))
 
     fields = await table_features_match_fields1()
     for field in sorted(list(fields)):

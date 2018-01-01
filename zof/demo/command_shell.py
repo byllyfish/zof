@@ -14,7 +14,6 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit import AbortAction
 
 import zof
-from ..event import make_event
 from ..exception import ControlFlowException
 from ..logging import DEFAULT_FORMATTER, STDERR_HANDLER
 
@@ -80,14 +79,14 @@ async def command_shell(_event):
                 APP.command_prompt,
                 history=history,
                 completer=completer,
-                style=bold_style,
+                #style=bold_style,
                 patch_stdout=True,
                 complete_while_typing=False,
                 on_abort=AbortAction.RETRY)
             if command:
                 await run_command(command)
         except EOFError:
-            zof.post_event('EXIT')
+            zof.post_event({'event': 'EXIT'})
             break
     APP.foreground_task = None
 
@@ -97,7 +96,7 @@ def handle_sigint(event):
     """Cancel async command_shell task."""
     if APP.foreground_task:
         APP.foreground_task.cancel()
-        event.exit = False
+        event['exit'] = False
 
 
 async def run_command(command):
@@ -137,8 +136,7 @@ def exec_command(cmd, handler):
         # Make sure `prog` is set to correct command name.
         parser.prog = cmd[0]
         cmd = parser.parse_args(cmd[1:])
-    event = make_event(event='COMMAND', args=cmd)
-    return handler.func(event)
+    return handler.func({'event': 'COMMAND', 'args': cmd})
 
 
 def find_command_handler(cmd):
@@ -175,7 +173,7 @@ def _help_args():
 @APP.command('help', argparser=_help_args())
 def help_cmd(event):
     """List all commands or show help for a specific command."""
-    cmd_name = event.args.command
+    cmd_name = event['args'].command
     if cmd_name:
         yield _show_help(cmd_name)
     else:
@@ -226,7 +224,7 @@ def _ps_args():
 def ps_cmd(event):
     """List all running apps/tasks."""
     app_tasks = collections.defaultdict(list)
-    if event.args.all:
+    if event['args'].all:
         for task in asyncio.Task.all_tasks():
             capp = getattr(task, 'zof_task_app', None)
             app_tasks[capp].append(task)
@@ -255,12 +253,12 @@ def _log_args():
 @APP.command('log', argparser=_log_args())
 async def log_cmd(event):
     """Show recent log messages."""
-    if event.args.f:
+    if event['args'].f:
         _CONSOLE_HANDLER.write('Type CTRL-C to stop logging.')
     # Print out lines from tail buffer.
     for line in _TAIL_HANDLER.lines():
         _CONSOLE_HANDLER.write(line)
-    if event.args.f:
+    if event['args'].f:
         # Temporarily change console log handler's level to use the root log level.
         console_level = _CONSOLE_HANDLER.level
         _CONSOLE_HANDLER.setLevel('NOTSET')
@@ -276,7 +274,57 @@ async def log_cmd(event):
 @APP.command('exit', brief='Exit command shell.')
 def exit_cmd(_event):
     """Exit command shell."""
-    zof.post_event('EXIT')
+    zof.post_event({'event': 'EXIT'})
+
+
+@APP.command('pktin', brief='Send an ICMP echo packet_in message')
+def pktin_cmd(event):
+    """Send Packet_In message."""
+    ofmsg = zof.compile('''
+        type:            PACKET_IN
+        msg:             
+          buffer_id:       NO_BUFFER
+          total_len:       0x0066
+          in_port:         0x00000001
+          in_phy_port:     0x00000001
+          metadata:        0x0000000000000000
+          reason:          TABLE_MISS
+          table_id:        0x00
+          cookie:          0x0000000000000000
+          match:           
+            - field:           IN_PORT
+              value:           0x00000001
+          data:            ''
+          _pkt:            
+            - field:           ETH_DST
+              value:           '72:5d:8f:f2:34:a3'
+            - field:           ETH_SRC
+              value:           '7e:10:49:88:b9:e8'
+            - field:           VLAN_VID
+              value:           0x1064
+            - field:           ETH_TYPE
+              value:           0x0800
+            - field:           IP_DSCP
+              value:           0x00
+            - field:           IP_ECN
+              value:           0x00
+            - field:           IP_PROTO
+              value:           0x01
+            - field:           IPV4_SRC
+              value:           10.0.0.1
+            - field:           IPV4_DST
+              value:           10.0.0.2
+            - field:           NX_IP_TTL
+              value:           0x40
+            - field:           ICMPV4_TYPE
+              value:           0x08
+            - field:           ICMPV4_CODE
+              value:           0x00
+          _pkt_data:     101A000210B6395A00000000150B0F0000000000101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F3031323334353637
+
+        ''')
+    ofmsg.send(conn_id=1)
+    return 'sent'
 
 
 class TailBufferedHandler(logging.Handler):

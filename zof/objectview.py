@@ -107,8 +107,8 @@ class ObjectView(object):
         if len(format_spec) == 2 and format_spec[1] == 's':
             indent = int(format_spec[0])
             return to_json_pretty(self, indent)
-        raise ValueError('ObjectView does not support format_spec: %s' %
-                         format_spec)
+        raise ValueError(
+            'ObjectView does not support format_spec: %s' % format_spec)
 
 
 # ------------------------------------------------------------------------------
@@ -139,7 +139,11 @@ def to_json_pretty(obj, indent=4):
     """Return string with indented json representation of an object.
     """
     return json.dumps(
-        obj, ensure_ascii=False, default=_json_serialize, indent=indent, sort_keys=True)
+        obj,
+        ensure_ascii=False,
+        default=_json_serialize,
+        indent=indent,
+        sort_keys=True)
 
 
 def _json_serialize(obj):

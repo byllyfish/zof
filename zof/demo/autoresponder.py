@@ -1,6 +1,5 @@
 import zof
 
-
 APP = zof.Application('autoresponder')
 
 
@@ -21,20 +20,18 @@ def channel_up(_):
     _ECHO_REPLY.send()
 
 
-
 @APP.message('packet_in')
 def packet_in(event):
     APP.logger.info('packet_in: %r', event['msg']['pkt'])
 
 
 _SET_FILTER = zof.compile({
-    'method': 'OFP.SET_FILTER',
-    'params': [
-        {
-            'filter': 'icmp',
-            'action': 'GENERIC_REPLY'
-        }
-    ]
+    'method':
+    'OFP.SET_FILTER',
+    'params': [{
+        'filter': 'icmp',
+        'action': 'GENERIC_REPLY'
+    }]
 })
 
 _DELETE_FLOWS = zof.compile('''
@@ -135,7 +132,6 @@ _ECHO_REPLY = zof.compile('''
             - action: GROUP
               group_id: 1000
 ''')
-
 
 if __name__ == '__main__':
     zof.run()

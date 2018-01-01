@@ -3,7 +3,6 @@ import zof
 
 
 class CompileTestCase(unittest.TestCase):
-
     def test_compile_string(self):
         """Test that a YAML string compiles to an OF message.
         """

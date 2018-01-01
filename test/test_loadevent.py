@@ -8,8 +8,7 @@ class LoadEventTestCase(unittest.TestCase):
         # Loading empty bytes is an error.
         event = load_event(b'')
         self.assertEqual('EXCEPTION', event['event'])
-        self.assertEqual('Expecting value: line 1 column 1 (char 0)',
-                         event['reason'])
+        self.assertEqual('EOF', event['reason'])
 
         # Loading only white space is an error.
         event = load_event(b'  ')

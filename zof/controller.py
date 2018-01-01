@@ -98,23 +98,24 @@ class Controller(object):
         """Async task for running the controller."""
         LOGGER.debug("Controller._run entered")
         try:
+            self._event_queue = asyncio.Queue()
             self._preflight()
 
-            self.conn = Connection(oftr_options={
-                'path': self.args.x_oftr_path,
-                'args': self.args.x_oftr_args,
-                'prefix': self.args.x_oftr_prefix
-            })
+            self.conn = Connection(
+                oftr_options={
+                    'path': self.args.x_oftr_path,
+                    'args': self.args.x_oftr_args,
+                    'prefix': self.args.x_oftr_prefix
+                })
             # Call connect() with "self.post_event" to use protocol based api.
             proto_callback = self.post_event if not self.args.xp_streams else None
             await self.conn.connect(proto_callback)
 
-            self._event_queue = asyncio.Queue()
             self._set_phase('PRESTART')
 
             asyncio.ensure_future(self._start())
             if not proto_callback:
-                # Schedule the read loop to read from the stream, if we're not 
+                # Schedule the read loop to read from the stream, if we're not
                 # using the protocol api.
                 asyncio.ensure_future(self._read_loop())
             idle = asyncio.ensure_future(self._idle_task())
@@ -253,27 +254,6 @@ class Controller(object):
         assert isinstance(event, dict)
         self._event_queue.put_nowait(event)
 
-    '''
-    def post_message(self, event):
-        """Post a message event to our event queue.
-
-        This private api differs from post_event in that we may dispatch the
-        event directly when the event queue is empty.
-        """
-        try:
-            if self._event_queue.empty():
-                # When there are no other events in line, direct dispatch.
-                self._dispatch_event(event)
-            else:
-                LOGGER.debug('post_message: indirect dispatch: %r', event)
-                self._event_queue.put_nowait(event)
-        except _exc.StopPropagationException:
-            LOGGER.debug('post_message: StopPropagationException caught')
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception('Exception in Controller.post_message')
-            sys.exit(1)
-    '''
-
     def _dispatch_event(self, event):
         """Dispatch an event we receive from the queue."""
         LOGGER.debug('_dispatch_event %r', event)
@@ -295,9 +275,11 @@ class Controller(object):
         If `xid` is specified, return a `_ReplyFuture` to await the response.
         Otherwise, return None.
         """
+        if self.conn.is_closed() and xid is not None:
+            raise _exc.ClosedException(xid, _XID_TIMEOUT)
         self.conn.write(dump_event(event))
         if xid is None:
-            return
+            return None
 
         # Register future to track the response.
         assert xid > 0
@@ -355,6 +337,10 @@ class Controller(object):
         # Immediately begin shutting down if there is an 'EXIT' event.
         if event_type == 'EXIT':
             raise _exc.ExitException(event.get('exit_status', 0))
+        # Handle RPC connection failure.
+        if event_type == 'EXCEPTION':
+            self._handle_rpc_fail(event)
+            return
         # Let apps handle the event.
         for app in self.apps:
             app.handle_event(event, 'event')
@@ -369,6 +355,18 @@ class Controller(object):
         known_xid = self._handle_xid(result, event['id'], except_class)
         if not known_xid:
             LOGGER.warning('Unrecognized id in RPC reply: %s', event)
+
+    def _handle_rpc_fail(self, event):
+        """Called when RPC connection fails."""
+        LOGGER.error('RPC connection raised exception: %s', event['reason'])
+        # Cancel all pending requests with a special ClosedException.
+        for (xid, (fut, _, timeout)) in self._reqs.items():
+            if not fut.cancelled():
+                fut.set_exception(_exc.ClosedException(xid, timeout))
+        self._reqs.clear()
+        # TODO(bfish): Restart the RPC connection if this happens in START
+        # phase.
+        raise _exc.ExitException(11)
 
     def _handle_message(self, message):
         """Called when a `OFP.MESSAGE` is received."""
@@ -429,11 +427,10 @@ class Controller(object):
         while True:
             await asyncio.sleep(_IDLE_INTERVAL)
             now = _timestamp()
-            timed_out = [
-                (xid, fut, timeout)
-                for (xid, (fut, expiration, timeout)) in self._reqs.items()
-                if expiration <= now
-            ]
+            timed_out = [(xid, fut, timeout)
+                         for (xid, (fut, expiration,
+                                    timeout)) in self._reqs.items()
+                         if expiration <= now]
             for xid, fut, timeout in timed_out:
                 if not fut.cancelled():
                     fut.set_exception(_exc.TimeoutException(xid, timeout))
@@ -513,8 +510,7 @@ class Controller(object):
         task.zof_task_scope = scope_key
         task.zof_task_locals = task_locals
         task.add_done_callback(
-            functools.partial(
-                self._task_callback, scope_key=scope_key))
+            functools.partial(self._task_callback, scope_key=scope_key))
         return task
 
     def _cancel_tasks(self, scope_key):

@@ -1,5 +1,5 @@
-import zof
 import asyncio
+import zof
 from zof.demo.simulator import APP as SIM
 
 APP = zof.Application('zbench', exception_fatal=True)

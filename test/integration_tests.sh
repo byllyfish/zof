@@ -14,6 +14,10 @@ fi
 echo "Test layer2 demo with unknown argument."
 $CMD -m zof.demo.layer2 --unknown-argument || true
 
+echo "Test layer2 with invalid oftr argument"
+$CMD -m zof.demo.layer2 --x-oftr-args='trace=rpc' &> log.txt || true
+grep "ClosedException" log.txt || cat log.txt
+
 echo "Test layer2 demo help."
 $CMD -m zof.demo.layer2 --help | grep "show this help message and exit"
 

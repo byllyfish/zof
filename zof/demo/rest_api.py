@@ -19,12 +19,12 @@ async def stop(_):
     await WEB.stop()
 
 
-@WEB.get_json('/stats/switches')
+@WEB.get('/stats/switches', 'json')
 def get_switches():
     return [d.datapath_id for d in zof.get_datapaths()]
 
 
-@WEB.get_json('/stats/flow/{dpid:[0-9A-F:]+}')
+@WEB.get('/stats/flow/{dpid:[0-9A-F:]+}', 'json')
 async def get_flows(dpid):
     result = []
     async for ofmsg in FLOW_REQ.request(datapath_id=_parse_dpid(dpid)):
@@ -33,28 +33,28 @@ async def get_flows(dpid):
     return {dpid: result}
 
 
-@WEB.get_json('/stats/groupdesc/{dpid:[0-9A-F:]+}')
+@WEB.get('/stats/groupdesc/{dpid:[0-9A-F:]+}', 'json')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_groups(result['msg'])
     return {dpid: result['msg']}
 
 
-@WEB.get_json('/stats/port/{dpid}/{port_no}')
-async def get_portstats(dpid, port_no):
+@WEB.get('/stats/port/{dpid}/{port_no}', 'json')
+async def get_portstats_specific(dpid, port_no):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no=_parse_port(port_no))
     return {dpid: result['msg']}
 
 
-@WEB.get_json('/stats/port/{dpid}')
+@WEB.get('/stats/port/{dpid}', 'json')
 async def get_portstats(dpid):
     result = await PORTSTATS_REQ.request(
         datapath_id=_parse_dpid(dpid), port_no='ANY')
     return {dpid: result['msg']}
 
 
-@WEB.post_json('/stats/portdesc/modify')
+@WEB.post('/stats/portdesc/modify', 'json')
 async def modify_portdesc(post_data):
     dpid = _parse_dpid(post_data['dpid'])
     port_no = _parse_port(post_data['port_no'])
@@ -72,7 +72,7 @@ async def modify_portdesc(post_data):
     return result['msg']
 
 
-@WEB.get_json('/stats/portdesc/{dpid}')
+@WEB.get('/stats/portdesc/{dpid}', 'json')
 async def get_portdesc(dpid):
     result = await PORTDESC_REQ.request(datapath_id=_parse_dpid(dpid))
     return {dpid: result['msg']}

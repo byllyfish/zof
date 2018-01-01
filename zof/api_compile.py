@@ -143,7 +143,8 @@ class CompiledString(CompiledMessage):
     def __repr__(self):
         """String representation (used for testing)
         """
-        return '<zof.CompiledString args=%r>\n%s\n</zof.CompiledString>' % (sorted(self._template_args), self._template.template)
+        return '<zof.CompiledString args=%r>\n%s\n</zof.CompiledString>' % (
+            sorted(self._template_args), self._template.template)
 
 
 class CompiledObject(CompiledMessage):
@@ -190,7 +191,8 @@ class CompiledObject(CompiledMessage):
     def __repr__(self):
         """String representation (used for testing)
         """
-        return '<zof.CompiledObject>\n%s\n</zof.CompiledObject>' % to_json_pretty(self._obj)
+        return '<zof.CompiledObject>\n%s\n</zof.CompiledObject>' % to_json_pretty(
+            self._obj)
 
 
 class CompiledObjectRPC(CompiledMessage):
@@ -218,7 +220,8 @@ class CompiledObjectRPC(CompiledMessage):
     def __repr__(self):
         """String representation (used for testing)
         """
-        return '<zof.CompiledObjectRPC>\n%s\n</zof.CompiledObjectRPC>' % to_json_pretty(self._obj)
+        return '<zof.CompiledObjectRPC>\n%s\n</zof.CompiledObjectRPC>' % to_json_pretty(
+            self._obj)
 
 
 class MyTemplate(string.Template):

@@ -36,8 +36,8 @@ class Connection(object):
         # Verify that connection options are all strings or None.
         for key, value in oftr_options.items():
             if value is not None and not isinstance(value, str):
-                raise ValueError('Unexpected oftr option: %s=%r' %
-                                 (key, value))
+                raise ValueError('Unexpected oftr option: %s=%r' % (key,
+                                                                    value))
         self._conn = None
         self._input = None
         self._output = None
@@ -186,6 +186,11 @@ class Connection(object):
             except ProcessLookupError:
                 # Ignore failure when process already died.
                 pass
+
+    def is_closed(self):
+        """Return true if connection is closed.
+        """
+        return self._output is None
 
     def get_write_buffer_size(self):
         """Get size of the write buffer.

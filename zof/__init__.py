@@ -14,4 +14,4 @@ from .api_functions import (get_apps, set_apps, get_datapaths, find_datapath,
                             find_port, post_event, ensure_future, connect,
                             close, get_connections, add_identity)
 
-__version__ = '0.9.0'
+__version__ = '0.10.0'

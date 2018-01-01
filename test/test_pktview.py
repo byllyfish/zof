@@ -38,13 +38,11 @@ class PktViewTestCase(unittest.TestCase):
         data = dict(a='a', b=2, c='ddd')
         fields = pktview_to_list(data)
         fields.sort(key=_by_field)
-        self.assertEqual(
-            fields, [
-                dict(
-                    field='A', value='a'), dict(
-                        field='B', value=2), dict(
-                            field='C', value='ddd')
-            ])
+        self.assertEqual(fields, [
+            dict(field='A', value='a'),
+            dict(field='B', value=2),
+            dict(field='C', value='ddd')
+        ])
 
         with self.assertRaisesRegex(ValueError, r'len\(tuple\) != 2'):
             pktview_to_list({'a': (1, 2, 3)})
@@ -126,8 +124,8 @@ class PktViewTestCase(unittest.TestCase):
         pkt = make_pktview(ipv4_src='1.2.3.4', eth_type=0x0800)
         items = list(pkt.items())
         items.sort()
-        self.assertEqual(items,
-                         [('eth_type', 0x0800), ('ipv4_src', '1.2.3.4')])
+        self.assertEqual(items, [('eth_type', 0x0800),
+                                 ('ipv4_src', '1.2.3.4')])
 
     def test_pktview_from_ofctl(self):
         data = dict(dl_type=0x0800, nw_proto=6, tp_dst=80)
@@ -136,8 +134,9 @@ class PktViewTestCase(unittest.TestCase):
 
         data = dict(dl_dst='ab:cd:00:00:00:00/ff:ff:00:00:00:00')
         pkt = pktview_from_ofctl(data, validate=True)
-        self.assertEqual(pkt,
-                         {'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'})
+        self.assertEqual(pkt, {
+            'eth_dst': 'ab:cd:00:00:00:00/ff:ff:00:00:00:00'
+        })
         items = pktview_to_list(pkt)
         self.assertEqual(items, [{
             'value': 'ab:cd:00:00:00:00',
@@ -187,15 +186,18 @@ class PktViewTestCase(unittest.TestCase):
 
         data = dict(ipv6_nd_target='fc00::1:2/112')
         fields = pktview_to_list(data)
-        self.assertEqual(fields, [{
-            'field': 'IPV6_ND_TARGET',
-            'value': IPv6Address('fc00::1:2'),
-            'mask': IPv6Address('ffff:ffff:ffff:ffff:ffff:ffff:ffff:0')
-        }])
+        self.assertEqual(
+            fields,
+            [{
+                'field': 'IPV6_ND_TARGET',
+                'value': IPv6Address('fc00::1:2'),
+                'mask': IPv6Address('ffff:ffff:ffff:ffff:ffff:ffff:ffff:0')
+            }])
 
         result = pktview_from_list(fields, slash_notation=True)
         self.assertEqual(result, {
-            'ipv6_nd_target': 'fc00::1:2/ffff:ffff:ffff:ffff:ffff:ffff:ffff:0'
+            'ipv6_nd_target':
+            'fc00::1:2/ffff:ffff:ffff:ffff:ffff:ffff:ffff:0'
         })
 
     def test_slash_notation_tcp_dst(self):

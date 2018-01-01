@@ -1,9 +1,9 @@
 import argparse
+from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
+from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 import zof
 from zof import exception as _exc
 from zof.http import HttpServer
-from prometheus_client import REGISTRY, CollectorRegistry, generate_latest, ProcessCollector
-from prometheus_client.core import CounterMetricFamily, GaugeMetricFamily
 
 
 def arg_parser():
@@ -39,14 +39,14 @@ async def stop(_):
     APP.logger.info('Stop listening on %s', APP.args.metrics_endpoint)
 
 
-@WEB.get_text('/')
-@WEB.get_text('/metrics')
-@WEB.get_text('/metrics/')
+@WEB.get('/', 'text')
+@WEB.get('/metrics', 'text')
+@WEB.get('/metrics/', 'text')
 async def metrics():
     return generate_latest(REGISTRY)
 
 
-@WEB.get_text('/metrics/ports?{target}')
+@WEB.get('/metrics/ports?{target}', 'text')
 async def ports(target):
     if target:
         met = PortMetrics()
@@ -54,7 +54,7 @@ async def ports(target):
     else:
         met = PortMetrics(include_instance=True)
         await _collect_port_stats_all(met)
-    return _dump_prometheus(met.metrics())
+    return _dump_prometheus(met)
 
 
 PORT_STATS = zof.compile('''
@@ -71,6 +71,7 @@ def _supported_counter(value):
 class PortMetrics:
     def __init__(self, include_instance=False):
         self.include_instance = include_instance
+        self.error = None
         if include_instance:
             labels = ['port_no', 'instance']
         else:
@@ -93,7 +94,7 @@ class PortMetrics:
             'port_duration_seconds_total', 'duration in seconds', None, labels)
         self.port_up = GaugeMetricFamily('port_up', 'port is up', None, labels)
 
-    def metrics(self):
+    def collect(self):
         return [
             self.tx_bytes, self.rx_bytes, self.tx_packets, self.rx_packets,
             self.tx_dropped, self.rx_dropped, self.rx_errors, self.duration,
@@ -107,12 +108,15 @@ class PortMetrics:
         else:
             labels = [str(port_no)]
         for counter, value in [(self.tx_bytes, stat['tx_bytes']),
-                               (self.rx_bytes, stat['rx_bytes']),
-                               (self.tx_packets, stat['tx_packets']),
-                               (self.rx_packets, stat['rx_packets']),
-                               (self.tx_dropped, stat['tx_dropped']),
-                               (self.rx_dropped, stat['rx_dropped']),
-                               (self.rx_errors, stat['rx_errors'])]:
+                               (self.rx_bytes,
+                                stat['rx_bytes']), (self.tx_packets,
+                                                    stat['tx_packets']),
+                               (self.rx_packets,
+                                stat['rx_packets']), (self.tx_dropped,
+                                                      stat['tx_dropped']),
+                               (self.rx_dropped,
+                                stat['rx_dropped']), (self.rx_errors,
+                                                      stat['rx_errors'])]:
             if _supported_counter(value):
                 counter.add_metric(labels, value)
         if stat['duration'] != '0':
@@ -130,6 +134,7 @@ async def _collect_port_stats(dpid, metric):
     except _exc.ControllerException as ex:
         APP.logger.warning('Unable to retrieve stats for dpid %s: %r', dpid,
                            ex)
+        metric.error = ('Unable to retrieve stats for dpid "%s"' % dpid, 404)
 
 
 async def _collect_port_stats_all(metric):
@@ -142,17 +147,11 @@ async def _collect_port_stats_all(metric):
             pass
 
 
-class _MyCollector:
-    def __init__(self, stats):
-        self.stats = stats
-
-    def collect(self):
-        return self.stats
-
-
 def _dump_prometheus(stats):
+    if stats.error:
+        return stats.error
     registry = CollectorRegistry()
-    registry.register(_MyCollector(stats))
+    registry.register(stats)
     return generate_latest(registry)
 
 
