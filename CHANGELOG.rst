@@ -7,6 +7,7 @@ Version 0.11.0
 - Default cacert and privkey to '' if not present.
 - Rest API allows datapath's that begin with '0x'.
 - Fix bug in stopping web server (when there was an error starting it).
+- Update oftr version in alpine docker file.
 
 
 Version 0.10.0
