@@ -214,11 +214,14 @@ class Controller(object):
     async def _configure_tls(self):
         """Set up a TLS identity for connections to use."""
         try:
+            cert = self.args.listen_cert
+            cacert = self.args.listen_cacert or ''
+            privkey = self.args.listen_privkey or ''
             result = await self.rpc_call(
                 'OFP.ADD_IDENTITY',
-                cert=self.args.listen_cert,
-                cacert=self.args.listen_cacert,
-                privkey=self.args.listen_privkey)
+                cert=cert,
+                cacert=cacert,
+                privkey=privkey)
             # Save tls_id from result so we can pass it in our calls to
             # 'OFP.LISTEN' and 'OFP.CONNECT'.
             self._tls_id = result['tls_id']

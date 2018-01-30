@@ -47,6 +47,7 @@ class HttpServer:
         Args:
             endpoint (str): Listening endpoint "address:port".
         """
+        assert self.web_server is None
         self.endpoint = Endpoint(endpoint)
         loop = asyncio.get_event_loop()
         self.web_handler = self.web_app.make_handler(
@@ -62,6 +63,8 @@ class HttpServer:
 
     async def stop(self):
         """Stop web server."""
+        if self.web_server is None:
+            return
         self.web_server.close()
         await self.web_server.wait_closed()
 

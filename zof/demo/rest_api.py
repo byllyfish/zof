@@ -24,7 +24,7 @@ def get_switches():
     return [d.datapath_id for d in zof.get_datapaths()]
 
 
-@WEB.get('/stats/flow/{dpid:[0-9A-F:]+}', 'json')
+@WEB.get('/stats/flow/{dpid}', 'json')
 async def get_flows(dpid):
     result = []
     async for ofmsg in FLOW_REQ.request(datapath_id=_parse_dpid(dpid)):
@@ -33,7 +33,7 @@ async def get_flows(dpid):
     return {dpid: result}
 
 
-@WEB.get('/stats/groupdesc/{dpid:[0-9A-F:]+}', 'json')
+@WEB.get('/stats/groupdesc/{dpid}', 'json')
 async def get_groupdesc(dpid):
     result = await GROUPDESC_REQ.request(datapath_id=_parse_dpid(dpid))
     _translate_groups(result['msg'])
