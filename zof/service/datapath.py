@@ -85,7 +85,6 @@ def features_reply(event):
 def port_status(event):
     datapath = APP.find_datapath(event['datapath_id'])
     if datapath is not None:
-        event['datapath'] = datapath
         msg = event['msg']
         reason = msg['reason']
         if reason == 'DELETE':
@@ -94,7 +93,9 @@ def port_status(event):
             datapath.add_ports([msg])
         else:
             APP.logger.warning('Unknown port_status reason: %r', event)
-        return
+        if datapath.ready:
+            event['datapath'] = datapath
+            return
 
     raise _exc.StopPropagationException()
 
@@ -102,7 +103,7 @@ def port_status(event):
 @APP.message(any)
 def other_message(event):
     datapath = APP.find_datapath(event['datapath_id'])
-    if datapath is not None:
+    if datapath is not None and datapath.ready:
         event['datapath'] = datapath
         return
 
