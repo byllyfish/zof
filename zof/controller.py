@@ -99,6 +99,7 @@ class Controller(object):
         LOGGER.debug("Controller._run entered")
         try:
             self._event_queue = asyncio.Queue()
+            self._prepare_bind()
             self._preflight()
 
             self.conn = Connection(
@@ -455,6 +456,12 @@ class Controller(object):
             self._dispatch_event(event)
         elif self._event_queue:
             self.post_event(event)
+
+    def _prepare_bind(self):
+        """Prepare app bindings.
+        """
+        for app in self.apps:
+            app.prepare_bind()
 
     def _preflight(self):
         """Called at the end of the INIT phase.

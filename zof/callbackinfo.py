@@ -87,6 +87,11 @@ class CallbackInfo:
             return callback.__get__(instance, cls)
         return callback
 
+    @property
+    def bind_required(self):
+        """Return true if callback must be bound to an instance."""
+        return self.class_required or self.instance_required
+
 
 def _args_required(params):
     """Return count of positional arguments needed."""

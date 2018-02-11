@@ -95,3 +95,13 @@ class Application(object):
             return self._app.register(func, 'event', subtype, kwds)
 
         return _wrap
+
+
+    def bind(self):
+        """Bind instance class to app."""
+        
+        def _wrap(class_):
+            self._app.bind_class = class_
+            return class_
+
+        return _wrap

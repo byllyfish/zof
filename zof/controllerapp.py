@@ -21,6 +21,8 @@ class ControllerApp(object):
         controller (Controller): App's parent controller object.
         logger (Logger): App's logger.
         handlers (Dict[str,List[BaseHandler]]): App handlers.
+        bind_class (Class|None): Class for delegate instance
+        bind_instance (object|None): Delegate instance
     Args:
         controller (Controller): Parent controller object.
         name (str): App name.
@@ -42,6 +44,8 @@ class ControllerApp(object):
         self.exception_fatal = exception_fatal
         self.arg_parser = arg_parser
         self._has_datapath_id = has_datapath_id
+        self.bind_class = None
+        self.bind_instance = None
         self.set_controller(controller)
 
         self.logger = logging.getLogger('%s.%s' % (__package__, self.name))
@@ -53,6 +57,16 @@ class ControllerApp(object):
         # Insert app into controller's list sorted by precedence.
         controller.apps.append(self)
         controller.apps.sort(key=attrgetter('precedence'), reverse=True)
+
+    def prepare_bind(self):
+        """Construct delegate instance and bind it to handlers."""
+        instance = None
+        if self.bind_class:
+            instance = self.bind_class()
+        for item in self.handlers.values():
+            for handler in item:
+                handler.bind(instance)
+        self.bind_instance = instance
 
     def handle_event(self, event, handler_type):
         """Handle event."""
@@ -104,9 +118,6 @@ class ControllerApp(object):
         if type_ == 'message' and not self._has_datapath_id and 'datapath_id' not in options:
             options['datapath_id'] = None
         handler = make_handler(callback, type_, subtype, options)
-        if not handler.verify():
-            self.logger.error('Failed to register %s', handler)
-            return None
         handlers = self.handlers.setdefault(handler.type, [])
         handlers.append(handler)
         self.logger.debug('Register handler %s', handler)
