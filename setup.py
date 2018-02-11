@@ -43,7 +43,7 @@ setup(
     # Dependencies
     install_requires=[
         # Imported by http submodule. Required for metrics demo.
-        'aiohttp>=2.2.2',
+        'aiohttp==3.0.0b4',
         # Required for metrics demo.
         'prometheus_client'
     ],
