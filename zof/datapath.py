@@ -57,6 +57,7 @@ class Datapath:
 
     def __init__(self, datapath_id, conn_id):
         self.datapath_id = datapath_id
+        self.id = normalize_datapath_id(datapath_id)
         self.conn_id = conn_id
         self.ports = OrderedDict()
         self.up = True
