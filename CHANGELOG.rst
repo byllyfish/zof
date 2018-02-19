@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+Version 0.12.0
+--------------
+
+- Add support for APP.bind decorator for classes.
+- Add --listen-keylog argument support for TLS key log file.
+- Datapath object instances now have an 'id' attribute (datapath_id as int).
+- Prevent datapath service from propagating messages if datapath is not ready.
+- Update requirements.txt.
+
 Version 0.11.0
 --------------
 
