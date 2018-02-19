@@ -89,6 +89,10 @@ def common_args(*, under_test=False, include_x_modules=False):
         type=file_contents_type(),
         metavar='FILE',
         help='private key')
+    listen_group.add_argument(
+        '--listen-keylog', 
+        metavar='FILE', 
+        help='key log file')
 
     x_group = parser.add_argument_group('experimental')
     x_group.add_argument(
