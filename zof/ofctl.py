@@ -107,7 +107,7 @@ def _validate_ofctl(ofctl):
 
 
 def _valid_port_no(value):
-    return True
+    return _valid_str(value) or _valid_int(value)
 
 
 def _valid_int(value):
@@ -118,6 +118,10 @@ def _valid_int(value):
     return True
 
 
+def _valid_str(value):
+    return isinstance(value, str) and value != ''
+
+
 def _valid_int_mask(value):
     if isinstance(value, str) and '/' in value:
         value, mask = value.split('/', 1)
@@ -126,15 +130,15 @@ def _valid_int_mask(value):
 
 
 def _valid_macaddr(value):
-    return True
+    return _valid_str(value)
 
 
 def _valid_ipv4(value):
-    return True
+    return _valid_str(value)
 
 
 def _valid_ipv6(value):
-    return True
+    return _valid_str(value)
 
 
 def _valid_vlan(value):
