@@ -113,7 +113,8 @@ class PktView(ObjectView):
         'IPV4': 'ipv4_src',
         'IPV6': 'ipv6_src',
         'ICMPV4': 'icmpv4_type',
-        'ICMPV6': 'icmpv6_type'
+        'ICMPV6': 'icmpv6_type',
+        'LLDP': 'x_lldp_ttl'
     }
 
     def get_protocol(self, protocol):
