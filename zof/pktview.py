@@ -133,7 +133,7 @@ def make_pktview(**kwds):
     return PktView(kwds)
 
 
-def pktview_from_list(fields, *, slash_notation=False):
+def pktview_from_list(fields, *, slash_notation=False, multiple_value=False):
     """Construct a PktView object from a list of field objects.
 
     A field object may be an ObjectView or a dict.
@@ -141,6 +141,7 @@ def pktview_from_list(fields, *, slash_notation=False):
     Args:
         fields (Seq[ObjectView|dict]): Sequence of fields.
         slash_notation (bool): If true, convert to "value/mask" notation.
+        multiple_value (bool): If true, allow multiple values.
     """
     if not isinstance(fields, (list, tuple)):
         raise ValueError('Expected list or tuple')
@@ -156,7 +157,16 @@ def pktview_from_list(fields, *, slash_notation=False):
                 value = '%s/%s' % value
         else:
             value = field['value']
-        pkt[key] = value
+        if key in pkt:
+            if not multiple_value:
+                raise ValueError('Multiple value for key "%s"' % key)
+            orig_value = pkt[key]
+            if not isinstance(orig_value, list):
+                orig_value = [orig_value]
+                pkt[key] = orig_value
+            orig_value.append(value)
+        else:
+            pkt[key] = value
     return pkt
 
 

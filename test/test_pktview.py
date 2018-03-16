@@ -47,6 +47,25 @@ class PktViewTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r'len\(tuple\) != 2'):
             pktview_to_list({'a': (1, 2, 3)})
 
+    def test_from_list_multiple(self):
+        # Test PktView creation where one key has more than one value.
+        data = [dict(field='A', value=1), dict(field='A', value=2)]
+        pkt = pktview_from_list(data, multiple_value=True)
+        self.assertEqual(pkt, {'a': [1, 2]})
+
+        # If we don't specify multiple_value, this will raise an exception.
+        with self.assertRaisesRegex(ValueError, r'Multiple value'):
+            pktview_from_list(data)
+
+        # The multiple_value option still works with masks (which use tuples)
+        data = [dict(field='A', value=5, mask=255), dict(field='A', value=6)]
+        pkt = pktview_from_list(data, multiple_value=True)        
+        self.assertEqual(pkt, {'a': [(5, 255), 6]})
+
+        # ...or slash_notation.
+        pkt = pktview_from_list(data, multiple_value=True, slash_notation=True)
+        self.assertEqual(pkt, {'a': ['5/255', 6]})
+
     def test_alias_attr(self):
         pkt = make_pktview()
         pkt.hop_limit = 5
