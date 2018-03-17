@@ -66,6 +66,15 @@ class PktViewTestCase(unittest.TestCase):
         pkt = pktview_from_list(data, multiple_value=True, slash_notation=True)
         self.assertEqual(pkt, {'a': ['5/255', 6]})
 
+    def test_to_list_multiple(self):
+        # Test converting PktView to list where key has multiple values.
+        data = {'a': [1, 2]}
+        fields = pktview_to_list(data)
+        self.assertEqual(fields, [
+            dict(field='A', value=1),
+            dict(field='A', value=2)
+        ])
+
     def test_alias_attr(self):
         pkt = make_pktview()
         pkt.hop_limit = 5

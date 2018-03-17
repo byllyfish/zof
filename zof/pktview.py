@@ -175,7 +175,14 @@ def pktview_to_list(pkt):
     if not isinstance(pkt, (dict, ObjectView)):
         raise ValueError('Expected a dict or ObjectView')
 
-    return [_make_field(k, v) for k, v in _iter_items(pkt) if k != PAYLOAD]
+    result = []
+    for key, value in _iter_items(pkt):
+        if key != PAYLOAD:
+            if isinstance(value, list):
+                result.extend(_make_field(key, item) for item in value)
+            else:
+                result.append(_make_field(key, value))
+    return result
 
 
 def pktview_from_ofctl(ofctl, *, validate=False):
@@ -192,6 +199,8 @@ def pktview_from_ofctl(ofctl, *, validate=False):
 
 
 def _make_field(name, value):
+    assert not isinstance(value, list)
+
     fname = name.upper()
     value = convert_slash_notation(fname, value)
 
