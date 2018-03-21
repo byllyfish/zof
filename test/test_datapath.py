@@ -133,7 +133,11 @@ class DatapathTestCase(unittest.TestCase):
             'hw_addr': '00:00:00:00:00:01',
             'name': 'Port 1',
             'state': ['LINK_DOWN'],
-            'config': ['PORT_DOWN']
+            'config': ['PORT_DOWN'],
+            'ethernet': {
+                'curr_speed': 1e6,
+                'max_speed': 2e6
+            }
         }
         dp1.add_ports([port1_desc])
 
@@ -143,6 +147,8 @@ class DatapathTestCase(unittest.TestCase):
         self.assertEqual(port1.name, 'Port 1')
         self.assertFalse(port1.up)
         self.assertTrue(port1.admin_down)
+        self.assertEqual(port1.curr_speed, 1e6)
+        self.assertEqual(port1.max_speed, 2e6)
 
     def test_normalize_datapath(self):
         dpid = normalize_datapath_id('00:00:00:00:00:00:00:01')

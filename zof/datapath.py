@@ -109,6 +109,8 @@ class Datapath:
             port.name = port_desc['name']
             port.state = port_desc['state']
             port.config = port_desc['config']
+            port.curr_speed = port_desc['ethernet']['curr_speed']
+            port.max_speed = port_desc['ethernet']['max_speed']
 
     def close(self):
         """Close connection to datapath; i.e. hang up.
@@ -160,6 +162,8 @@ class Port:
         self.name = None
         self.state = []
         self.config = []
+        self.curr_speed = 0
+        self.max_speed = 0
 
     def __getstate__(self):
         return str(self)
