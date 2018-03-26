@@ -4,6 +4,7 @@ CHANGELOG
 Version 0.13.0
 --------------
 
+- Add curr_speed and max_speed to zof.Port class.
 - PktView now supports fields with multiple values (e.g. x_lldp_org_specific).
 - Add lldp support for get_protocol API in PktView.
 - Validate that mac, ipv4 and ipv6 addresses are non-empty strings (ofctl).
