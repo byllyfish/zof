@@ -155,3 +155,9 @@ class TestOfctl(unittest.TestCase):
         ofctl = {'udp_src': '123/70/12'}
         with self.assertRaisesRegex(ValueError, 'udp_src: 123/70/12'):
             convert_from_ofctl(ofctl, validate=True)
+
+    def test_validate_empty(self):
+        ofctl = {'ipv4_src': ''}
+        with self.assertRaisesRegex(ValueError, 'ipv4_src'):
+            convert_from_ofctl(ofctl, validate=True)
+

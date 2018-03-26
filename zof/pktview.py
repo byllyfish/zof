@@ -113,7 +113,8 @@ class PktView(ObjectView):
         'IPV4': 'ipv4_src',
         'IPV6': 'ipv6_src',
         'ICMPV4': 'icmpv4_type',
-        'ICMPV6': 'icmpv6_type'
+        'ICMPV6': 'icmpv6_type',
+        'LLDP': 'x_lldp_ttl'
     }
 
     def get_protocol(self, protocol):
@@ -132,7 +133,7 @@ def make_pktview(**kwds):
     return PktView(kwds)
 
 
-def pktview_from_list(fields, *, slash_notation=False):
+def pktview_from_list(fields, *, slash_notation=False, multiple_value=False):
     """Construct a PktView object from a list of field objects.
 
     A field object may be an ObjectView or a dict.
@@ -140,6 +141,7 @@ def pktview_from_list(fields, *, slash_notation=False):
     Args:
         fields (Seq[ObjectView|dict]): Sequence of fields.
         slash_notation (bool): If true, convert to "value/mask" notation.
+        multiple_value (bool): If true, allow multiple values.
     """
     if not isinstance(fields, (list, tuple)):
         raise ValueError('Expected list or tuple')
@@ -155,7 +157,16 @@ def pktview_from_list(fields, *, slash_notation=False):
                 value = '%s/%s' % value
         else:
             value = field['value']
-        pkt[key] = value
+        if key in pkt:
+            if not multiple_value:
+                raise ValueError('Multiple value for key "%s"' % key)
+            orig_value = pkt[key]
+            if not isinstance(orig_value, list):
+                orig_value = [orig_value]
+                pkt[key] = orig_value
+            orig_value.append(value)
+        else:
+            pkt[key] = value
     return pkt
 
 
@@ -164,7 +175,14 @@ def pktview_to_list(pkt):
     if not isinstance(pkt, (dict, ObjectView)):
         raise ValueError('Expected a dict or ObjectView')
 
-    return [_make_field(k, v) for k, v in _iter_items(pkt) if k != PAYLOAD]
+    result = []
+    for key, value in _iter_items(pkt):
+        if key != PAYLOAD:
+            if isinstance(value, list):
+                result.extend(_make_field(key, item) for item in value)
+            else:
+                result.append(_make_field(key, value))
+    return result
 
 
 def pktview_from_ofctl(ofctl, *, validate=False):
@@ -181,6 +199,8 @@ def pktview_from_ofctl(ofctl, *, validate=False):
 
 
 def _make_field(name, value):
+    assert not isinstance(value, list)
+
     fname = name.upper()
     value = convert_slash_notation(fname, value)
 

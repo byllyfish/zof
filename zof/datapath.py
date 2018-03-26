@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from .controller import Controller
 
+import zof
+
 # Keys for datapath.user_data dictionary. Used by datapath service.
 CHANNEL_UP_MSG = '_datapath.channel_up'
 FEATURES_MSG = '_datapath.features_reply'
@@ -107,6 +109,8 @@ class Datapath:
             port.name = port_desc['name']
             port.state = port_desc['state']
             port.config = port_desc['config']
+            port.curr_speed = port_desc['ethernet']['curr_speed']
+            port.max_speed = port_desc['ethernet']['max_speed']
 
     def close(self):
         """Close connection to datapath; i.e. hang up.
@@ -118,6 +122,10 @@ class Datapath:
             self.closed = True
             Controller.singleton().rpc_call(
                 'OFP.CLOSE', ignore_result=True, conn_id=self.conn_id)
+
+    def send_msg(self, ofmsg):
+        """Send an OpenFlow message to the datapath."""
+        zof.compile(ofmsg).send(datapath_id=hex(self.id))
 
     def __getstate__(self):
         return str(self)
@@ -154,6 +162,8 @@ class Port:
         self.name = None
         self.state = []
         self.config = []
+        self.curr_speed = 0
+        self.max_speed = 0
 
     def __getstate__(self):
         return str(self)
