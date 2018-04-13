@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+Version 0.14.0
+--------------
+
+- The contents of the FeaturesReply message is now available from the built-in Datapath object. 
+- The FeaturesReply message is no longer dispatched separately.
+
+
 Version 0.13.0
 --------------
 

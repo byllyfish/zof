@@ -8,7 +8,7 @@ This app modifies message events to include the source `datapath` object.
 """
 
 import zof
-from zof.datapath import DatapathList, CHANNEL_UP_MSG, FEATURES_MSG
+from zof.datapath import DatapathList, CHANNEL_UP_MSG
 import zof.exception as _exc
 
 
@@ -70,7 +70,9 @@ def features_reply(event):
         event['datapath'] = datapath
         return
 
-    datapath.user_data[FEATURES_MSG] = event
+    # Store features reply message in datapath.
+    datapath.features = event['msg']
+
     if event['version'] > 1:
         zof.ensure_future(
             _get_ports(datapath), datapath_id=event['datapath_id'])
@@ -127,7 +129,3 @@ def _post_channel_up(datapath):
     channel_event = datapath.user_data.pop(CHANNEL_UP_MSG)
     channel_event['event'] = 'MESSAGE'
     zof.post_event(channel_event)
-
-    features = datapath.user_data.pop(FEATURES_MSG)
-    features['event'] = 'MESSAGE'
-    zof.post_event(features)

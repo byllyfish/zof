@@ -5,7 +5,6 @@ import zof
 
 # Keys for datapath.user_data dictionary. Used by datapath service.
 CHANNEL_UP_MSG = '_datapath.channel_up'
-FEATURES_MSG = '_datapath.features_reply'
 
 
 class DatapathList:
@@ -65,6 +64,7 @@ class Datapath:
         self.up = True
         self.ready = False
         self.closed = False
+        self.features = None
         self.user_data = {}
 
     def add_port(self, *, port_no):
