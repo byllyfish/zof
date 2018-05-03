@@ -43,7 +43,8 @@ class Dispatcher:
 
 	async def run(self):
 		"""Run until we receive a 'stop' event."""
-		self({'type': 'start'})
+
+		self.__call__({'type': 'start'})
 		await self._stopped # and remaining tasks have completed...
 
 	def _stop(self):

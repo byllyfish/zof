@@ -16,10 +16,10 @@ async def test_driver_no_dispatcher():
     """Driver context manager without dispatcher."""
 
     async with Driver() as driver:
-        request = { 'method': 'OFP.DESCRIPTION' }
+        request = { 'id': 1, 'method': 'OFP.DESCRIPTION' }
         reply = await driver.request(request)
 
-        assert request == { 'method': 'OFP.DESCRIPTION' }, 'Request modified'
+        assert request == { 'id': 1, 'method': 'OFP.DESCRIPTION' }, 'Request modified'
         assert reply['api_version'] == '0.9'
         assert reply['sw_desc'].startswith('0.')
         assert reply['versions'] == list(range(1, 7))
@@ -53,7 +53,7 @@ async def test_driver_nonexistant_method():
     """Non-existant JSON-RPC method."""
 
     async with Driver() as driver:
-        request = { 'method': 'NON_EXISTANT' }
+        request = { 'id': 1, 'method': 'NON_EXISTANT' }
         with pytest.raises(RequestError) as excinfo:
             reply = await driver.request(request)
         assert 'unknown method' in excinfo.value.message
@@ -63,7 +63,7 @@ async def test_driver_invalid_rpc():
     """Non-existant JSON-RPC method."""
 
     async with Driver() as driver:
-        request = { 'meth': 'INVALID' }
+        request = { 'id': 1, 'meth': 'INVALID' }
         with pytest.raises(RequestError) as excinfo:
             reply = await driver.request(request)
         assert 'missing required key \'method\'' in excinfo.value.message
@@ -78,16 +78,15 @@ async def test_large_rpc_too_big():
         incoming.append(event)
 
     async with Driver(_dispatch) as driver:
-        request = { 'method': 'FOO', 'params': 'x' * MSG_LIMIT }
+        request = { 'id': 1, 'method': 'FOO', 'params': 'x' * MSG_LIMIT }
         with pytest.raises(RequestError) as excinfo:
-            reply = await driver.request(request)
+            await driver.request(request)
 
         # The reply error should be a closed error.
         assert 'connection closed' in excinfo.value.message
 
     assert incoming == [
         {'type': 'DRIVER_UP'}, 
-        {'error': {'code': -32600, 'message': 'RPC request is too big'}, 'id': None}, 
         {'type': 'DRIVER_DOWN'}
     ]
 
@@ -101,7 +100,7 @@ async def test_large_rpc():
         incoming.append(event)
 
     async with Driver(_dispatch) as driver:
-        request = { 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100) }
+        request = { 'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100) }
         with pytest.raises(RequestError) as excinfo:
             reply = await driver.request(request)
 
@@ -115,7 +114,7 @@ async def _driver_request_benchmark(name, loops):
     from timeit import default_timer as _timer
 
     async def _test(loops):
-        DESC = {'method': 'OFP.DESCRIPTION'}
+        DESC = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         async with Driver() as driver:
             start_time = _timer()
             for _ in range(loops):

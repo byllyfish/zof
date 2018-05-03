@@ -78,7 +78,6 @@ class Driver:
             reply = await driver.request(ofmsg, conn_id=conn_id)
             print(reply)
 
-
     Example (with a dispatcher):
 
         def dispatcher(driver, event):
@@ -89,11 +88,13 @@ class Driver:
             await asyncio.sleep(30)
     """
 
-    def __init__(self, dispatch: EventCallback=_noop) -> None:
+    def __init__(self, dispatch: EventCallback=_noop, debug=False) -> None:
         """Initialize event callback."""
 
         self._dispatch = dispatch  # type: EventCallback
+        self._debug = debug
         self._protocol = None  # type: Optional[OftrProtocol]
+        self._last_xid = 0  # type: int
         self.pid = None  # type: Optional[int]
 
     async def __aenter__(self) -> 'Driver':
@@ -127,75 +128,110 @@ class Driver:
         self._protocol = None
         self.pid = None
 
-    def send(self, msg: Event, xid: Optional[int]=None) -> None:
-        """Send an OpenFlow message."""
+    def send(self, msg):
+        """Send an OpenFlow message.
+
+        OpenFlow messages may be modified by having an xid value assigned.
+        """
 
         assert self._protocol, 'Driver not open'
 
         if 'method' not in msg:
-            msg = { 
-                'method': 'OFP.SEND',
-                'params': msg
-            }
+            msg = self._ofp_send(msg)
 
-        self._protocol.send(msg, xid)
+        self._protocol.send(msg)
 
-    async def request(self, msg: Event, xid: Optional[int]=None) -> Event:
+    async def request(self, msg):
         """Send an OpenFlow message and wait for a reply."""
 
         assert self._protocol, 'Driver not open'
 
-        return await self._protocol.request(msg, xid)
+        if 'method' not in msg:
+            msg = self._ofp_send(msg)
 
-    async def listen(self, endpoint: str) -> int:
+        return await self._protocol.request(msg)
+
+    async def listen(self, endpoint: str, options=(), versions=()) -> int:
         """Listen for OpenFlow connections on a given endpoint."""
 
-        request = {
-            'method': 'OFP.LISTEN',
-            'params': {
-                'endpoint': endpoint
-            }
-        }
-
+        request = self._ofp_listen(endpoint, options, versions)
         reply = await self.request(request)
         return cast(int, reply['conn_id'])
 
     async def connect(self, endpoint):
         """Make outgoing OpenFlow connection to given endpoint."""
 
-        request = {
-            'method': 'OFP.CONNECT',
-            'params': {
-                'endpoint': endpoint
-            }
-        }
-
+        request = self._ofp_connect(endpoint)
         reply = await self.request(request)
         return reply['conn_id']
 
     async def close(self, conn_id):
         """Close an OpenFlow connection."""
 
-        request = {
-            'method': 'OFP.CLOSE',
-            'params': {
-                'conn_id': conn_id
-            }
-        }
-
+        request = self._ofp_close(conn_id)
         reply = await self.request(request)
         return reply['count']
 
     def post_event(self, event):
         """Dispatch event."""
 
+        assert 'type' in event, repr(event)
         self._dispatch(self, event)
 
 
     def _oftr_cmd(self) -> List[str]:
         """Return oftr command with args."""
 
-        return shlex.split('%s jsonrpc' % shutil.which('oftr'))
+        cmd = '%s jsonrpc'
+        if self._debug:
+            cmd += ' --trace=rpc'
+
+        return shlex.split(cmd % shutil.which('oftr'))
+
+    def _assign_xid(self):
+        """Return the next xid to use for a request/send."""
+
+        self._last_xid += 1
+        return self._last_xid
+
+    def _ofp_send(self, msg):
+        if 'type' not in msg:
+            return msg
+        if 'xid' not in msg:
+            msg['xid'] = self._assign_xid()
+        return {
+            'method': 'OFP.SEND',
+            'params': msg 
+        }
+
+    def _ofp_listen(self, endpoint, options, versions):
+        return {
+            'id': self._assign_xid(),
+            'method': 'OFP.LISTEN',
+            'params': {
+                'endpoint': endpoint,
+                'options': options,
+                'versions': versions
+            }
+        }
+
+    def _ofp_connect(self, endpoint):
+        return {
+            'id': self._assign_xid(),
+            'method': 'OFP.CONNECT',
+            'params': {
+                'endpoint': endpoint
+            }
+        }
+
+    def _ofp_close(self, conn_id):
+        return {
+            'id': self._assign_xid(), 
+            'method': 'OFP.CLOSE',
+            'params': {
+                'conn_id': conn_id
+            }
+        }    
 
 
 class OftrProtocol(asyncio.SubprocessProtocol):
@@ -210,11 +246,10 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._transport = None  # type: Optional[asyncio.SubprocessTransport]
         self._write = None  # type: Optional[Callable[[bytes], None]]
         self._request_futures = {}  # type: Dict[int, _RequestInfo]
-        self._last_xid = 0  # type: int
         self._closed_future = None
         self._idle_handle = None
 
-    def send(self, msg: Event, xid: Optional[int]=None) -> None:
+    def send(self, msg: Event) -> None:
         """Send an OpenFlow/RPC message."""
 
         assert self._write
@@ -222,16 +257,18 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         data = _dump_msg(msg)
         self._write(data)
 
-    def request(self, msg: Event, xid: Optional[int]=None) -> Awaitable[Event]:
+    def request(self, msg: Event) -> Awaitable[Event]:
         """Send an OpenFlow/RPC message and wait for a reply."""
 
         assert self._write
 
+        xid = msg.get('id')
         if xid is None:
-            xid = self._next_xid()
-
-        msg = msg.copy()
-        msg['id'] = xid
+            params = msg.get('params')
+            if isinstance(params, dict):
+                xid = params['xid']
+            else:
+                raise ValueError('Missing xid: %r', msg)
 
         data = _dump_msg(msg)
         self._write(data)
@@ -239,12 +276,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         req_info = _RequestInfo(self._loop, 3.0)
         self._request_futures[xid] = req_info
         return req_info.future
-
-    def _next_xid(self) -> int:
-        """Return the next xid to use for a request/send."""
-
-        self._last_xid += 1
-        return self._last_xid
 
     def pipe_data_received(self, fd: int, data: Union[bytes, str]) -> None:
         """Read data from pipe into buffer and dispatch incoming messages."""
@@ -276,14 +307,22 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def handle_msg(self, msg: Event) -> None:
         """Handle incoming message."""
-        xid = msg.get('id')
-        if xid is not None:
-            req_info = self._request_futures.pop(xid)
-            req_info.handle_reply(msg)
-        elif msg.get('method') == 'OFP.MESSAGE':
-            self._dispatch(msg['params'])
+        
+        if msg.get('method') == 'OFP.MESSAGE':
+            msg = msg['params']
+            xid = msg.get('xid')
+            ofp_msg = True
         else:
+            xid = msg.get('id')
+            ofp_msg = False
+
+        req_info = self._request_futures.pop(xid, None)
+        if req_info is not None:
+            req_info.handle_reply(msg)
+        elif ofp_msg:
             self._dispatch(msg)
+        else:
+            LOGGER.error('Driver.handle_msg: Ignored msg: %r', msg)
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self._transport = cast(asyncio.SubprocessTransport, transport)
@@ -374,6 +413,7 @@ def _dump_msg(msg: Event) -> bytes:
     return json.dumps(
         msg, ensure_ascii=False, allow_nan=False,
         check_circular=False).encode('utf-8') + b'\0'
+
 
 
 def main() -> None:
