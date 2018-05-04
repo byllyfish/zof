@@ -22,8 +22,12 @@ async def test_taskset_container(event_loop):
 	assert list(tasks) == [task]
 
 	tasks.cancel()
-	for _ in range(2):
-		await asyncio.sleep(0)
+
+	assert len(tasks) == 1
+	assert list(tasks) == [task]
+
+	# Wait for task to be removed.
+	await tasks.wait_cancelled()
 
 	assert not tasks
 	assert len(tasks) == 0

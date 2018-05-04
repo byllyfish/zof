@@ -33,6 +33,17 @@ class TaskSet:
         for task in self._tasks:
             task.cancel()
 
+    async def wait_cancelled(self):
+        """Wait for cancelled tasks to complete."""
+
+        # It takes 2 cycles through the event loop for a task to be cancelled
+        # and invoke its done_callback.
+        for _ in range(2):
+            await asyncio.sleep(0)
+
+        if len(self) > 0:
+            raise RuntimeError('TaskSet: Cancelled tasks did not exit as expected')
+
     def __len__(self):
         """Return length of task list."""
 

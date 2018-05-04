@@ -91,7 +91,7 @@ class Driver:
     def __init__(self, dispatch: EventCallback=_noop, debug=False) -> None:
         """Initialize event callback."""
 
-        self._dispatch = dispatch  # type: EventCallback
+        self.dispatch = dispatch  # type: EventCallback
         self._debug = debug
         self._protocol = None  # type: Optional[OftrProtocol]
         self._last_xid = 0  # type: int
@@ -176,7 +176,7 @@ class Driver:
         """Dispatch event."""
 
         assert 'type' in event, repr(event)
-        self._dispatch(self, event)
+        self.dispatch(self, event)
 
 
     def _oftr_cmd(self) -> List[str]:
@@ -240,7 +240,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
     def __init__(self, dispatch, loop) -> None:
         """Initialize protocol."""
 
-        self._dispatch = dispatch  # type: EventCallback
+        self.dispatch = dispatch  # type: EventCallback
         self._loop = loop
         self._recv_buf = bytearray()
         self._transport = None  # type: Optional[asyncio.SubprocessTransport]
@@ -320,7 +320,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         if req_info is not None:
             req_info.handle_reply(msg)
         elif ofp_msg:
-            self._dispatch(msg)
+            self.dispatch(msg)
         else:
             LOGGER.error('Driver.handle_msg: Ignored msg: %r', msg)
 
@@ -330,7 +330,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._write = write_transport.write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
-        self._dispatch({'type': 'DRIVER_UP'})
+        self.dispatch({'type': 'DRIVER_UP'})
 
     def connection_lost(self, exc: Exception) -> None:
         self._cancel_requests()
@@ -338,7 +338,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._idle_handle.cancel()
         self._write = None
         self._transport = None
-        self._dispatch({'type': 'DRIVER_DOWN'})
+        self.dispatch({'type': 'DRIVER_DOWN'})
 
     def _idle(self) -> None:
         """Idle task handler."""

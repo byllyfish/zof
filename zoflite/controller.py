@@ -51,7 +51,13 @@ class Controller:
     async def run(self):
         """Run controller in an event loop."""
 
-        self.zof_driver = Driver(self.zof_dispatch)
+        if self.zof_driver is None:
+            self.zof_driver = Driver(self.zof_dispatch)
+        else:
+            # Change dispatch function of existing driver; this is used
+            # for testing with a mock driver.
+            self.zof_driver.dispatch = self.zof_dispatch
+
         self.zof_loop = asyncio.get_event_loop()
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
@@ -60,14 +66,20 @@ class Controller:
         self.zof_init_signals()
 
         async with self.zof_driver:
+            # Start listening for OpenFlow connections.
             await self.zof_listen()
             await self.zof_invoke('START')
 
             # Run until we're told to exit.
             await self.zof_exit_status
 
-        self.zof_tasks.cancel()
-        await self.zof_invoke('STOP')
+            # Clean up after ourselves.
+            self.zof_tasks.cancel()
+            await self.zof_tasks.wait_cancelled()
+            await self.zof_invoke('STOP')
+
+        # Make sure the DRIVER_DOWN event is dispatched.
+        await asyncio.sleep(0)
 
     def create_task(self, coro):
         """Create a managed async task."""
@@ -89,7 +101,7 @@ class Controller:
         handler = getattr(self, msg_type, None)
         if handler:
             if dp is None:
-                dp = self.zof_datapaths.get(event['conn_id'])
+                dp = self.zof_find_dp(event)
 
             if asyncio.iscoroutinefunction(handler):
                 dp.create_task(handler(dp, event))
@@ -115,17 +127,30 @@ class Controller:
         dp.zof_cancel_tasks()
         return dp
 
+    def zof_find_dp(self, event):
+        """Find the zof Datapath object for the event source."""
+
+        dp = None
+        conn_id = event.get('conn_id')
+        if conn_id is not None:
+            dp = self.zof_datapaths.get(conn_id)
+            if dp is None:
+                LOGGER.warning('Unknown conn_id %r', conn_id)
+
+        return dp
+
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
 
-        coros = [self.zof_driver.listen(endpoint, options=self.zof_listen_options, versions=self.zof_listen_versions) for endpoint in self.zof_listen_endpoints]
-        await asyncio.gather(*coros)
+        if self.zof_listen_endpoints:
+            coros = [self.zof_driver.listen(endpoint, options=self.zof_listen_options, versions=self.zof_listen_versions) for endpoint in self.zof_listen_endpoints]
+            await asyncio.gather(*coros)
 
     def zof_init_signals(self):
         """Set up exit signal handler."""
 
         def _quit():
-            self.zof_exit_status.set_result(0)
+            self.zof_exit(0)
 
         for signum in self.zof_exit_signals:
             self.zof_loop.add_signal_handler(signum, _quit)
@@ -141,6 +166,11 @@ class Controller:
             await handler()
         else:
             handler()
+
+    def zof_exit(self, exit_status):
+        """Exit controller event loop."""
+
+        self.zof_exit_status.set_result(exit_status)
 
     def CHANNEL_ALERT(self, dp, event):
         """Default handler for CHANNEL_ALERT message."""
