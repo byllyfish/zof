@@ -54,8 +54,9 @@ class Controller:
         if self.zof_driver is None:
             self.zof_driver = Driver(self.zof_dispatch)
         else:
-            # Change dispatch function of existing driver; this is used
+            # Set dispatch function of existing driver; this is used
             # for testing with a mock driver.
+            assert self.zof_driver.dispatch is None
             self.zof_driver.dispatch = self.zof_dispatch
 
         self.zof_loop = asyncio.get_event_loop()
@@ -66,9 +67,12 @@ class Controller:
         self.zof_init_signals()
 
         async with self.zof_driver:
-            # Start listening for OpenFlow connections.
-            await self.zof_listen()
+            # Make sure the DRIVER_UP event is dispatched first.
+            await asyncio.sleep(0)
+
+            # Start app and OpenFlow listener.
             await self.zof_invoke('START')
+            await self.zof_listen()
 
             # Run until we're told to exit.
             await self.zof_exit_status
@@ -78,7 +82,7 @@ class Controller:
             await self.zof_tasks.wait_cancelled()
             await self.zof_invoke('STOP')
 
-        # Make sure the DRIVER_DOWN event is dispatched.
+        # Dispatch DRIVER_DOWN event before returning.
         await asyncio.sleep(0)
 
     def create_task(self, coro):
@@ -87,7 +91,11 @@ class Controller:
         self.zof_tasks.create_task(coro)
 
     def zof_dispatch(self, _driver, event):
-        """Dispatch incoming event to an app handler."""
+        """Dispatch incoming event to an app handler.
+
+        N.B. The handler is scheduled to run on the event loop. This function
+        returns immediately.
+        """
 
         # TODO(bfish): change oftr dsl.
         msg_type = event['type'].replace('.', '_')
@@ -104,7 +112,10 @@ class Controller:
                 dp = self.zof_find_dp(event)
 
             if asyncio.iscoroutinefunction(handler):
-                dp.create_task(handler(dp, event))
+                if dp:
+                    dp.create_task(handler(dp, event))
+                else:
+                    raise RuntimeError('No datapath object for async task')
             else:
                 self.zof_loop.call_soon(handler, dp, event)
 
@@ -156,7 +167,10 @@ class Controller:
             self.zof_loop.add_signal_handler(signum, _quit)
 
     async def zof_invoke(self, name):
-        """Notify app that event loop will start/stop."""
+        """Notify app to start/stop.
+
+        N.B. The handler is invoked directly from the current task.
+        """
 
         handler = getattr(self, name, None)
         if not handler:

@@ -2,8 +2,6 @@ import pytest
 import asyncio
 from zoflite.driver import Driver, RequestError
 
-#import uvloop
-#asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
