@@ -1,6 +1,9 @@
 """Implements a set of async tasks."""
 
 import asyncio
+import logging
+
+LOGGER = logging.getLogger(__package__)
 
 
 class TaskSet:
@@ -14,23 +17,26 @@ class TaskSet:
         """Create a managed async task."""
 
         # When a task is cancelled, it should be removed from `self._tasks`
-        # within 1-2 cycles through the event loop. (N.B. The done_callback
+        # within 1-2 cycles through the event loop. (N.B. The "done callback"
         # is scheduled via call_soon, so it typically takes 2 cycles.)
 
         task = self._loop.create_task(coro)
-        task.add_done_callback(self._done_callback)
+        task.add_done_callback(self._task_done)
         self._tasks.add(task)
+        LOGGER.debug('Create task %r', task)
         return task
 
-    def _done_callback(self, task):
+    def _task_done(self, task):
         """Called when task is finished."""
 
+        LOGGER.debug('Task done %r', task)
         self._tasks.discard(task)
 
     def cancel(self):
         """Cancel all managed async tasks."""
 
         for task in self._tasks:
+            LOGGER.debug('Cancel task %r', task)
             task.cancel()
 
     async def wait_cancelled(self):

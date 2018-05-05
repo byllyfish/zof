@@ -93,18 +93,25 @@ class Controller:
     def zof_dispatch(self, _driver, event):
         """Dispatch incoming event to an app handler.
 
-        N.B. The handler is scheduled to run on the event loop. This function
-        returns immediately.
+        This method is called by the protocol driver. There may be
+        no current event loop.
+
+        N.B. The handler is scheduled to run on our event loop.
         """
 
         # TODO(bfish): change oftr dsl.
         msg_type = event['type'].replace('.', '_')
+        LOGGER.debug('Dispatch %r', msg_type)
 
+        # Update bookkeeping for connected datapaths.
         dp = None
         if msg_type == 'CHANNEL_UP':
+            # Datapath object can be added well before channel_up handler
+            # is *actually* called (event queue is FIFO).
             dp = self.zof_channel_up(event)
         elif msg_type == 'CHANNEL_DOWN':
-            dp = self.zof_channel_down(event)
+            # Clean up the datapath using call_soon to maintain ordering.
+            self.zof_loop.call_soon(self.zof_channel_down, event)
 
         handler = getattr(self, msg_type, None)
         if handler:
@@ -128,7 +135,7 @@ class Controller:
         # TODO(bfish): change oftr dsl to include features, port_desc in channel_up.
         dp = Datapath(self, conn_id, event)
         self.zof_datapaths[conn_id] = dp
-        return dp        
+        return dp
 
     def zof_channel_down(self, event):
         """Remove the zof Datapath object that represents the event source."""
@@ -136,7 +143,6 @@ class Controller:
         conn_id = event['conn_id']
         dp = self.zof_datapaths.pop(conn_id)
         dp.zof_cancel_tasks()
-        return dp
 
     def zof_find_dp(self, event):
         """Find the zof Datapath object for the event source."""
@@ -166,13 +172,14 @@ class Controller:
         for signum in self.zof_exit_signals:
             self.zof_loop.add_signal_handler(signum, _quit)
 
-    async def zof_invoke(self, name):
+    async def zof_invoke(self, msg_type):
         """Notify app to start/stop.
 
         N.B. The handler is invoked directly from the current task.
         """
 
-        handler = getattr(self, name, None)
+        LOGGER.debug('Invoke %r', msg_type)
+        handler = getattr(self, msg_type, None)
         if not handler:
             return
 

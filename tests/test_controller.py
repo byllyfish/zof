@@ -38,8 +38,8 @@ class BasicController(Controller):
         self.events = []
 
     def START(self):
+        self.zof_loop.call_later(0.01, self.zof_exit, 0)
         self.events.append('START')
-        self.zof_loop.call_later(0.05, self.zof_exit, 0)
 
     def STOP(self):
         self.events.append('STOP')
@@ -54,10 +54,50 @@ class BasicController(Controller):
 
 
 async def test_basic_controller(caplog):
-    """Controller should account for up/down datapaths."""
+    """Test controller event dispatch order with sync handlers."""
 
     controller = BasicController()
     await controller.run()
 
     assert controller.events == ['DRIVER_UP', 'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP', 'DRIVER_DOWN']
+    assert not caplog.record_tuples
+
+
+async def test_async_controller(caplog):
+    """Test controller event dispatch with a mix of sync/async handlers."""
+
+    class _Controller(BasicController):
+
+        async def CHANNEL_UP(self, dp, event):
+            try:
+                self.log_event(dp, event)
+                await asyncio.sleep(0)
+                # The next event is not logged because the task is cancelled.
+                self.events.append('NEXT')
+            except asyncio.CancelledError:
+                # The cancel event is sequenced after the CHANNEL_DOWN.
+                self.events.append('CANCEL')
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['DRIVER_UP', 'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP', 'DRIVER_DOWN']
+    assert not caplog.record_tuples
+
+
+async def test_async_start(caplog):
+    """Test controller event dispatch with async start."""
+
+    class _Controller(BasicController):
+
+        async def START(self):
+            self.zof_loop.call_later(0.01, self.zof_exit, 0)
+            self.events.append('START')
+            await asyncio.sleep(0.02)
+            self.events.append('NEXT')
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['DRIVER_UP', 'START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP', 'DRIVER_DOWN']
     assert not caplog.record_tuples
