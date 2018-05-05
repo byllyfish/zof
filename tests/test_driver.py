@@ -10,10 +10,12 @@ pytestmark = pytest.mark.asyncio
 MSG_LIMIT = 2**20 - 1
 
 
-async def test_driver_no_dispatcher():
-    """Driver context manager without dispatcher."""
+async def test_driver_request():
+    """Driver context manager's request api."""
 
     async with Driver() as driver:
+        assert driver.pid >= 0
+
         request = { 'id': 1, 'method': 'OFP.DESCRIPTION' }
         reply = await driver.request(request)
 
@@ -31,10 +33,10 @@ async def test_driver_dispatch():
     def _dispatch(_driver, event):
         incoming.append(event)
 
-    async with Driver(_dispatch):
-        pass
+    async with Driver(_dispatch) as driver:
+        assert driver.pid >= 0
 
-    assert incoming == [{'type': 'DRIVER_UP'}, {'type': 'DRIVER_DOWN'}]
+    assert incoming == []
 
 
 async def test_driver_not_reentrant():
@@ -83,10 +85,7 @@ async def test_large_rpc_too_big():
         # The reply error should be a closed error.
         assert 'connection closed' in excinfo.value.message
 
-    assert incoming == [
-        {'type': 'DRIVER_UP'}, 
-        {'type': 'DRIVER_DOWN'}
-    ]
+    assert incoming == []
 
 
 async def test_large_rpc():
@@ -103,7 +102,7 @@ async def test_large_rpc():
             reply = await driver.request(request)
 
     assert 'unknown method' in excinfo.value.message
-    assert incoming == [{'type': 'DRIVER_UP'}, {'type': 'DRIVER_DOWN'}]
+    assert incoming == []
 
 
 async def _driver_request_benchmark(name, loops):
@@ -155,8 +154,8 @@ async def test_driver_openflow():
             agent.send(dict(type='BARRIER_REPLY', conn_id=conn_id))
             await agent.close(conn_id)
 
-    assert controller_log == ['DRIVER_UP', 'CHANNEL_UP', 'BARRIER_REPLY', 'CHANNEL_DOWN', 'DRIVER_DOWN']
-    assert agent_log == ['DRIVER_UP', 'CHANNEL_UP', 'CHANNEL_DOWN', 'DRIVER_DOWN']
+    assert controller_log == ['CHANNEL_UP', 'BARRIER_REPLY', 'CHANNEL_DOWN']
+    assert agent_log == ['CHANNEL_UP', 'CHANNEL_DOWN']
 
 
 

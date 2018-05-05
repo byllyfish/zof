@@ -330,7 +330,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._write = write_transport.write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
-        self.dispatch({'type': 'DRIVER_UP'})
 
     def connection_lost(self, exc: Exception) -> None:
         self._cancel_requests()
@@ -338,7 +337,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._idle_handle.cancel()
         self._write = None
         self._transport = None
-        self.dispatch({'type': 'DRIVER_DOWN'})
 
     def _idle(self) -> None:
         """Idle task handler."""

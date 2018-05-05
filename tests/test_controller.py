@@ -12,11 +12,10 @@ class MockDriver:
     dispatch = None
 
     async def __aenter__(self):
-        self.post_event({'type': 'DRIVER_UP'})
         return self
 
     async def __aexit__(self, *args):
-        self.post_event({'type': 'DRIVER_DOWN'})
+        pass
 
     async def listen(self, endpoint: str, options=(), versions=()):
         asyncio.ensure_future(self._simulate_channel(2))
@@ -59,7 +58,7 @@ async def test_basic_controller(caplog):
     controller = BasicController()
     await controller.run()
 
-    assert controller.events == ['DRIVER_UP', 'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP', 'DRIVER_DOWN']
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
 
@@ -81,7 +80,7 @@ async def test_async_controller(caplog):
     controller = _Controller()
     await controller.run()
 
-    assert controller.events == ['DRIVER_UP', 'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP', 'DRIVER_DOWN']
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP']
     assert not caplog.record_tuples
 
 
@@ -99,5 +98,5 @@ async def test_async_start(caplog):
     controller = _Controller()
     await controller.run()
 
-    assert controller.events == ['DRIVER_UP', 'START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP', 'DRIVER_DOWN']
+    assert controller.events == ['START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples

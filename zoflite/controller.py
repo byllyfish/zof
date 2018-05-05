@@ -67,9 +67,6 @@ class Controller:
         self.zof_init_signals()
 
         async with self.zof_driver:
-            # Make sure the DRIVER_UP event is dispatched first.
-            await asyncio.sleep(0)
-
             # Start app and OpenFlow listener.
             await self.zof_invoke('START')
             await self.zof_listen()
@@ -81,9 +78,6 @@ class Controller:
             self.zof_tasks.cancel()
             await self.zof_tasks.wait_cancelled()
             await self.zof_invoke('STOP')
-
-        # Dispatch DRIVER_DOWN event before returning.
-        await asyncio.sleep(0)
 
     def create_task(self, coro):
         """Create a managed async task."""
