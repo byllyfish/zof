@@ -1,7 +1,9 @@
 import asyncio
 from zoflite.controller import Controller
 
-class HubController(Controller):
+
+class HubReactiveController(Controller):
+    """Demo OpenFlow app that implements a reactive hub."""
 
     def CHANNEL_UP(self, dp, event):
         # Set up default flow table entry.
@@ -34,6 +36,6 @@ class HubController(Controller):
         dp.send(ofmsg)
 
 
-# Invoke your controller's run() coroutine in an event loop.
-loop = asyncio.get_event_loop()
-loop.run_until_complete(HubController().run())
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(HubReactiveController().run())
