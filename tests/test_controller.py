@@ -46,8 +46,6 @@ class BasicController(Controller):
     def log_event(self, dp, event):
         self.events.append(event.get('type', event))
 
-    DRIVER_UP = log_event
-    DRIVER_DOWN = log_event
     CHANNEL_UP = log_event
     CHANNEL_DOWN = log_event
 
