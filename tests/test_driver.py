@@ -131,7 +131,6 @@ async def test_driver_request_benchmark():
     """Benchmark making async requests."""
 
     print(await _driver_request_benchmark('driver_request', 1000))
-    assert False
 
 
 async def test_driver_openflow():
