@@ -60,8 +60,8 @@ async def test_basic_controller(caplog):
     assert not caplog.record_tuples
 
 
-async def test_async_controller(caplog):
-    """Test controller event dispatch with a mix of sync/async handlers."""
+async def test_async_channel_up(caplog):
+    """Test controller event dispatch with an async channel_up handler."""
 
     class _Controller(BasicController):
 
@@ -82,6 +82,27 @@ async def test_async_controller(caplog):
     assert not caplog.record_tuples
 
 
+async def test_async_channel_down(caplog):
+    """Test controller event dispatch with an async channel_down handler."""
+
+    class _Controller(BasicController):
+
+        async def CHANNEL_DOWN(self, dp, event):
+            try:
+                self.log_event(dp, event)
+                await asyncio.sleep(0)
+                self.events.append('NEXT')
+            except asyncio.CancelledError:
+                # Not logged; the handler isn't cancelled.
+                self.events.append('CANCEL')
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'NEXT', 'STOP']
+    assert not caplog.record_tuples
+
+
 async def test_async_start(caplog):
     """Test controller event dispatch with async start."""
 
@@ -98,3 +119,30 @@ async def test_async_start(caplog):
 
     assert controller.events == ['START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
+
+
+async def test_exceptions(caplog):
+    """Test exceptions in async handlers."""
+
+    controller = None
+
+    def _exception_handler(exc):
+        controller.events.append(str(exc))
+
+    class _Controller(BasicController):
+
+        def START(self):
+            self.zof_loop.call_later(0.5, self.zof_exit, 0)
+            self.events.append('START')
+
+        @Controller.zof_exception(_exception_handler)
+        async def CHANNEL_UP(self, dp, event):
+            self.log_event(dp, event)
+            raise Exception('FAIL')
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+

@@ -2,6 +2,7 @@ from zoflite.driver import Driver
 from zoflite.datapath import Datapath
 from zoflite.taskset import TaskSet
 import asyncio
+import functools
 import logging
 import signal
 
@@ -75,6 +76,8 @@ class Controller:
             await self.zof_exit_status
 
             # Clean up after ourselves.
+            for dp in self.zof_datapaths.values():
+                dp.zof_cancel_tasks()
             self.zof_tasks.cancel()
             await self.zof_tasks.wait_cancelled()
             await self.zof_invoke('STOP')
@@ -95,30 +98,43 @@ class Controller:
 
         # TODO(bfish): change oftr dsl.
         msg_type = event['type'].replace('.', '_')
-        LOGGER.debug('Dispatch %r', msg_type)
 
         # Update bookkeeping for connected datapaths.
         dp = None
+        channel_down = False
         if msg_type == 'CHANNEL_UP':
             # Datapath object can be added well before channel_up handler
             # is *actually* called (event queue is FIFO).
             dp = self.zof_channel_up(event)
         elif msg_type == 'CHANNEL_DOWN':
             # Clean up the datapath using call_soon to maintain ordering.
+            channel_down = True
             self.zof_loop.call_soon(self.zof_channel_down, event)
 
-        handler = getattr(self, msg_type, None)
+        # Find the event handler for 'msg_type' and invoke it.
+        handler = self.zof_find_handler(msg_type)
         if handler:
             if dp is None:
                 dp = self.zof_find_dp(event)
 
+            LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
+
             if asyncio.iscoroutinefunction(handler):
-                if dp:
+                if dp and not channel_down:
                     dp.create_task(handler(dp, event))
                 else:
-                    raise RuntimeError('No datapath object for async task')
+                    self.create_task(handler(dp, event))
             else:
                 self.zof_loop.call_soon(handler, dp, event)
+
+        else:
+            # Handler not found for msg_type.
+            LOGGER.debug('Dispatch %r (no handler)', msg_type)
+
+    def zof_find_handler(self, msg_type):
+        """Return handler for msg type (or None)."""
+
+        return getattr(self, msg_type, None)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -191,3 +207,41 @@ class Controller:
         """Default handler for CHANNEL_ALERT message."""
 
         LOGGER.error('CHANNEL_ALERT received: %r', event)
+
+    @staticmethod
+    def zof_exception(callback, exc_class=Exception):
+        """Decorator to invoke a callback for an unhandled exception.
+
+        Used to wrap a method:
+
+            def my_callback(exc):
+                ...
+
+            @Controller.zof_exception(my_callback)
+            def PACKET_IN(self, dp, event):
+                ...
+
+        The decorator callback is called with the exception as sole argument.
+        """
+
+        def _fwd(func):
+
+            @functools.wraps(func)
+            def __fwd(*args, **kwargs):
+                try:
+                    func(*args, **kwargs)
+                except exc_class as ex:
+                    callback(ex)
+
+            @functools.wraps(func)
+            async def __afwd(*args, **kwargs):
+                try:
+                    await func(*args, **kwargs)
+                except asyncio.CancelledError:
+                    pass
+                except exc_class as ex:
+                    callback(ex)
+
+            return __afwd if asyncio.iscoroutinefunction(func) else __fwd
+
+        return _fwd
