@@ -4,7 +4,11 @@ from zoflite.taskset import TaskSet
 import asyncio
 import functools
 import logging
+import os
 import signal
+
+
+LOGGER = logging.getLogger(__package__)
 
 
 class Controller:
@@ -32,11 +36,10 @@ class Controller:
                 dp.send(ofmsg)
 
         # Invoke your controller's run() coroutine in an event loop.
-        asyncio.get_event_loop().run_until_complete(HubController().run())
+        asyncio.run(HubController().run())
 
     """
 
-    zof_logger = logging.getLogger(__package__)
     zof_driver = None
     zof_loop = None
     zof_listen_endpoints = ['6653']
@@ -59,6 +62,8 @@ class Controller:
             self.zof_driver.dispatch = self.zof_dispatch
 
         self.zof_loop = asyncio.get_event_loop()
+        self.zof_init_debug()
+
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
         self.zof_tasks = TaskSet(self.zof_loop)
@@ -115,12 +120,12 @@ class Controller:
             if dp is None:
                 dp = self.zof_find_dp(event)
 
-            self.zof_logger.debug('Dispatch %r dp=%r', msg_type, dp)
+            LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
             self.zof_dispatch_handler(handler, dp, event, channel_down)
 
         else:
             # Handler not found for msg_type.
-            self.zof_logger.debug('Dispatch %r (no handler)', msg_type)
+            LOGGER.debug('Dispatch %r (no handler)', msg_type)
 
     def zof_find_handler(self, msg_type):
         """Return handler for msg type (or None)."""
@@ -195,6 +200,15 @@ class Controller:
             coros = [self.zof_driver.listen(endpoint, options=self.zof_listen_options, versions=self.zof_listen_versions) for endpoint in self.zof_listen_endpoints]
             await asyncio.gather(*coros)
 
+    def zof_init_debug(self):
+        """Set up debugging for controller."""
+
+        debug_mode = os.getenv('ZOFDEBUG')
+        if not debug_mode:
+            return
+
+        LOGGER.setLevel('DEBUG')
+
     def zof_init_signals(self):
         """Set up exit signal handler."""
 
@@ -210,7 +224,7 @@ class Controller:
         N.B. The handler is invoked directly from the current task.
         """
 
-        self.zof_logger.debug('Invoke %r', msg_type)
+        LOGGER.debug('Invoke %r', msg_type)
         handler = getattr(self, msg_type, None)
         if not handler:
             return
@@ -225,13 +239,13 @@ class Controller:
 
         self.zof_exit_status.set_result(exit_status)
 
-    def CHANNEL_ALERT(self, dp, event):
-        """Default handler for CHANNEL_ALERT message."""
-
-        self.zof_logger.error('CHANNEL_ALERT received: %r', event)
-
     def zof_exception_handler(self, exc):
         """Report exception from a zof handler function."""
 
-        self.zof_logger.exception('zof_exception_handler: %r', exc)
+        LOGGER.exception('zof_exception_handler: %r', exc)
         raise
+
+    def CHANNEL_ALERT(self, dp, event):
+        """Default handler for CHANNEL_ALERT message."""
+
+        LOGGER.error('CHANNEL_ALERT received: %r', event)

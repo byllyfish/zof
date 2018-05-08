@@ -143,7 +143,6 @@ async def test_exceptions(caplog):
     controller = _Controller()
     await controller.run()
 
-    print(controller.events)
     assert controller.events == ['START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
@@ -158,6 +157,7 @@ async def test_request_benchmark(caplog):
             self.events.append('START')
 
         async def CHANNEL_UP(self, dp, event):
+            self.log_event(dp, event)
             try:
                 print(await _controller_request_benchmark('controller_request', dp, 1000))
             finally:
@@ -166,6 +166,8 @@ async def test_request_benchmark(caplog):
     controller = _Controller()
     await controller.run()
 
+    # FIXME(bfish): 'CHANNEL_DOWN' is called after 'STOP'...
+    assert controller.events == ['START', 'CHANNEL_UP', 'STOP', 'CHANNEL_DOWN']
     assert not caplog.record_tuples
 
 
@@ -214,11 +216,13 @@ async def test_packet_in_async(caplog):
                 print(bench)
 
         def CHANNEL_DOWN(self, dp, event):
+            self.log_event(dp, event)
             self.zof_exit(0)
 
     controller = _Controller()
     await controller.run()
 
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
 
@@ -246,9 +250,11 @@ async def test_packet_in_sync(caplog):
                 print(bench)
 
         def CHANNEL_DOWN(self, dp, event):
+            self.log_event(dp, event)
             self.zof_exit(0)
 
     controller = _Controller()
     await controller.run()
 
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
