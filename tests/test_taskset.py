@@ -14,7 +14,7 @@ async def test_taskset_container(event_loop):
 	"""Test basic container functionality."""
 
 	tasks = TaskSet(event_loop)
-	task = tasks.create_task(_mock_task)
+	task = tasks.create_task(_mock_task())
 
 	assert tasks
 	assert len(tasks) == 1

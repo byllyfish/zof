@@ -14,12 +14,13 @@ class TaskSet:
         self._tasks = set()
 
     def create_task(self, coro):
-        """Create a managed async task."""
+        """Create a managed async task for a coroutine."""
 
         # When a task is cancelled, it should be removed from `self._tasks`
         # within 1-2 cycles through the event loop. (N.B. The "done callback"
         # is scheduled via call_soon, so it typically takes 2 cycles.)
 
+        assert asyncio.iscoroutine(coro)
         task = self._loop.create_task(coro)
         task.add_done_callback(self._task_done)
         self._tasks.add(task)

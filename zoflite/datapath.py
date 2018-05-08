@@ -15,6 +15,12 @@ class Datapath:
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
 
+    async def request(self, msg):
+        """Send message to datapath and wait for reply."""
+
+        msg['conn_id'] = self.conn_id
+        return await self.zof_driver.request(msg)
+
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
 

@@ -7,9 +7,6 @@ import logging
 import signal
 
 
-LOGGER = logging.getLogger(__package__)
-
-
 class Controller:
     """Base class for a Controller app.
 
@@ -39,6 +36,7 @@ class Controller:
 
     """
 
+    zof_logger = logging.getLogger(__package__)
     zof_driver = None
     zof_loop = None
     zof_listen_endpoints = ['6653']
@@ -117,24 +115,48 @@ class Controller:
             if dp is None:
                 dp = self.zof_find_dp(event)
 
-            LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
-
-            if asyncio.iscoroutinefunction(handler):
-                if dp and not channel_down:
-                    dp.create_task(handler(dp, event))
-                else:
-                    self.create_task(handler(dp, event))
-            else:
-                self.zof_loop.call_soon(handler, dp, event)
+            self.zof_logger.debug('Dispatch %r dp=%r', msg_type, dp)
+            self.zof_dispatch_handler(handler, dp, event, channel_down)
 
         else:
             # Handler not found for msg_type.
-            LOGGER.debug('Dispatch %r (no handler)', msg_type)
+            self.zof_logger.debug('Dispatch %r (no handler)', msg_type)
 
     def zof_find_handler(self, msg_type):
         """Return handler for msg type (or None)."""
 
         return getattr(self, msg_type, None)
+
+    def zof_dispatch_handler(self, handler, dp, event, channel_down):
+        """Dispatch to a specific handler function.
+
+        The handler function is scheduled to run as an async task or
+        to run in FIFO order (via call_soon). To make debugging easier,
+        we wrap the handler call in a function that will catch exceptions and
+        report them.
+        """
+
+        def _fwd(handler, dp, event):
+            try:
+                handler(dp, event)
+            except Exception as ex:
+                self.zof_exception_handler(ex)
+
+        async def _afwd(handler, dp, event):
+            try:
+                await handler(dp, event)
+            except asyncio.CancelledError:
+                pass
+            except Exception as ex:
+                self.zof_exception_handler(ex)
+
+        if asyncio.iscoroutinefunction(handler):
+            if dp and not channel_down:
+                dp.create_task(_afwd(handler, dp, event))
+            else:
+                self.create_task(_afwd(handler, dp, event))
+        else:
+            self.zof_loop.call_soon(_fwd, handler, dp, event)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -188,7 +210,7 @@ class Controller:
         N.B. The handler is invoked directly from the current task.
         """
 
-        LOGGER.debug('Invoke %r', msg_type)
+        self.zof_logger.debug('Invoke %r', msg_type)
         handler = getattr(self, msg_type, None)
         if not handler:
             return
@@ -206,42 +228,10 @@ class Controller:
     def CHANNEL_ALERT(self, dp, event):
         """Default handler for CHANNEL_ALERT message."""
 
-        LOGGER.error('CHANNEL_ALERT received: %r', event)
+        self.zof_logger.error('CHANNEL_ALERT received: %r', event)
 
-    @staticmethod
-    def zof_exception(callback, exc_class=Exception):
-        """Decorator to invoke a callback for an unhandled exception.
+    def zof_exception_handler(self, exc):
+        """Report exception from a zof handler function."""
 
-        Used to wrap a method:
-
-            def my_callback(exc):
-                ...
-
-            @Controller.zof_exception(my_callback)
-            def PACKET_IN(self, dp, event):
-                ...
-
-        The decorator callback is called with the exception as sole argument.
-        """
-
-        def _fwd(func):
-
-            @functools.wraps(func)
-            def __fwd(*args, **kwargs):
-                try:
-                    func(*args, **kwargs)
-                except exc_class as ex:
-                    callback(ex)
-
-            @functools.wraps(func)
-            async def __afwd(*args, **kwargs):
-                try:
-                    await func(*args, **kwargs)
-                except asyncio.CancelledError:
-                    pass
-                except exc_class as ex:
-                    callback(ex)
-
-            return __afwd if asyncio.iscoroutinefunction(func) else __fwd
-
-        return _fwd
+        self.zof_logger.exception('zof_exception_handler: %r', exc)
+        raise
