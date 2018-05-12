@@ -1,7 +1,7 @@
 
 import asyncio
 from zoflite.driver import Driver, RequestError
-
+from zoflite.backport import asyncio_run
 
 
 class MySimulator:
@@ -124,5 +124,4 @@ class MySimulator:
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(MySimulator().run())
+    asyncio_run(MySimulator().run())

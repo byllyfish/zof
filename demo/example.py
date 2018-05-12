@@ -1,5 +1,7 @@
 import asyncio
 from zoflite.controller import Controller
+from zoflite.backport import asyncio_run
+
 
 class MyController(Controller):
 
@@ -21,5 +23,5 @@ class MyController(Controller):
 		print(dp, event)
 
 
-# Invoke your controller's run() coroutine in an event loop.
-asyncio.get_event_loop().run_until_complete(MyController().run())
+if __name__ == '__main__':
+	asyncio_run(MyController().run())

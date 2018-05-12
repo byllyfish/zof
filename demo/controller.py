@@ -1,5 +1,6 @@
 import asyncio
 from zoflite.driver import Driver, RequestError
+from zoflite.backport import asyncio_run
 
 
 class MyController:
@@ -34,5 +35,4 @@ class MyController:
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(MyController().run())
+    asyncio_run(MyController().run())
