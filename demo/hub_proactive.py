@@ -7,7 +7,7 @@ class HubProactiveController(Controller):
 
     def CHANNEL_UP(self, dp, event):
         # Set up default flow table entry.
-        action = {'action': 'OUTPUT', 'port_no': 'ALL', 'max_len': 'NO_BUFFER'}
+        action = {'action': 'OUTPUT', 'port_no': 'ALL', 'max_len': 0}
         instruction = {'instruction': 'APPLY_ACTIONS', 'actions': [action]}
         ofmsg = {
             'type': 'FLOW_MOD',

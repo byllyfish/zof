@@ -4,17 +4,17 @@ import asyncio
 
 
 def asyncio_run(coro, *, debug=False):
-	"""Backport of Python 3.7's `asyncio.run()` API.
+    """Backport of Python 3.7's `asyncio.run()` API.
 
-	This code is strict about not leaving any dangling tasks. The real
-	implementation (in Python 3.7) cancels them.
+    This code is strict about not leaving any dangling tasks. The real
+    implementation (in Python 3.7) cancels them.
 
-	Adapted from https://github.com/python/cpython/blob/master/Lib/asyncio/runners.py
-	on 9 May 2018.
-	"""
+    Adapted from https://github.com/python/cpython/blob/master/Lib/asyncio/runners.py
+    on 9 May 2018.
+    """
 
-	assert asyncio._get_running_loop() is None, 'Loop already running'
-	assert asyncio.iscoroutine(coro), repr(coro)
+    assert asyncio._get_running_loop() is None, 'Loop already running'
+    assert asyncio.iscoroutine(coro), repr(coro)
 
     loop = asyncio.new_event_loop()
     try:

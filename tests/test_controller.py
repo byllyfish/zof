@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from zoflite.controller import Controller
+from zoflite.controller import Controller, ControllerSettings
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
@@ -9,9 +9,11 @@ pytestmark = pytest.mark.asyncio
 class MockDriver:
     """Implements a mock OpenFlow driver."""
 
-    dispatch = None
     channel_wait = -1
     packet_count = 0
+
+    def __init__(self, dispatch=None):
+        self.dispatch = dispatch
 
     async def __aenter__(self):
         return self
@@ -40,11 +42,15 @@ class MockDriver:
         self.post_event({'type': 'CHANNEL_DOWN', 'conn_id': conn_id})
 
 
+class MockSettings(ControllerSettings):
+    driver_class = MockDriver
+    exit_signals = []
+
+
 class BasicController(Controller):
     """Implements a test controller that uses a mock driver."""
 
     def __init__(self):
-        self.zof_driver = MockDriver()
         self.events = []
 
     def START(self):
@@ -65,7 +71,7 @@ async def test_basic_controller(caplog):
     """Test controller event dispatch order with sync handlers."""
 
     controller = BasicController()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
@@ -87,7 +93,7 @@ async def test_async_channel_up(caplog):
                 self.events.append('CANCEL')
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP']
     assert not caplog.record_tuples
@@ -104,7 +110,7 @@ async def test_async_channel_down(caplog):
             self.events.append('NEXT')
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'NEXT', 'STOP']
     assert not caplog.record_tuples
@@ -122,7 +128,7 @@ async def test_async_start(caplog):
             self.events.append('NEXT')
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
@@ -141,7 +147,7 @@ async def test_exceptions(caplog):
             self.events.append(str(exc))
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
@@ -164,7 +170,7 @@ async def test_request_benchmark(caplog):
                 self.zof_exit(0)
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     # FIXME(bfish): 'CHANNEL_DOWN' is called after 'STOP'...
     assert controller.events == ['START', 'CHANNEL_UP', 'STOP', 'CHANNEL_DOWN']
@@ -220,7 +226,7 @@ async def test_packet_in_async(caplog):
             self.zof_exit(0)
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
@@ -254,7 +260,7 @@ async def test_packet_in_sync(caplog):
             self.zof_exit(0)
 
     controller = _Controller()
-    await controller.run()
+    await controller.run(settings=MockSettings())
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples

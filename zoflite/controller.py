@@ -2,6 +2,7 @@ from zoflite.driver import Driver
 from zoflite.datapath import Datapath
 from zoflite.taskset import TaskSet
 import asyncio
+import contextlib
 import functools
 import logging
 import os
@@ -9,6 +10,27 @@ import signal
 
 
 LOGGER = logging.getLogger(__package__)
+
+if os.getenv('ZOFDEBUG'):
+    LOGGER.setLevel('DEBUG')
+
+
+class ControllerSettings:
+    """Settings for a controller."""
+
+    # Options for listening for OpenFlow connections.
+    listen_endpoints = ['6653']
+    listen_options = ['FEATURES_REQ']
+    listen_versions = []
+
+    # Default exit signals.
+    exit_signals = [signal.SIGTERM, signal.SIGINT]
+
+    # List of subcontrollers (not implemented yet).
+    subcontrollers = []
+
+    # Default driver class.
+    driver_class = Driver
 
 
 class Controller:
@@ -40,50 +62,41 @@ class Controller:
 
     """
 
+    zof_settings = None
     zof_driver = None
     zof_loop = None
-    zof_listen_endpoints = ['6653']
-    zof_listen_options = ['FEATURES_REQ']
-    zof_listen_versions = []
     zof_datapaths = None
     zof_exit_status = None
-    zof_exit_signals = [signal.SIGTERM, signal.SIGINT]
     zof_tasks = None
 
-    async def run(self):
+    async def run(self, *, settings=None):
         """Run controller in an event loop."""
 
-        if self.zof_driver is None:
-            self.zof_driver = Driver(self.zof_dispatch)
-        else:
-            # Set dispatch function of existing driver; this is used
-            # for testing with a mock driver.
-            assert self.zof_driver.dispatch is None
-            self.zof_driver.dispatch = self.zof_dispatch
+        self.zof_settings = settings or ControllerSettings()
+        self.zof_driver = self.zof_settings.driver_class(self.zof_dispatch)
 
         self.zof_loop = asyncio.get_event_loop()
-        self.zof_init_debug()
-
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
         self.zof_tasks = TaskSet(self.zof_loop)
 
-        self.zof_init_signals()
+        with self.zof_signals_handled():
+            async with self.zof_driver:
+                # Start app and OpenFlow listener.
+                await self.zof_invoke('START')
+                await self.zof_listen()
 
-        async with self.zof_driver:
-            # Start app and OpenFlow listener.
-            await self.zof_invoke('START')
-            await self.zof_listen()
+                # Run until we're told to exit.
+                await self.zof_exit_status
 
-            # Run until we're told to exit.
-            await self.zof_exit_status
+                # Clean up datapath tasks.
+                for dp in self.zof_datapaths.values():
+                    dp.zof_cancel_tasks()
 
-            # Clean up after ourselves.
-            for dp in self.zof_datapaths.values():
-                dp.zof_cancel_tasks()
-            self.zof_tasks.cancel()
-            await self.zof_tasks.wait_cancelled()
-            await self.zof_invoke('STOP')
+                # Clean up controller tasks and stop.
+                self.zof_tasks.cancel()
+                await self.zof_tasks.wait_cancelled()
+                await self.zof_invoke('STOP')
 
     def create_task(self, coro):
         """Create a managed async task."""
@@ -196,27 +209,25 @@ class Controller:
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
 
-        if self.zof_listen_endpoints:
-            coros = [self.zof_driver.listen(endpoint, options=self.zof_listen_options, versions=self.zof_listen_versions) for endpoint in self.zof_listen_endpoints]
+        if self.zof_settings.listen_endpoints:
+            coros = [self.zof_driver.listen(endpoint, options=self.zof_settings.listen_options, versions=self.zof_settings.listen_versions) for endpoint in self.zof_settings.listen_endpoints]
             await asyncio.gather(*coros)
 
-    def zof_init_debug(self):
-        """Set up debugging for controller."""
-
-        debug_mode = os.getenv('ZOFDEBUG')
-        if not debug_mode:
-            return
-
-        LOGGER.setLevel('DEBUG')
-
-    def zof_init_signals(self):
-        """Set up exit signal handler."""
+    @contextlib.contextmanager
+    def zof_signals_handled(self):
+        """Context manager for exit signal handling."""
 
         def _quit():
             self.zof_exit(0)
 
-        for signum in self.zof_exit_signals:
+        signals = list(self.zof_settings.exit_signals)
+        for signum in signals:
             self.zof_loop.add_signal_handler(signum, _quit)
+
+        yield
+
+        for signum in signals:
+            self.zof_loop.remove_signal_handler(signum)
 
     async def zof_invoke(self, msg_type):
         """Notify app to start/stop.
