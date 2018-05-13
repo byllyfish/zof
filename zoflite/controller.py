@@ -8,7 +8,6 @@ import logging
 import os
 import signal
 
-
 LOGGER = logging.getLogger(__package__)
 
 if os.getenv('ZOFDEBUG'):
@@ -210,7 +209,13 @@ class Controller:
         """Tell driver to listen on specific endpoints."""
 
         if self.zof_settings.listen_endpoints:
-            coros = [self.zof_driver.listen(endpoint, options=self.zof_settings.listen_options, versions=self.zof_settings.listen_versions) for endpoint in self.zof_settings.listen_endpoints]
+            coros = [
+                self.zof_driver.listen(
+                    endpoint,
+                    options=self.zof_settings.listen_options,
+                    versions=self.zof_settings.listen_versions)
+                for endpoint in self.zof_settings.listen_endpoints
+            ]
             await asyncio.gather(*coros)
 
     @contextlib.contextmanager

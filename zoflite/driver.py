@@ -14,8 +14,6 @@ from typing import Any, Callable, Optional, Awaitable, Dict, Union, List, cast
 #    JSON = Union[Dict[str, 'JSON'], List['JSON'], str, int, float, bool, None]
 Event = Dict[str, Any]
 EventCallback = Callable[['Driver', Event], None]
-
-
 """
 TODO:
     No task context for current conn_id/datapath_id. Use event['datapath'] object.
@@ -88,7 +86,7 @@ class Driver:
             await asyncio.sleep(30)
     """
 
-    def __init__(self, dispatch: EventCallback=_noop, debug=False) -> None:
+    def __init__(self, dispatch: EventCallback = _noop, debug=False) -> None:
         """Initialize event callback."""
 
         self.dispatch = dispatch  # type: EventCallback
@@ -101,7 +99,7 @@ class Driver:
         """Async context manager entry point."""
 
         assert not self._protocol, 'Driver already open'
-        
+
         cmd = self._oftr_cmd()
         loop = asyncio.get_event_loop()
         proto_factory = lambda: OftrProtocol(self.post_event, loop)
@@ -178,7 +176,6 @@ class Driver:
         assert 'type' in event, repr(event)
         self.dispatch(self, event)
 
-
     def _oftr_cmd(self) -> List[str]:
         """Return oftr command with args."""
 
@@ -199,10 +196,7 @@ class Driver:
             return msg
         if 'xid' not in msg:
             msg['xid'] = self._assign_xid()
-        return {
-            'method': 'OFP.SEND',
-            'params': msg 
-        }
+        return {'method': 'OFP.SEND', 'params': msg}
 
     def _ofp_listen(self, endpoint, options, versions):
         return {
@@ -226,12 +220,12 @@ class Driver:
 
     def _ofp_close(self, conn_id):
         return {
-            'id': self._assign_xid(), 
+            'id': self._assign_xid(),
             'method': 'OFP.CLOSE',
             'params': {
                 'conn_id': conn_id
             }
-        }    
+        }
 
 
 class OftrProtocol(asyncio.SubprocessProtocol):
@@ -307,7 +301,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def handle_msg(self, msg: Event) -> None:
         """Handle incoming message."""
-        
+
         if msg.get('method') == 'OFP.MESSAGE':
             msg = msg['params']
             xid = msg.get('xid')
@@ -326,7 +320,8 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self._transport = cast(asyncio.SubprocessTransport, transport)
-        write_transport = cast(asyncio.WriteTransport, self._transport.get_pipe_transport(0))
+        write_transport = cast(asyncio.WriteTransport,
+                               self._transport.get_pipe_transport(0))
         self._write = write_transport.write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
@@ -341,7 +336,9 @@ class OftrProtocol(asyncio.SubprocessProtocol):
     def _idle(self) -> None:
         """Idle task handler."""
 
-        expired = [(xid, info) for (xid, info) in self._request_futures.items() if info.expiration <= self._loop.time()]
+        expired = [(xid, info)
+                   for (xid, info) in self._request_futures.items()
+                   if info.expiration <= self._loop.time()]
         for xid, info in expired:
             info.handle_timeout(xid)
             del self._request_futures[xid]
@@ -366,7 +363,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
 
 class _RequestInfo:
-
     def __init__(self, loop, timeout: float) -> None:
         self.future = loop.create_future()  # type: asyncio.Future[Event]
         self.expiration = loop.time() + timeout  # type: float
@@ -386,16 +382,12 @@ class _RequestInfo:
 
     def handle_timeout(self, xid) -> None:
         # Synthesize an error reply to stand in for the timeout error.
-        msg = { 'id': xid, 'error': {
-            'message': 'request timeout'
-        }}
+        msg = {'id': xid, 'error': {'message': 'request timeout'}}
         self.future.set_exception(RequestError(msg))
 
     def handle_closed(self, xid) -> None:
         # Synthesize an error reply to stand in for close error.
-        msg = { 'id': xid, 'error': {
-            'message': 'connection closed'
-        }}
+        msg = {'id': xid, 'error': {'message': 'connection closed'}}
         self.future.set_exception(RequestError(msg))
 
 
@@ -411,7 +403,6 @@ def _dump_msg(msg: Event) -> bytes:
     return json.dumps(
         msg, ensure_ascii=False, allow_nan=False,
         check_circular=False).encode('utf-8') + b'\0'
-
 
 
 def main() -> None:

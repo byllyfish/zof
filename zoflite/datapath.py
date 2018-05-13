@@ -2,7 +2,6 @@ from zoflite.taskset import TaskSet
 
 
 class Datapath:
-
     def __init__(self, controller, conn_id, event):
         self.zof_driver = controller.zof_driver
         self.conn_id = conn_id

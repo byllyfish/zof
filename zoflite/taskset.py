@@ -49,7 +49,8 @@ class TaskSet:
             await asyncio.sleep(0)
 
         if len(self) > 0:
-            raise RuntimeError('TaskSet: Cancelled tasks did not exit as expected')
+            raise RuntimeError(
+                'TaskSet: Cancelled tasks did not exit as expected')
 
     def __len__(self):
         """Return length of task list."""
