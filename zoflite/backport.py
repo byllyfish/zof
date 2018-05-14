@@ -13,7 +13,7 @@ def asyncio_run(coro, *, debug=False):
     on 9 May 2018.
     """
 
-    assert asyncio._get_running_loop() is None, 'Loop already running'
+    assert asyncio._get_running_loop() is None  # pylint: disable=no-member,protected-access
     assert asyncio.iscoroutine(coro), repr(coro)
 
     loop = asyncio.new_event_loop()

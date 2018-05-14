@@ -1,12 +1,14 @@
-from zoflite.driver import Driver
-from zoflite.datapath import Datapath
-from zoflite.taskset import TaskSet
 import asyncio
 import contextlib
 import functools
 import logging
 import os
 import signal
+
+from zoflite.driver import Driver
+from zoflite.datapath import Datapath
+from zoflite.taskset import TaskSet
+
 
 LOGGER = logging.getLogger(__package__)
 
@@ -156,7 +158,7 @@ class Controller:
         def _fwd(handler, dp, event):
             try:
                 handler(dp, event)
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 self.zof_exception_handler(ex)
 
         async def _afwd(handler, dp, event):
@@ -164,7 +166,7 @@ class Controller:
                 await handler(dp, event)
             except asyncio.CancelledError:
                 pass
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 self.zof_exception_handler(ex)
 
         if asyncio.iscoroutinefunction(handler):

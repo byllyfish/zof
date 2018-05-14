@@ -48,7 +48,7 @@ class TaskSet:
         for _ in range(2):
             await asyncio.sleep(0)
 
-        if len(self) > 0:
+        if self._tasks:
             raise RuntimeError(
                 'TaskSet: Cancelled tasks did not exit as expected')
 
