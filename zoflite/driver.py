@@ -6,35 +6,6 @@ import shlex
 import json
 import logging
 
-from typing import Any, Callable, Optional, Awaitable, Dict, Union, List, cast
-
-# Declare common types.
-#
-# TODO(bfish): Use recursive types (https://github.com/python/mypy/issues/731)
-#    JSON = Union[Dict[str, 'JSON'], List['JSON'], str, int, float, bool, None]
-Event = Dict[str, Any]
-EventCallback = Callable[['Driver', Event], None]
-"""
-TODO:
-    No task context for current conn_id/datapath_id. Use event['datapath'] object.
-    Support for 'other' handler in Dispatcher.
-    Fix support for event delimiter.
-    Add support for default ofp.listen.
-    Datapath class.
-    Wrap callbacks so exceptions are reported.
-    Add timeout checking periodic timer.
-
-    Test: send() and request() should not modify the dict object.
-    Test: send() and request() should auto-fill the conn_id and xid.
-    
-    Async dispatch will still be supported. There will be simple code to deal with async
-    start and tracking datapath-dependent tasks.
-
-    zof.send and zof.request need to use conn_id to set?
-    No support for signals. Use asyncio callback instead.
-
-    
-"""
 
 LOGGER = logging.getLogger(__package__)
 
@@ -52,7 +23,7 @@ class RequestError(Exception):
         self.message = event['error']['message']
 
 
-def _noop(driver, event) -> None:
+def _noop(driver, event):
     pass
 
 
@@ -86,16 +57,16 @@ class Driver:
             await asyncio.sleep(30)
     """
 
-    def __init__(self, dispatch: EventCallback = _noop, debug=False) -> None:
+    def __init__(self, dispatch=_noop, debug=False):
         """Initialize event callback."""
 
-        self.dispatch = dispatch  # type: EventCallback
+        self.dispatch = dispatch
+        self.pid = None
         self._debug = debug
-        self._protocol = None  # type: Optional[OftrProtocol]
-        self._last_xid = 0  # type: int
-        self.pid = None  # type: Optional[int]
+        self._protocol = None
+        self._last_xid = 0
 
-    async def __aenter__(self) -> 'Driver':
+    async def __aenter__(self):
         """Async context manager entry point."""
 
         assert not self._protocol, 'Driver already open'
@@ -110,12 +81,12 @@ class Driver:
         transport, protocol = await loop.subprocess_exec(
             proto_factory, *cmd, stderr=None, start_new_session=True)
 
-        self._protocol = cast(OftrProtocol, protocol)
-        self.pid = cast(asyncio.SubprocessTransport, transport).get_pid()
+        self._protocol = protocol
+        self.pid = transport.get_pid()
 
         return self
 
-    async def __aexit__(self, *_args: List[Any]) -> None:
+    async def __aexit__(self, *_args):
         """Async context manager exit point."""
 
         assert self._protocol, 'Driver not open'
@@ -149,12 +120,12 @@ class Driver:
 
         return await self._protocol.request(msg)
 
-    async def listen(self, endpoint: str, options=(), versions=()) -> int:
+    async def listen(self, endpoint, options=(), versions=()) -> int:
         """Listen for OpenFlow connections on a given endpoint."""
 
         request = self._ofp_listen(endpoint, options, versions)
         reply = await self.request(request)
-        return cast(int, reply['conn_id'])
+        return reply['conn_id']
 
     async def connect(self, endpoint):
         """Make outgoing OpenFlow connection to given endpoint."""
@@ -176,7 +147,7 @@ class Driver:
         assert 'type' in event, repr(event)
         self.dispatch(self, event)
 
-    def _oftr_cmd(self) -> List[str]:
+    def _oftr_cmd(self):
         """Return oftr command with args."""
 
         cmd = '%s jsonrpc'
@@ -231,19 +202,19 @@ class Driver:
 class OftrProtocol(asyncio.SubprocessProtocol):
     """Protocol subclass that implements communication with OFTR."""
 
-    def __init__(self, dispatch, loop) -> None:
+    def __init__(self, dispatch, loop):
         """Initialize protocol."""
 
-        self.dispatch = dispatch  # type: EventCallback
+        self.dispatch = dispatch 
         self._loop = loop
         self._recv_buf = bytearray()
-        self._transport = None  # type: Optional[asyncio.SubprocessTransport]
-        self._write = None  # type: Optional[Callable[[bytes], None]]
-        self._request_futures = {}  # type: Dict[int, _RequestInfo]
+        self._transport = None
+        self._write = None
+        self._request_futures = {}
         self._closed_future = None
         self._idle_handle = None
 
-    def send(self, msg: Event) -> None:
+    def send(self, msg):
         """Send an OpenFlow/RPC message."""
 
         assert self._write
@@ -251,7 +222,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         data = _dump_msg(msg)
         self._write(data)
 
-    def request(self, msg: Event) -> Awaitable[Event]:
+    def request(self, msg):
         """Send an OpenFlow/RPC message and wait for a reply."""
 
         assert self._write
@@ -262,7 +233,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             if isinstance(params, dict):
                 xid = params['xid']
             else:
-                raise ValueError('Missing xid: %r', msg)
+                raise ValueError('Missing xid: %r' % msg)
 
         data = _dump_msg(msg)
         self._write(data)
@@ -271,7 +242,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._request_futures[xid] = req_info
         return req_info.future
 
-    def pipe_data_received(self, fd: int, data: Union[bytes, str]) -> None:
+    def pipe_data_received(self, fd, data):
         """Read data from pipe into buffer and dispatch incoming messages."""
 
         buf = self._recv_buf
@@ -299,7 +270,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             offset += 1
             begin = offset
 
-    def handle_msg(self, msg: Event) -> None:
+    def handle_msg(self, msg):
         """Handle incoming message."""
 
         if msg.get('method') == 'OFP.MESSAGE':
@@ -318,22 +289,20 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         else:
             LOGGER.error('Driver.handle_msg: Ignored msg: %r', msg)
 
-    def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        self._transport = cast(asyncio.SubprocessTransport, transport)
-        write_transport = cast(asyncio.WriteTransport,
-                               self._transport.get_pipe_transport(0))
-        self._write = write_transport.write
+    def connection_made(self, transport):
+        self._transport = transport
+        self._write = transport.get_pipe_transport(0).write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
 
-    def connection_lost(self, exc: Exception) -> None:
+    def connection_lost(self, exc):
         self._cancel_requests()
         self._closed_future.set_result(1)
         self._idle_handle.cancel()
         self._write = None
         self._transport = None
 
-    def _idle(self) -> None:
+    def _idle(self):
         """Idle task handler."""
 
         expired = [(xid, info)
@@ -351,7 +320,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             info.handle_closed(xid)
         self._request_futures = {}
 
-    async def stop(self) -> None:
+    async def stop(self):
         """Stop the OpenFlow driver."""
 
         if self._transport:
@@ -363,11 +332,11 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
 
 class _RequestInfo:
-    def __init__(self, loop, timeout: float) -> None:
-        self.future = loop.create_future()  # type: asyncio.Future[Event]
-        self.expiration = loop.time() + timeout  # type: float
+    def __init__(self, loop, timeout):
+        self.future = loop.create_future()
+        self.expiration = loop.time() + timeout
 
-    def handle_reply(self, msg: Event) -> None:
+    def handle_reply(self, msg):
         if 'type' in msg:
             if msg['type'] == 'ERROR':
                 self.future.set_exception(RequestError(msg))
@@ -380,33 +349,32 @@ class _RequestInfo:
         else:
             LOGGER.error('OFTR: Unexpected reply: %r', msg)
 
-    def handle_timeout(self, xid) -> None:
+    def handle_timeout(self, xid):
         # Synthesize an error reply to stand in for the timeout error.
         msg = {'id': xid, 'error': {'message': 'request timeout'}}
         self.future.set_exception(RequestError(msg))
 
-    def handle_closed(self, xid) -> None:
+    def handle_closed(self, xid):
         # Synthesize an error reply to stand in for close error.
         msg = {'id': xid, 'error': {'message': 'connection closed'}}
         self.future.set_exception(RequestError(msg))
 
 
-def _load_msg(data: Union[bytes, str]) -> Event:
+def _load_msg(data):
     try:
-        msg = json.loads(data)
-        return cast(Event, msg)
+        return json.loads(data)
     except Exception as ex:
         return {'type': 'DRIVER_ALERT', 'msg': data}
 
 
-def _dump_msg(msg: Event) -> bytes:
+def _dump_msg(msg):
     return json.dumps(
         msg, ensure_ascii=False, allow_nan=False,
         check_circular=False).encode('utf-8') + b'\0'
 
 
-def main() -> None:
-    async def _test() -> None:
+def main():
+    async def _test():
         async with Driver() as driver:
             from timeit import default_timer as timer
 
