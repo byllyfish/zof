@@ -1,4 +1,4 @@
-"""Implements a Driver for communicating with `oftr`."""
+"""Implements a Driver class for communicating with `oftr`."""
 
 import asyncio
 import shutil

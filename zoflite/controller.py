@@ -1,3 +1,5 @@
+"""Implements a Controller base class."""
+
 import asyncio
 import contextlib
 import functools
