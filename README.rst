@@ -10,8 +10,7 @@ Supported Features
 ------------------
 
 - OpenFlow versions 1.0 - 1.4 (with partial support for 1.5)
-- SSL connections
-- Auxiliary OpenFlow connections over TCP and UDP
+- TLS connections
 - Limited packet parsing and generation: ARP, LLDP, IPv4, IPv6, UDP, TCP, ICMPv4, ICMPv6
 - App's can simulate switches; Supports both sides of the OpenFlow protocol
 
