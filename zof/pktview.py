@@ -79,6 +79,7 @@ class PktView(ObjectView):
     ip_ttl = pktview_alias('nx_ip_ttl')
     hop_limit = pktview_alias('nx_ip_ttl')
     ipv6_nd_res = pktview_alias('x_ipv6_nd_res')
+    nxt = pktview_alias('ip_proto')
 
     @property
     def src(self):
@@ -93,6 +94,10 @@ class PktView(ObjectView):
         if not result:
             raise AttributeError('dst')
         return result
+
+    @property
+    def ext_hdrs(self):
+        return self['ipv6_exthdr'] != 1
 
     def get(self, key, default=None):
         """Allows PktView to be treated as a Python dict.

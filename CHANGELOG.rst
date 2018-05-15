@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+Version 0.15.0
+--------------
+
+- Add support for 'nxt' and 'ext_hdrs' aliases to PktView.
+- CallbackInfo class now allows a base class member to bind to a direct subclass instance.
+- Update base alpine image version to v0.48.0-alpine3.7.
+
+
 Version 0.14.0
 --------------
 
