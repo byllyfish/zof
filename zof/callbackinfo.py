@@ -83,7 +83,9 @@ class CallbackInfo:
                 raise ValueError('Callback %s requires an instance of class %s' % (self.name, self.class_))
             cls = instance.__class__
             if cls.__name__ != self.class_:
-                raise ValueError('Callback %s requires an instance of class %s (not %s)' % (self.name, self.class_, cls.__name__))
+                # It's okay if self.class_ is a base class of instance.
+                if self.class_ not in (i.__name__ for i in cls.__bases__):
+                    raise ValueError('Callback %s requires an instance of class %s (not %s)' % (self.name, self.class_, cls.__name__))
             return callback.__get__(instance, cls)
         return callback
 
