@@ -38,8 +38,8 @@ class HttpServer:
         self.endpoint = None
         self.logger = logger
         self.web_app = web.Application()
-        self.web_handler = None
-        self.web_server = None
+        self.web_runner = None
+        self.web_site = None
 
     async def start(self, endpoint):
         """Start web server listening on endpoint.
@@ -47,15 +47,13 @@ class HttpServer:
         Args:
             endpoint (str): Listening endpoint "address:port".
         """
-        assert self.web_server is None
+        assert self.web_site is None
         self.endpoint = Endpoint(endpoint)
         loop = asyncio.get_event_loop()
-        self.web_handler = self.web_app.make_handler(
-            loop=loop, access_log=self.logger, access_log_format=_LOG_FORMAT)
-        await self.web_app.startup()
-
-        self.web_server = await loop.create_server(
-            self.web_handler, self.endpoint.host, self.endpoint.port)
+        self.web_runner = web.AppRunner(self.web_app)
+        await self.web_runner.setup()
+        self.web_site = web.TCPSite(self.web_runner, self.endpoint.host, self.endpoint.port)
+        await self.web_site.start()
 
         if self.logger:
             self.logger.info('HttpServer: Start listening on %s',
@@ -63,14 +61,10 @@ class HttpServer:
 
     async def stop(self):
         """Stop web server."""
-        if self.web_server is None:
+        if self.web_site is None:
             return
-        self.web_server.close()
-        await self.web_server.wait_closed()
 
-        await self.web_app.shutdown()
-        await self.web_handler.shutdown(timeout=10)
-        await self.web_app.cleanup()
+        await self.web_runner.cleanup()
 
         if self.logger:
             self.logger.info('HttpServer: Stop listening on %s', self.endpoint)
