@@ -10,7 +10,7 @@ from zoflite.protocol import OftrProtocol, RequestError
 LOGGER = logging.getLogger(__package__)
 
 
-def _noop(driver, event):
+def _noop(driver, event):  # pragma: no cover
     pass
 
 

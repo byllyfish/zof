@@ -15,7 +15,7 @@ from zoflite.taskset import TaskSet
 LOGGER = logging.getLogger(__package__)
 
 if os.getenv('ZOFDEBUG'):
-    LOGGER.setLevel('DEBUG')
+    LOGGER.setLevel('DEBUG')  # pragma: no cover
 
 
 class ControllerSettings:

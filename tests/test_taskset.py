@@ -72,3 +72,29 @@ async def test_taskset_cancel_nostart(event_loop):
 		await asyncio.sleep(0)
 
 	assert len(tasks) == 0
+
+
+async def test_taskset_wait_cancelled(event_loop):
+	"""Test wait_cancelled() raises an error when tasks don't cancel."""
+
+	async def _uncancellable():
+		try:
+			await asyncio.sleep(5)
+		except asyncio.CancelledError:
+			await asyncio.sleep(1)
+
+	tasks = TaskSet(event_loop)
+	task = tasks.create_task(_uncancellable())
+
+	await asyncio.sleep(0)
+	assert len(tasks) == 1
+
+	tasks.cancel()
+
+	with pytest.raises(RuntimeError):
+		# Task doesn't exit immediately.
+		await tasks.wait_cancelled()
+
+	assert len(tasks) == 1
+	await task
+

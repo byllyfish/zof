@@ -33,7 +33,7 @@ async def test_driver_dispatch():
     def _dispatch(_driver, event):
         incoming.append(event)
 
-    async with Driver(_dispatch) as driver:
+    async with Driver(_dispatch, True) as driver:
         assert driver.pid >= 0
 
     assert incoming == []
@@ -156,7 +156,3 @@ async def test_driver_openflow():
 
     assert controller_log == ['CHANNEL_UP', 'BARRIER_REPLY', 'CHANNEL_DOWN']
     assert agent_log == ['CHANNEL_UP', 'CHANNEL_DOWN']
-
-
-
-
