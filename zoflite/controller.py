@@ -269,3 +269,8 @@ class Controller:
         """Default handler for CHANNEL_ALERT message."""
 
         LOGGER.error('CHANNEL_ALERT received: %r', event)
+
+    def DRIVER_ALERT(self, dp, event):
+        """Default handler for DRIVER_ALERT message."""
+
+        LOGGER.error('DRIVER_ALERT received: %r', event)
