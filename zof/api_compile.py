@@ -161,8 +161,8 @@ class CompiledObject(CompiledMessage):
     def _complete(self, kwds, task_locals):
         """Substitute keywords into object template, and compile to JSON.
         """
-        kwds.setdefault('datapath_id', task_locals['datapath_id'])
-        kwds.setdefault('conn_id', task_locals['conn_id'])
+        kwds.setdefault('datapath_id', task_locals.get('datapath_id'))
+        kwds.setdefault('conn_id', task_locals.get('conn_id'))
 
         if 'datapath_id' not in self._obj:
             self._obj['datapath_id'] = kwds['datapath_id']
