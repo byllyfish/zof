@@ -51,10 +51,13 @@ def ensure_future(coroutine, *, datapath_id=None, conn_id=None):
     """Function used by an app to run an async coroutine, under a specific
     scope.
     """
-    app = asyncio.Task.current_task().zof_task_app
-    return app.ensure_future(
-        coroutine, datapath_id=datapath_id, conn_id=conn_id)
-
+    task = asyncio.Task.current_task()
+    if task:
+        # Execute task within scope of current app.
+        app = task.zof_task_app
+        return app.ensure_future(coroutine, datapath_id=datapath_id, conn_id=conn_id)
+    else:
+        return asyncio.ensure_future(coroutine)
 
 def _rpc_call(method, **params):
     """Function used to send a RPC request and receive a response.

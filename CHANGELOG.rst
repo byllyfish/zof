@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+Version 0.16.0
+--------------
+
+- Allow OF messages to be compiled from non-zof tasks.
+- Allow zof.ensure_future to be called from outside an async task.
+- Update requirements.txt.
+- Update http API shim to use aiohttp 3.0 AppRunner API.
+
+
 Version 0.15.0
 --------------
 
@@ -33,6 +42,7 @@ Version 0.12.0
 - Datapath object instances now have an 'id' attribute (datapath_id as int).
 - Prevent datapath service from propagating messages if datapath is not ready.
 - Update requirements.txt.
+
 
 Version 0.11.0
 --------------
