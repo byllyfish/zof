@@ -703,7 +703,7 @@ def _convert_pkt(msg):
         data = bytes.fromhex(msg['data'])
         msg['data'] = data
         # If there's no `_pkt` key, the rest is skipped.
-        pkt = pktview_from_list(msg.pop('_pkt'))
+        pkt = pktview_from_list(msg.pop('_pkt'), multiple_value=True)
         msg['pkt'] = pkt
         # If there's no 'x_pkt_pos' key in pkt, the rest is skipped.
         pkt.payload = data[pkt['x_pkt_pos']:]
