@@ -6,6 +6,7 @@ https://github.com/pypa/sampleproject
 
 import os
 import re
+from codecs import open
 from setuptools import setup, find_packages
 
 
