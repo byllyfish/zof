@@ -212,7 +212,7 @@ class ConnectionTestCase(AsyncTestCase):
         result = await asyncio.wait_for(self.conn.readline(), 1.0)
         self.assert_prefix(
             result,
-            b'{"id":321,"error":{"code":-32600,"message":"YAML:1:48: error: unknown value \\"foo\\" Did you mean \\"HELLO\\"?'
+            b'{"id":321,"error":{"code":-32600,"message":"YAML:1:48: error: unknown value \\"foo\\" Did you mean \\"ERROR\\"?'
         )
         await self._still_alive()
 

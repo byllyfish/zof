@@ -6,7 +6,7 @@
 [source,yaml]
 ----
 # List all flows in all tables.
-type: REQUEST.FLOW
+type: REQUEST.FLOW_DESC
 msg:
   table_id: ALL
   out_port: ANY
