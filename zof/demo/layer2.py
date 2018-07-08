@@ -9,7 +9,7 @@
 import zof
 from zof.pktview import pktview_from_list
 
-APP = zof.Application('layer2')
+APP = zof.Application('layer2', exception_fatal=True)
 
 # The forwarding table is a dictionary that maps:
 #   datapath_id -> { (eth_dst, vlan_vid) -> (out_port, time) }
@@ -21,7 +21,7 @@ APP.forwarding_table = {}
 def channel_up(event):
     """Set up datapath when switch connects."""
     APP.logger.info('%s Connected from %s (%d ports, version %d)',
-                    event['datapath_id'], event['endpoint'],
+                    event['datapath_id'], event['msg']['endpoint'],
                     len(event['datapath']), event['version'])
     APP.logger.info('%s Remove all flows', event['datapath_id'])
 

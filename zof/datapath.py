@@ -3,9 +3,6 @@ from .controller import Controller
 
 import zof
 
-# Keys for datapath.user_data dictionary. Used by datapath service.
-CHANNEL_UP_MSG = '_datapath.channel_up'
-
 
 class DatapathList:
     """Represents a collection of datapaths."""

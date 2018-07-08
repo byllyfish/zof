@@ -8,7 +8,7 @@ This app modifies message events to include the source `datapath` object.
 """
 
 import zof
-from zof.datapath import DatapathList, CHANNEL_UP_MSG
+from zof.datapath import DatapathList
 import zof.exception as _exc
 
 
@@ -46,11 +46,10 @@ PORTS_REQUEST = zof.compile('type: REQUEST.PORT_DESC')
 def channel_up(event):
     datapath = APP.datapaths.add_datapath(
         datapath_id=event['datapath_id'], conn_id=event['conn_id'])
-    if datapath.ready:
-        event['datapath'] = datapath
-        return
-    datapath.user_data[CHANNEL_UP_MSG] = event
-    raise _exc.StopPropagationException()
+    datapath.features = event['msg']['features']
+    datapath.add_ports(datapath.features['ports'])
+    datapath.ready = True
+    event['datapath'] = datapath
 
 
 @APP.message('channel_down')
@@ -60,25 +59,6 @@ def channel_down(event):
     if datapath.ready:
         event['datapath'] = datapath
         return
-    raise _exc.StopPropagationException()
-
-
-@APP.message('features_reply')
-def features_reply(event):
-    datapath = APP.datapaths[event['datapath_id']]
-    if datapath.ready:
-        event['datapath'] = datapath
-        return
-
-    # Store features reply message in datapath.
-    datapath.features = event['msg']
-
-    if event['version'] > 1:
-        zof.ensure_future(
-            _get_ports(datapath), datapath_id=event['datapath_id'])
-    else:
-        datapath.add_ports(event['msg']['ports'])
-        _post_channel_up(datapath)
 
     raise _exc.StopPropagationException()
 
@@ -110,22 +90,3 @@ def other_message(event):
         return
 
     raise _exc.StopPropagationException()
-
-
-async def _get_ports(datapath):
-    try:
-        ports = await PORTS_REQUEST.request(
-            datapath_id=datapath.datapath_id, conn_id=datapath.conn_id)
-        datapath.add_ports(ports['msg'])
-        _post_channel_up(datapath)
-    except _exc.ControllerException as ex:
-        datapath.close()
-        APP.logger.warning('_get_ports failed: %s', ex)
-
-
-def _post_channel_up(datapath):
-    datapath.ready = True
-
-    channel_event = datapath.user_data.pop(CHANNEL_UP_MSG)
-    channel_event['event'] = 'MESSAGE'
-    zof.post_event(channel_event)
