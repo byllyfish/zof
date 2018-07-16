@@ -1,6 +1,6 @@
 ---
 # # List all flows in all tables.
-# type: REQUEST.FLOW
+# type: REQUEST.FLOW_DESC
 # msg:
 #   table_id: ALL
 #   out_port: ANY
@@ -8,7 +8,7 @@
 #   cookie: 0
 #   cookie_mask: 0
 #   match: 
-type:            REQUEST.FLOW
+type:            REQUEST.FLOW_DESC
 flags:           [  ]
 xid:             0x00000000
 version:         0x04

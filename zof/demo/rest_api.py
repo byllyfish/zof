@@ -27,7 +27,7 @@ def get_switches():
 @WEB.get('/stats/flow/{dpid}', 'json')
 async def get_flows(dpid):
     result = []
-    async for ofmsg in FLOW_REQ.request(datapath_id=_parse_dpid(dpid)):
+    async for ofmsg in FLOWDESC_REQ.request(datapath_id=_parse_dpid(dpid)):
         _translate_flows(ofmsg['msg'])
         result.extend(ofmsg['msg'])
     return {dpid: result}
@@ -78,8 +78,8 @@ async def get_portdesc(dpid):
     return {dpid: result['msg']}
 
 
-FLOW_REQ = zof.compile('''
-    type: REQUEST.FLOW
+FLOWDESC_REQ = zof.compile('''
+    type: REQUEST.FLOW_DESC
     msg:
         table_id: ALL
         out_port: ANY

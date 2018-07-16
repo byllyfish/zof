@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+Version 0.17.0
+--------------
+
+- oftr changes CHANNEL_UP event to include FeaturesReply with ports.
+- oftr renames some events, e.g. REQUEST.FLOW -> REQUEST.FLOW_DESC.
+- LLDP support for multiple TLV values with the same subtype.
+
+
 Version 0.16.0
 --------------
 
