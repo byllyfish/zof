@@ -107,7 +107,7 @@ class Driver:
 
         return await self._protocol.request(msg)
 
-    async def listen(self, endpoint, options=(), versions=()) -> int:
+    async def listen(self, endpoint, options=(), versions=()):
         """Listen for OpenFlow connections on a given endpoint."""
 
         request = self._ofp_listen(endpoint, options, versions)
