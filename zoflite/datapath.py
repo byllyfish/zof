@@ -33,3 +33,6 @@ class Datapath:
         """Cancel tasks when datapath disconnects."""
 
         self.tasks.cancel()
+
+    def __repr__(self):
+        return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id, self.datapath_id)

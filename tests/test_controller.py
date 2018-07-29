@@ -9,7 +9,7 @@ pytestmark = pytest.mark.asyncio
 class MockDriver:
     """Implements a mock OpenFlow driver."""
 
-    channel_wait = -1
+    channel_wait = 0.001
     packet_count = 0
 
     def __init__(self, dispatch=None):
@@ -83,6 +83,28 @@ async def test_async_channel_up(caplog):
     class _Controller(BasicController):
 
         async def CHANNEL_UP(self, dp, event):
+            self.log_event(dp, event)
+            await asyncio.sleep(0)
+            self.events.append('NEXT')
+
+    controller = _Controller()
+    await controller.run(settings=MockSettings())
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'NEXT', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+
+
+async def test_async_channel_up_cancel(caplog):
+    """Test controller event dispatch with an async channel_up handler."""
+
+    class _Controller(BasicController):
+
+        def START(self):
+            self.zof_driver.channel_wait = -1
+            self.zof_loop.call_later(0.01, self.zof_exit, 0)
+            self.events.append('START')
+
+        async def CHANNEL_UP(self, dp, event):
             try:
                 self.log_event(dp, event)
                 await asyncio.sleep(0)
@@ -122,7 +144,7 @@ async def test_async_start(caplog):
     class _Controller(BasicController):
 
         async def START(self):
-            self.zof_loop.call_later(0.01, self.zof_exit, 0)
+            self.zof_loop.call_later(0.03, self.zof_exit, 0)
             self.events.append('START')
             await asyncio.sleep(0.02)
             self.events.append('NEXT')
@@ -172,8 +194,7 @@ async def test_request_benchmark(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    # FIXME(bfish): 'CHANNEL_DOWN' is called after 'STOP'...
-    assert controller.events == ['START', 'CHANNEL_UP', 'STOP', 'CHANNEL_DOWN']
+    assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
     assert not caplog.record_tuples
 
 
@@ -214,7 +235,6 @@ async def test_packet_in_async(caplog):
             self.start_time = _timer()
 
         async def PACKET_IN(self, dp, event):
-            await asyncio.sleep(0)
             self.packet_count += 1
             if self.packet_count >= self.packet_limit:
                 t = _timer() - self.start_time

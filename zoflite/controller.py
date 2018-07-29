@@ -73,6 +73,7 @@ class Controller:
     zof_datapaths = None
     zof_exit_status = None
     zof_tasks = None
+    zof_event_queue = None
 
     async def run(self, *, settings=None):
         """Run controller in an event loop."""
@@ -84,6 +85,8 @@ class Controller:
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
         self.zof_tasks = TaskSet(self.zof_loop)
+        self.zof_event_queue = asyncio.Queue()
+        self.zof_tasks.create_task(self.zof_event_loop())
 
         with self.zof_signals_handled():
             async with self.zof_driver:
@@ -103,54 +106,49 @@ class Controller:
                 await self.zof_tasks.wait_cancelled()
                 await self.zof_invoke('STOP')
 
+                qsize = self.zof_event_queue.qsize()
+                if qsize > 0:
+                    LOGGER.warning('Exiting with %d events in queue', qsize)
+
     def create_task(self, coro):
         """Create a managed async task."""
 
         self.zof_tasks.create_task(coro)
 
     def zof_dispatch(self, _driver, event):
-        """Dispatch incoming event to an app handler.
+        """Post incoming event to our event queue."""
 
-        This method is called by the protocol driver. There may be
-        no current event loop.
+        self.zof_event_queue.put_nowait(event)
 
-        N.B. The handler is scheduled to run on our event loop.
-        """
+    async def zof_event_loop(self):
+        """Dispatch events to handler functions."""
 
-        # TODO(bfish): change oftr dsl.
-        msg_type = event['type'].replace('.', '_')
+        while True:
+            event = await self.zof_event_queue.get()
+            # TODO(bfish): change oftr dsl.
+            msg_type = event['type'].replace('.', '_')
 
-        # Update bookkeeping for connected datapaths.
-        dp = None
-        channel_down = False
-        if msg_type == 'CHANNEL_UP':
-            # Datapath object can be added well before channel_up handler
-            # is *actually* called (event queue is FIFO).
-            dp = self.zof_channel_up(event)
-        elif msg_type == 'CHANNEL_DOWN':
-            # Clean up the datapath using call_soon to maintain ordering.
-            channel_down = True
-            self.zof_loop.call_soon(self.zof_channel_down, event)
-
-        # Find the event handler for 'msg_type' and invoke it.
-        handler = self.zof_find_handler(msg_type)
-        if handler:
-            if dp is None:
+            # Update bookkeeping for connected datapaths.
+            if msg_type == 'CHANNEL_UP':
+                dp = self.zof_channel_up(event)
+            elif msg_type == 'CHANNEL_DOWN':
+                dp = self.zof_channel_down(event)
+            else:
                 dp = self.zof_find_dp(event)
 
-            LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
-            self.zof_dispatch_handler(handler, dp, event, channel_down)
-
-        else:
-            # Handler not found for msg_type.
-            LOGGER.debug('Dispatch %r (no handler)', msg_type)
+            handler = self.zof_find_handler(msg_type)
+            if handler:
+                LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
+                await self.zof_dispatch_handler(handler, dp, event)
+            else:
+                LOGGER.debug('Dispatch %r dp=%r (no handler)', msg_type, dp)
 
     def zof_find_handler(self, msg_type):
         """Return handler for msg type (or None)."""
 
         return getattr(self, msg_type, None)
 
-    def zof_dispatch_handler(self, handler, dp, event, channel_down):
+    async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function.
 
         The handler function is scheduled to run as an async task or
@@ -158,12 +156,6 @@ class Controller:
         we wrap the handler call in a function that will catch exceptions and
         report them.
         """
-
-        def _fwd(handler, dp, event):
-            try:
-                handler(dp, event)
-            except Exception as ex:  # pylint: disable=broad-except
-                self.zof_exception_handler(ex)
 
         async def _afwd(handler, dp, event):
             try:
@@ -174,12 +166,18 @@ class Controller:
                 self.zof_exception_handler(ex)
 
         if asyncio.iscoroutinefunction(handler):
-            if dp and not channel_down:
+            if dp and event['type'] != 'CHANNEL_DOWN':
                 dp.create_task(_afwd(handler, dp, event))
             else:
                 self.create_task(_afwd(handler, dp, event))
+            # Yield time to the newly created task.
+            await asyncio.sleep(0)
         else:
-            self.zof_loop.call_soon(_fwd, handler, dp, event)
+            # Invoke handler directly.
+            try:
+                handler(dp, event)
+            except Exception as ex:  # pylint: disable=broad-except
+                self.zof_exception_handler(ex)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -272,8 +270,3 @@ class Controller:
         """Default handler for CHANNEL_ALERT message."""
 
         LOGGER.error('CHANNEL_ALERT received: %r', event)
-
-    def DRIVER_ALERT(self, dp, event):
-        """Default handler for DRIVER_ALERT message."""
-
-        LOGGER.error('DRIVER_ALERT received: %r', event)
