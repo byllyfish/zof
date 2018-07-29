@@ -1,6 +1,5 @@
 import asyncio
 from zoflite.controller import Controller
-from zoflite.backport import asyncio_run
 
 
 class MyController(Controller):
@@ -24,4 +23,4 @@ class MyController(Controller):
 
 
 if __name__ == '__main__':
-	asyncio_run(MyController().run())
+	MyController().run_forever()
