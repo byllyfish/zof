@@ -79,7 +79,7 @@ class Controller:
         """Run controller in an event loop."""
 
         self.zof_settings = settings or ControllerSettings()
-        self.zof_driver = self.zof_settings.driver_class(self.zof_dispatch)
+        self.zof_driver = self.zof_settings.driver_class(self.zof_post_event)
 
         self.zof_loop = asyncio.get_event_loop()
         self.zof_exit_status = self.zof_loop.create_future()
@@ -115,7 +115,7 @@ class Controller:
 
         self.zof_tasks.create_task(coro)
 
-    def zof_dispatch(self, _driver, event):
+    def zof_post_event(self, _driver, event):
         """Post incoming event to our event queue."""
 
         self.zof_event_queue.put_nowait(event)
@@ -136,17 +136,12 @@ class Controller:
             else:
                 dp = self.zof_find_dp(event)
 
-            handler = self.zof_find_handler(msg_type)
+            handler = getattr(self, msg_type, None)
             if handler:
                 LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
                 await self.zof_dispatch_handler(handler, dp, event)
             else:
                 LOGGER.debug('Dispatch %r dp=%r (no handler)', msg_type, dp)
-
-    def zof_find_handler(self, msg_type):
-        """Return handler for msg type (or None)."""
-
-        return getattr(self, msg_type, None)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function.
