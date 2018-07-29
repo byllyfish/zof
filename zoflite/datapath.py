@@ -1,6 +1,10 @@
 """Implements a Datapath class."""
 
+import logging
 from zoflite.taskset import TaskSet
+
+
+LOGGER = logging.getLogger(__package__)
 
 
 class Datapath:
@@ -15,12 +19,14 @@ class Datapath:
     def send(self, msg):
         """Send message to datapath."""
 
+        LOGGER.debug('Send %r dp=%r' % (msg['type'], self))
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
 
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
 
+        LOGGER.debug('Send %r dp=%r' % (msg['type'], self))
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)
 

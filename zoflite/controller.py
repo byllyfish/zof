@@ -138,10 +138,10 @@ class Controller:
 
             handler = getattr(self, msg_type, None)
             if handler:
-                LOGGER.debug('Dispatch %r dp=%r', msg_type, dp)
+                LOGGER.debug('Receive %r dp=%r', msg_type, dp)
                 await self.zof_dispatch_handler(handler, dp, event)
             else:
-                LOGGER.debug('Dispatch %r dp=%r (no handler)', msg_type, dp)
+                LOGGER.debug('Receive %r dp=%r (no handler)', msg_type, dp)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function.
@@ -180,7 +180,6 @@ class Controller:
         conn_id = event['conn_id']
         assert conn_id not in self.zof_datapaths
 
-        # TODO(bfish): change oftr dsl to include features, port_desc in channel_up.
         dp = Datapath(self, conn_id, event)
         self.zof_datapaths[conn_id] = dp
         return dp
@@ -235,10 +234,7 @@ class Controller:
             self.zof_loop.remove_signal_handler(signum)
 
     async def zof_invoke(self, msg_type):
-        """Notify app to start/stop.
-
-        N.B. The handler is invoked directly from the current task.
-        """
+        """Notify app to start/stop."""
 
         LOGGER.debug('Invoke %r', msg_type)
         handler = getattr(self, msg_type, None)
@@ -259,9 +255,8 @@ class Controller:
         """Report exception from a zof handler function."""
 
         LOGGER.exception('zof_exception_handler: %r', exc)
-        raise
 
     def CHANNEL_ALERT(self, dp, event):
         """Default handler for CHANNEL_ALERT message."""
 
-        LOGGER.error('CHANNEL_ALERT received: %r', event)
+        LOGGER.error('CHANNEL_ALERT dp=%r %r', dp, event)
