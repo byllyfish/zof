@@ -26,8 +26,14 @@ class Datapath:
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
 
-        LOGGER.debug('Send %r dp=%r' % (msg['type'], self))
-        msg['conn_id'] = self.conn_id
+        if 'type' in msg:
+            msg['conn_id'] = self.conn_id
+            LOGGER.debug('Send %r dp=%r' % (msg['type'], self))
+        elif 'method' in msg:
+            LOGGER.debug('Send %r' % msg['method'])
+        else:
+            raise ValueError('Unexpected request: %r' % msg)
+
         return await self.zof_driver.request(msg)
 
     def create_task(self, coro):

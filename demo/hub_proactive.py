@@ -1,5 +1,4 @@
 from zoflite.controller import Controller
-from zoflite.backport import asyncio_run
 
 
 class HubProactiveController(Controller):
@@ -23,4 +22,5 @@ class HubProactiveController(Controller):
 
 
 if __name__ == '__main__':
-    asyncio_run(HubProactiveController().run())
+    controller = HubProactiveController()
+    controller.run_forever()

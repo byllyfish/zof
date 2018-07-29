@@ -75,6 +75,12 @@ class Controller:
     zof_tasks = None
     zof_event_queue = None
 
+    def run_forever(self, *, settings=None):
+        """Run controller synchronously in a new event loop."""
+
+        from .backport import asyncio_run
+        return asyncio_run(self.run(settings=settings))
+
     async def run(self, *, settings=None):
         """Run controller in an event loop."""
 
@@ -135,6 +141,8 @@ class Controller:
                 dp = self.zof_channel_down(event)
             else:
                 dp = self.zof_find_dp(event)
+                if msg_type == 'PACKET_IN':
+                    self.zof_convert_packet_in(event)
 
             handler = getattr(self, msg_type, None)
             if handler:
@@ -143,28 +151,23 @@ class Controller:
             else:
                 LOGGER.debug('Receive %r dp=%r (no handler)', msg_type, dp)
 
+    async def zof_dispatch_async(self, handler, dp, event):
+        try:
+            await handler(dp, event)
+        except asyncio.CancelledError:
+            pass
+        except Exception as ex:  # pylint: disable=broad-except
+            self.zof_exception_handler(ex)
+
     async def zof_dispatch_handler(self, handler, dp, event):
-        """Dispatch to a specific handler function.
-
-        The handler function is scheduled to run as an async task or
-        to run in FIFO order (via call_soon). To make debugging easier,
-        we wrap the handler call in a function that will catch exceptions and
-        report them.
-        """
-
-        async def _afwd(handler, dp, event):
-            try:
-                await handler(dp, event)
-            except asyncio.CancelledError:
-                pass
-            except Exception as ex:  # pylint: disable=broad-except
-                self.zof_exception_handler(ex)
+        """Dispatch to a specific handler function."""
 
         if asyncio.iscoroutinefunction(handler):
+            coro = self.zof_dispatch_async(handler, dp, event)
             if dp and event['type'] != 'CHANNEL_DOWN':
-                dp.create_task(_afwd(handler, dp, event))
+                dp.create_task(coro)
             else:
-                self.create_task(_afwd(handler, dp, event))
+                self.create_task(coro)
             # Yield time to the newly created task.
             await asyncio.sleep(0)
         else:
@@ -202,6 +205,11 @@ class Controller:
                 LOGGER.warning('Unknown conn_id %r', conn_id)
 
         return dp
+
+    def zof_convert_packet_in(self, event):
+        """Convert incoming packet_in message to easier to digest format."""
+
+        pass
 
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
