@@ -156,7 +156,7 @@ class Controller:
         except asyncio.CancelledError:
             pass
         except Exception as ex:  # pylint: disable=broad-except
-            self.zof_exception_handler(ex)
+            self.on_exception(ex)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
@@ -174,7 +174,7 @@ class Controller:
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
-                self.zof_exception_handler(ex)
+                self.on_exception(ex)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -263,10 +263,10 @@ class Controller:
 
         self.zof_exit_status.set_result(exit_status)
 
-    def zof_exception_handler(self, exc):
+    def on_exception(self, exc):
         """Report exception from a zof handler function."""
 
-        LOGGER.exception('zof_exception_handler: %r', exc)
+        LOGGER.exception('EXCEPTION: %r', exc)
 
     def on_channel_alert(self, dp, event):
         """Default handler for CHANNEL_ALERT message."""

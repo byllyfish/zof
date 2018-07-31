@@ -165,7 +165,7 @@ async def test_exceptions(caplog):
             self.log_event(dp, event)
             raise Exception('FAIL')
 
-        def zof_exception_handler(self, exc):
+        def on_exception(self, exc):
             self.events.append(str(exc))
 
     controller = _Controller()
@@ -204,10 +204,11 @@ async def _controller_request_benchmark(name, dp, loops):
     from timeit import default_timer as _timer
 
     async def _test(loops):
+        driver = dp.zof_driver
         DESC = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         start_time = _timer()
         for _ in range(loops):
-            await dp.request(DESC)
+            await driver.request(DESC)
         return _timer() - start_time
 
     bench = { 'benchmark': name, 'loops': loops, 'times': [] }
