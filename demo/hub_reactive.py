@@ -4,7 +4,7 @@ from zoflite.controller import Controller
 class HubReactiveController(Controller):
     """Demo OpenFlow app that implements a reactive hub."""
 
-    def CHANNEL_UP(self, dp, event):
+    def on_channel_up(self, dp, event):
         # Set up default flow table entry.
         action = {'action': 'OUTPUT', 'port_no': 'CONTROLLER', 'max_len': 'NO_BUFFER'}
         instruction = {'instruction': 'APPLY_ACTIONS', 'actions': [action]}
@@ -20,7 +20,7 @@ class HubReactiveController(Controller):
         }
         dp.send(ofmsg)
 
-    def PACKET_IN(self, dp, event):
+    def on_packet_in(self, dp, event):
         # Construct a PACKET_OUT message and send it.
         msg = event['msg']
         action = {'action': 'OUTPUT', 'port_no': 'ALL'}

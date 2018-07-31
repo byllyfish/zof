@@ -131,25 +131,24 @@ class Controller:
 
         while True:
             event = await self.zof_event_queue.get()
-            # TODO(bfish): change oftr dsl.
-            msg_type = event['type'].replace('.', '_')
+            event_type = event['type'].replace('.', '_')
 
             # Update bookkeeping for connected datapaths.
-            if msg_type == 'CHANNEL_UP':
+            if event_type == 'CHANNEL_UP':
                 dp = self.zof_channel_up(event)
-            elif msg_type == 'CHANNEL_DOWN':
+            elif event_type == 'CHANNEL_DOWN':
                 dp = self.zof_channel_down(event)
             else:
                 dp = self.zof_find_dp(event)
-                if msg_type == 'PACKET_IN':
+                if event_type == 'PACKET_IN':
                     self.zof_convert_packet_in(event)
 
-            handler = getattr(self, msg_type, None)
+            handler = self.zof_find_handler(event_type)
             if handler:
-                LOGGER.debug('Receive %r dp=%r', msg_type, dp)
+                LOGGER.debug('Receive %r dp=%r', event_type, dp)
                 await self.zof_dispatch_handler(handler, dp, event)
             else:
-                LOGGER.debug('Receive %r dp=%r (no handler)', msg_type, dp)
+                LOGGER.debug('Receive %r dp=%r (no handler)', event_type, dp)
 
     async def zof_dispatch_async(self, handler, dp, event):
         try:
@@ -241,11 +240,11 @@ class Controller:
         for signum in signals:
             self.zof_loop.remove_signal_handler(signum)
 
-    async def zof_invoke(self, msg_type):
+    async def zof_invoke(self, event_type):
         """Notify app to start/stop."""
 
-        LOGGER.debug('Invoke %r', msg_type)
-        handler = getattr(self, msg_type, None)
+        LOGGER.debug('Invoke %r', event_type)
+        handler = self.zof_find_handler(event_type)
         if not handler:
             return
 
@@ -253,6 +252,11 @@ class Controller:
             await handler()
         else:
             handler()
+
+    def zof_find_handler(self, event_type):
+        """Return handler function for given event type."""
+
+        return getattr(self, 'on_%s' % event_type.lower(), None)
 
     def zof_exit(self, exit_status):
         """Exit controller event loop."""
@@ -264,7 +268,7 @@ class Controller:
 
         LOGGER.exception('zof_exception_handler: %r', exc)
 
-    def CHANNEL_ALERT(self, dp, event):
+    def on_channel_alert(self, dp, event):
         """Default handler for CHANNEL_ALERT message."""
 
         LOGGER.error('CHANNEL_ALERT dp=%r %r', dp, event)

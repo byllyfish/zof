@@ -53,18 +53,18 @@ class BasicController(Controller):
     def __init__(self):
         self.events = []
 
-    def START(self):
+    def on_start(self):
         self.zof_loop.call_later(0.01, self.zof_exit, 0)
         self.events.append('START')
 
-    def STOP(self):
+    def on_stop(self):
         self.events.append('STOP')
 
     def log_event(self, dp, event):
         self.events.append(event.get('type', event))
 
-    CHANNEL_UP = log_event
-    CHANNEL_DOWN = log_event
+    on_channel_up = log_event
+    on_channel_down = log_event
 
 
 async def test_basic_controller(caplog):
@@ -82,7 +82,7 @@ async def test_async_channel_up(caplog):
 
     class _Controller(BasicController):
 
-        async def CHANNEL_UP(self, dp, event):
+        async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             await asyncio.sleep(0)
             self.events.append('NEXT')
@@ -99,12 +99,12 @@ async def test_async_channel_up_cancel(caplog):
 
     class _Controller(BasicController):
 
-        def START(self):
+        def on_start(self):
             self.zof_driver.channel_wait = -1
             self.zof_loop.call_later(0.01, self.zof_exit, 0)
             self.events.append('START')
 
-        async def CHANNEL_UP(self, dp, event):
+        async def on_channel_up(self, dp, event):
             try:
                 self.log_event(dp, event)
                 await asyncio.sleep(0)
@@ -126,7 +126,7 @@ async def test_async_channel_down(caplog):
 
     class _Controller(BasicController):
 
-        async def CHANNEL_DOWN(self, dp, event):
+        async def on_channel_down(self, dp, event):
             self.log_event(dp, event)
             await asyncio.sleep(0)
             self.events.append('NEXT')
@@ -143,7 +143,7 @@ async def test_async_start(caplog):
 
     class _Controller(BasicController):
 
-        async def START(self):
+        async def on_start(self):
             self.zof_loop.call_later(0.03, self.zof_exit, 0)
             self.events.append('START')
             await asyncio.sleep(0.02)
@@ -161,7 +161,7 @@ async def test_exceptions(caplog):
 
     class _Controller(BasicController):
 
-        async def CHANNEL_UP(self, dp, event):
+        async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             raise Exception('FAIL')
 
@@ -180,11 +180,11 @@ async def test_request_benchmark(caplog):
 
     class _Controller(BasicController):
 
-        async def START(self):
+        async def on_start(self):
             self.zof_driver.channel_wait = 0.25
             self.events.append('START')
 
-        async def CHANNEL_UP(self, dp, event):
+        async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             try:
                 print(await _controller_request_benchmark('controller_request', dp, 1000))
@@ -227,21 +227,21 @@ async def test_packet_in_async(caplog):
 
         packet_limit = 1000
 
-        async def START(self):
+        async def on_start(self):
             self.zof_driver.channel_wait = 0.001
             self.zof_driver.packet_count = self.packet_limit
             self.events.append('START')
             self.packet_count = 0
             self.start_time = _timer()
 
-        async def PACKET_IN(self, dp, event):
+        async def on_packet_in(self, dp, event):
             self.packet_count += 1
             if self.packet_count >= self.packet_limit:
                 t = _timer() - self.start_time
                 bench = { 'benchmark': 'packet_in_async', 'loops': self.packet_count, 'times': [t] }
                 print(bench)
 
-        def CHANNEL_DOWN(self, dp, event):
+        def on_channel_down(self, dp, event):
             self.log_event(dp, event)
             self.zof_exit(0)
 
@@ -261,21 +261,21 @@ async def test_packet_in_sync(caplog):
 
         packet_limit = 1000
 
-        async def START(self):
+        async def on_start(self):
             self.zof_driver.channel_wait = 0.001
             self.zof_driver.packet_count = self.packet_limit
             self.events.append('START')
             self.packet_count = 0
             self.start_time = _timer()
 
-        def PACKET_IN(self, dp, event):
+        def on_packet_in(self, dp, event):
             self.packet_count += 1
             if self.packet_count >= self.packet_limit:
                 t = _timer() - self.start_time
                 bench = { 'benchmark': 'packet_in_sync', 'loops': self.packet_count, 'times': [t] }
                 print(bench)
 
-        def CHANNEL_DOWN(self, dp, event):
+        def on_channel_down(self, dp, event):
             self.log_event(dp, event)
             self.zof_exit(0)
 
