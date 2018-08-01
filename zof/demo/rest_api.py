@@ -72,6 +72,12 @@ async def modify_portdesc(post_data):
     return result['msg']
 
 
+@WEB.get('/stats/portdesc/{dpid}/{port}', 'json')
+async def get_portdesc_specific(dpid, port):
+    # FIXME(bfish): Filter by port...
+    return await get_portdesc(dpid)
+
+
 @WEB.get('/stats/portdesc/{dpid}', 'json')
 async def get_portdesc(dpid):
     result = await PORTDESC_REQ.request(datapath_id=_parse_dpid(dpid))
