@@ -5,7 +5,7 @@ import shutil
 import shlex
 import logging
 
-from zoflite.protocol import OftrProtocol, RequestError
+from zoflite.protocol import OftrProtocol
 
 LOGGER = logging.getLogger(__package__)
 

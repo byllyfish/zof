@@ -26,13 +26,10 @@ class ControllerSettings:
     # Options for listening for OpenFlow connections.
     listen_endpoints = ['6653']
     listen_options = ['FEATURES_REQ']
-    listen_versions = []
+    listen_versions = [4]
 
     # Default exit signals.
     exit_signals = [signal.SIGTERM, signal.SIGINT]
-
-    # List of subcontrollers (not implemented yet).
-    subcontrollers = []
 
     # Default driver class.
     driver_class = Driver
@@ -214,7 +211,9 @@ class Controller:
         """Tell driver to listen on specific endpoints."""
 
         if self.zof_settings.listen_endpoints:
-            LOGGER.debug('Listen on %r, versions %r', self.zof_settings.listen_endpoints, self.zof_settings.listen_versions)
+            LOGGER.debug('Listen on %r, versions %r', 
+                         self.zof_settings.listen_endpoints, 
+                         self.zof_settings.listen_versions)
             coros = [
                 self.zof_driver.listen(
                     endpoint,
