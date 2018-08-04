@@ -1,6 +1,7 @@
 import pytest
 import asyncio
-from zoflite.driver import Driver, RequestError
+from zoflite.driver import Driver
+from zoflite.exception import RequestError
 
 
 # All test coroutines will be treated as marked.
