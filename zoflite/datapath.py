@@ -17,7 +17,6 @@ class Datapath:
 
     def send(self, msg):
         """Send message to datapath."""
-
         LOGGER.debug('Send %r dp=%r', msg['type'], self)
 
         msg['conn_id'] = self.conn_id
@@ -25,7 +24,6 @@ class Datapath:
 
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
-
         LOGGER.debug('Send %r dp=%r', msg['type'], self)
 
         msg['conn_id'] = self.conn_id
@@ -33,12 +31,10 @@ class Datapath:
 
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
-
         self.tasks.create_task(coro)
 
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""
-
         self.tasks.cancel()
 
     def __repr__(self):

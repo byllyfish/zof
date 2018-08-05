@@ -3,6 +3,7 @@ class RequestError(Exception):
 
     Attributes:
         message (str): human-readable error message
+
     """
 
     def __init__(self, event):

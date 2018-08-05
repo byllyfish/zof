@@ -15,15 +15,15 @@ def _noop(driver, event):  # pragma: no cover
 
 
 class Driver:
-    """Concrete class that manages communication with the `oftr` OpenFlow library. 
+    """Concrete class that manages communication with oftr program.
 
-    The driver implements the basic OpenFlow RPC commands: listen, connect, send 
-    and request. It facilitates request/reply pairing and dispatches incoming 
-    events to higher layers.
-    
+    The driver implements the basic OpenFlow RPC commands: listen, connect,
+    send and request. It facilitates request/reply pairing and dispatches
+    incoming events to higher layers.
+
     The driver is initialized with a `dispatcher` parameter. The dispatcher is
-    a 2-arg callable used to dispatch incoming events. The dispatcher arguments are
-    (driver, event).
+    a 2-arg callable used to dispatch incoming events. The dispatcher arguments
+    are (driver, event).
 
     Example (no dispatcher):
 
@@ -46,7 +46,6 @@ class Driver:
 
     def __init__(self, dispatch=_noop, debug=False):
         """Initialize event callback."""
-
         self.dispatch = dispatch
         self.pid = None
         self._debug = debug
@@ -55,12 +54,13 @@ class Driver:
 
     async def __aenter__(self):
         """Async context manager entry point."""
-
         assert not self._protocol, 'Driver already open'
 
         cmd = self._oftr_cmd()
         loop = asyncio.get_event_loop()
-        proto_factory = lambda: OftrProtocol(self.post_event, loop)
+
+        def proto_factory():
+            return OftrProtocol(self.post_event, loop)
 
         # When we create the subprocess, make it a session leader.
         # We do not want SIGINT signals sent from the terminal to reach
@@ -75,7 +75,6 @@ class Driver:
 
     async def __aexit__(self, *_args):
         """Async context manager exit point."""
-
         assert self._protocol, 'Driver not open'
 
         # Tell the subprocess to stop, then wait for it to exit.
@@ -89,7 +88,6 @@ class Driver:
 
         OpenFlow messages may be modified by having an xid value assigned.
         """
-
         assert self._protocol, 'Driver not open'
 
         if 'method' not in msg:
@@ -99,7 +97,6 @@ class Driver:
 
     async def request(self, msg):
         """Send an OpenFlow message and wait for a reply."""
-
         assert self._protocol, 'Driver not open'
 
         if 'method' not in msg:
@@ -109,34 +106,29 @@ class Driver:
 
     async def listen(self, endpoint, options=(), versions=()):
         """Listen for OpenFlow connections on a given endpoint."""
-
         request = self._ofp_listen(endpoint, options, versions)
         reply = await self.request(request)
         return reply['conn_id']
 
     async def connect(self, endpoint):
         """Make outgoing OpenFlow connection to given endpoint."""
-
         request = self._ofp_connect(endpoint)
         reply = await self.request(request)
         return reply['conn_id']
 
     async def close(self, conn_id):
         """Close an OpenFlow connection."""
-
         request = self._ofp_close(conn_id)
         reply = await self.request(request)
         return reply['count']
 
     def post_event(self, event):
         """Dispatch event."""
-
         assert 'type' in event, repr(event)
         self.dispatch(self, event)
 
     def _oftr_cmd(self):
         """Return oftr command with args."""
-
         cmd = '%s jsonrpc'
         if self._debug:
             cmd += ' --trace=rpc'
@@ -145,7 +137,6 @@ class Driver:
 
     def _assign_xid(self):
         """Return the next xid to use for a request/send."""
-
         self._last_xid += 1
         return self._last_xid
 

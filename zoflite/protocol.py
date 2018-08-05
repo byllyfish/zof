@@ -12,7 +12,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def __init__(self, dispatch, loop):
         """Initialize protocol."""
-
         self.dispatch = dispatch
         self._loop = loop
         self._recv_buf = bytearray()
@@ -24,7 +23,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def send(self, msg):
         """Send an OpenFlow/RPC message."""
-
         assert self._write
 
         data = _dump_msg(msg)
@@ -32,7 +30,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def request(self, msg):
         """Send an OpenFlow/RPC message and wait for a reply."""
-
         assert self._write
 
         xid = msg.get('id')
@@ -52,7 +49,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def pipe_data_received(self, fd, data):
         """Read data from pipe into buffer and dispatch incoming messages."""
-
         buf = self._recv_buf
         offset = len(buf)
         buf += data
@@ -80,7 +76,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def handle_msg(self, msg):
         """Handle incoming message."""
-
         if msg.get('method') == 'OFP.MESSAGE':
             msg = msg['params']
             xid = msg.get('xid')
@@ -112,7 +107,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def _idle(self):
         """Idle task handler."""
-
         expired = [(xid, info)
                    for (xid, info) in self._request_futures.items()
                    if info.expiration <= self._loop.time()]
@@ -123,14 +117,12 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
     def _cancel_requests(self):
         """Cancel all pending requests."""
-
         for xid, info in self._request_futures.items():
             info.handle_closed(xid)
         self._request_futures = {}
 
     async def stop(self):
         """Stop the OpenFlow driver."""
-
         if self._transport:
             # N.B. Do not call close(); it's unreliable under uvloop.
             self._transport.terminate()
@@ -183,7 +175,6 @@ def _dump_msg(msg):
 
 def _json_serialize(obj):
     """Support JSON serialization for common object types."""
-
     if isinstance(obj, bytes):
         return obj.hex()
     if isinstance(obj, (IPv4Address, IPv6Address)):

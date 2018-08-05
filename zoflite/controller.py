@@ -37,7 +37,7 @@ class ControllerSettings:
 class Controller:
     """Base class for a Controller app.
 
-    To create an app, subclass `Controller`, then call the instance's run() 
+    To create an app, subclass `Controller`, then call the instance's run()
     coroutine function in an event loop.
 
     Example:
@@ -73,13 +73,11 @@ class Controller:
 
     def run_forever(self, *, settings=None):
         """Run controller synchronously in a new event loop."""
-
         from .backport import asyncio_run
         return asyncio_run(self.run(settings=settings))
 
     async def run(self, *, settings=None):
         """Run controller in an event loop."""
-
         self.zof_settings = settings or ControllerSettings()
         self.zof_driver = self.zof_settings.driver_class(self.zof_post_event)
 
@@ -114,17 +112,14 @@ class Controller:
 
     def create_task(self, coro):
         """Create a managed async task."""
-
         self.zof_tasks.create_task(coro)
 
     def zof_post_event(self, _driver, event):
         """Post incoming event to our event queue."""
-
         self.zof_event_queue.put_nowait(event)
 
     async def zof_event_loop(self):
         """Dispatch events to handler functions."""
-
         while True:
             event = await self.zof_event_queue.get()
             event_type = event['type'].replace('.', '_')
@@ -156,7 +151,6 @@ class Controller:
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
-
         if asyncio.iscoroutinefunction(handler):
             if dp and event['type'] != 'CHANNEL_DOWN':
                 create_task = dp.create_task
@@ -174,7 +168,6 @@ class Controller:
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
-
         conn_id = event['conn_id']
         assert conn_id not in self.zof_datapaths
 
@@ -184,7 +177,6 @@ class Controller:
 
     def zof_channel_down(self, event):
         """Remove the zof Datapath object that represents the event source."""
-
         conn_id = event['conn_id']
         dp = self.zof_datapaths.pop(conn_id)
         dp.zof_cancel_tasks()
@@ -192,7 +184,6 @@ class Controller:
 
     def zof_find_dp(self, event):
         """Find the zof Datapath object for the event source."""
-
         dp = None
         conn_id = event.get('conn_id')
         if conn_id is not None:
@@ -204,12 +195,10 @@ class Controller:
 
     def zof_convert_packet_in(self, event):
         """Convert incoming packet_in message to easier to digest format."""
-
         pass
 
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
-
         if self.zof_settings.listen_endpoints:
             LOGGER.debug('Listen on %r, versions %r',
                          self.zof_settings.listen_endpoints,
@@ -226,7 +215,6 @@ class Controller:
     @contextlib.contextmanager
     def zof_signals_handled(self):
         """Context manager for exit signal handling."""
-
         def _quit():
             self.zof_exit(0)
 
@@ -241,7 +229,6 @@ class Controller:
 
     async def zof_invoke(self, event_type):
         """Notify app to start/stop."""
-
         LOGGER.debug('Invoke %r', event_type)
         handler = self.zof_find_handler(event_type)
         if not handler:
@@ -254,20 +241,16 @@ class Controller:
 
     def zof_find_handler(self, event_type):
         """Return handler function for given event type."""
-
         return getattr(self, 'on_%s' % event_type.lower(), None)
 
     def zof_exit(self, exit_status):
         """Exit controller event loop."""
-
         self.zof_exit_status.set_result(exit_status)
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-
         LOGGER.exception('EXCEPTION: %r', exc)
 
     def on_channel_alert(self, dp, event):
-        """Default handler for CHANNEL_ALERT message."""
-
+        """Handle CHANNEL_ALERT message."""
         LOGGER.error('CHANNEL_ALERT dp=%r %r', dp, event)

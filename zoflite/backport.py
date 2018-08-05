@@ -9,11 +9,10 @@ def asyncio_run(coro, *, debug=False):
     This code is strict about not leaving any dangling tasks. The real
     implementation (in Python 3.7) cancels them.
 
-    Adapted from https://github.com/python/cpython/blob/master/Lib/asyncio/runners.py
-    on 9 May 2018.
+    [9 May 2018] Adapted from:
+    https://github.com/python/cpython/blob/master/Lib/asyncio/runners.py
     """
-
-    assert asyncio._get_running_loop() is None  # pylint: disable=no-member,protected-access
+    assert asyncio._get_running_loop() is None  # pylint: disable=no-member
     assert asyncio.iscoroutine(coro), repr(coro)
 
     loop = asyncio.new_event_loop()
