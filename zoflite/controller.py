@@ -121,6 +121,7 @@ class Controller:
         """Dispatch events to handler functions."""
         while True:
             event = await self.zof_event_queue.get()
+            assert isinstance(event, dict), repr(event)
             event_type = event['type'].replace('.', '_')
 
             # Update bookkeeping for connected datapaths.

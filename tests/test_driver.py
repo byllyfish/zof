@@ -55,7 +55,7 @@ async def test_driver_nonexistant_method():
     async with Driver() as driver:
         request = { 'id': 1, 'method': 'NON_EXISTANT' }
         with pytest.raises(RequestError) as excinfo:
-            reply = await driver.request(request)
+            await driver.request(request)
         assert 'unknown method' in excinfo.value.message
 
 
@@ -65,7 +65,7 @@ async def test_driver_invalid_rpc():
     async with Driver() as driver:
         request = { 'id': 1, 'meth': 'INVALID' }
         with pytest.raises(RequestError) as excinfo:
-            reply = await driver.request(request)
+            await driver.request(request)
         assert 'missing required key \'method\'' in excinfo.value.message
 
 
@@ -99,7 +99,7 @@ async def test_large_rpc():
     async with Driver(_dispatch) as driver:
         request = { 'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100) }
         with pytest.raises(RequestError) as excinfo:
-            reply = await driver.request(request)
+            await driver.request(request)
 
     assert 'unknown method' in excinfo.value.message
     assert incoming == []

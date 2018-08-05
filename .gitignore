@@ -3,4 +3,5 @@ venv
 .pytest_cache
 .DS_Store
 .coverage
+pytype_output
 __pycache__

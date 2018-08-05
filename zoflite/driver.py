@@ -59,14 +59,14 @@ class Driver:
         cmd = self._oftr_cmd()
         loop = asyncio.get_event_loop()
 
-        def proto_factory():
+        def _proto_factory():
             return OftrProtocol(self.post_event, loop)
 
         # When we create the subprocess, make it a session leader.
         # We do not want SIGINT signals sent from the terminal to reach
         # the subprocess.
         transport, protocol = await loop.subprocess_exec(
-            proto_factory, *cmd, stderr=None, start_new_session=True)
+            _proto_factory, *cmd, stderr=None, start_new_session=True)
 
         self._protocol = protocol
         self.pid = transport.get_pid()

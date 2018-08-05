@@ -58,7 +58,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
         while True:
             # Search for end-of-message byte.
-            offset = buf.find(0, offset)
+            offset = buf.find(b'\x00', offset)
 
             # If not found, reset buffer and return.
             if offset < 0:
