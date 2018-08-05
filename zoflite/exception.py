@@ -1,3 +1,6 @@
+"""Exception classes."""
+
+
 class RequestError(Exception):
     """Represents a failure of the request() api.
 
@@ -7,6 +10,6 @@ class RequestError(Exception):
     """
 
     def __init__(self, event):
-        assert event.get('error') is not None or event.get('type') == 'ERROR'
+        """Initialize exception with event."""
         super().__init__(event)
         self.message = event['error']['message']

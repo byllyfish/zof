@@ -12,7 +12,8 @@ def asyncio_run(coro, *, debug=False):
     [9 May 2018] Adapted from:
     https://github.com/python/cpython/blob/master/Lib/asyncio/runners.py
     """
-    assert asyncio._get_running_loop() is None  # pylint: disable=no-member
+    # pylint: disable=no-member,protected-access
+    assert asyncio._get_running_loop() is None
     assert asyncio.iscoroutine(coro), repr(coro)
 
     loop = asyncio.new_event_loop()

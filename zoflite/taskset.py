@@ -15,6 +15,7 @@ class TaskSet:
     """
 
     def __init__(self, loop):
+        """Initialize empty task set."""
         self._loop = loop
         self._tasks = set()
 

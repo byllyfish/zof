@@ -10,6 +10,7 @@ class Datapath:
     """Stores info about each connected datapath."""
 
     def __init__(self, controller, conn_id, event):
+        """Initialize datapath object."""
         self.zof_driver = controller.zof_driver
         self.conn_id = conn_id
         self.datapath_id = event['datapath_id']
@@ -38,5 +39,6 @@ class Datapath:
         self.tasks.cancel()
 
     def __repr__(self):
+        """Return string representation of datapath."""
         return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id,
                                                   self.datapath_id)

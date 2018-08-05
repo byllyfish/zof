@@ -2,7 +2,6 @@
 
 import asyncio
 import contextlib
-import functools
 import logging
 import os
 import signal

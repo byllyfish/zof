@@ -21,7 +21,7 @@ class MockDriver:
         return 1
 
     def send(self, msg):
-    	assert isinstance(msg, dict)
+        assert isinstance(msg, dict)
 
     async def request(self, msg):
         await asyncio.sleep(0)

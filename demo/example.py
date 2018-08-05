@@ -4,23 +4,23 @@ from zoflite.controller import Controller
 
 class MyController(Controller):
 
-	async def CHANNEL_UP(self, dp, event):
-		try:
-			print(dp, event)
-			await asyncio.sleep(5)
-			print('done')
-		except asyncio.CancelledError:
-			print('cancelled')
+    async def CHANNEL_UP(self, dp, event):
+        try:
+            print(dp, event)
+            await asyncio.sleep(5)
+            print('done')
+        except asyncio.CancelledError:
+            print('cancelled')
 
-	def CHANNEL_DOWN(self, dp, event):
-		print(dp, event)
+    def CHANNEL_DOWN(self, dp, event):
+        print(dp, event)
 
-	def PACKET_IN(self, dp, event):
-		print(dp, event)
+    def PACKET_IN(self, dp, event):
+        print(dp, event)
 
-	async def PORT_STATUS(self, dp, event):
-		print(dp, event)
+    async def PORT_STATUS(self, dp, event):
+        print(dp, event)
 
 
 if __name__ == '__main__':
-	MyController().run_forever()
+    MyController().run_forever()

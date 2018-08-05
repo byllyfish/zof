@@ -1,3 +1,5 @@
+"""Protocol class for oftr driver."""
+
 import asyncio
 import json
 import logging
@@ -93,12 +95,14 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             LOGGER.error('Driver.handle_msg: Ignored msg: %r', msg)
 
     def connection_made(self, transport):
+        """Handle new incoming connection."""
         self._transport = transport
         self._write = transport.get_pipe_transport(0).write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
 
     def connection_lost(self, exc):
+        """Handle disconnect."""
         self._cancel_requests()
         self._closed_future.set_result(1)
         self._idle_handle.cancel()

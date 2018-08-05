@@ -4,7 +4,7 @@ from zoflite.controller import Controller
 class HubProactiveController(Controller):
     """Demo OpenFlow app that implements a proactive hub."""
 
-    def on_channel_up(self, dp, event):
+    def on_channel_up(self, dp, _event):
         # Set up default flow table entry.
         action = {'action': 'OUTPUT', 'port_no': 'ALL', 'max_len': 0}
         instruction = {'instruction': 'APPLY_ACTIONS', 'actions': [action]}

@@ -1,6 +1,5 @@
 import asyncio
 from zoflite.driver import Driver
-from zoflite.exception import RequestError
 from zoflite.backport import asyncio_run
 
 
