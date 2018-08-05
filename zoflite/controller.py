@@ -147,7 +147,7 @@ class Controller:
             else:
                 LOGGER.debug('Receive %r dp=%r (no handler)', event_type, dp)
 
-    async def zof_dispatch_async(self, handler, dp, event):
+    async def _zof_dispatch_async(self, handler, dp, event):
         try:
             await handler(dp, event)
         except asyncio.CancelledError:
@@ -159,11 +159,11 @@ class Controller:
         """Dispatch to a specific handler function."""
 
         if asyncio.iscoroutinefunction(handler):
-            coro = self.zof_dispatch_async(handler, dp, event)
             if dp and event['type'] != 'CHANNEL_DOWN':
-                dp.create_task(coro)
+                create_task = dp.create_task
             else:
-                self.create_task(coro)
+                create_task = self.create_task
+            create_task(self._zof_dispatch_async(handler, dp, event))
             # Yield time to the newly created task.
             await asyncio.sleep(0)
         else:
@@ -189,6 +189,7 @@ class Controller:
         conn_id = event['conn_id']
         dp = self.zof_datapaths.pop(conn_id)
         dp.zof_cancel_tasks()
+        return dp
 
     def zof_find_dp(self, event):
         """Find the zof Datapath object for the event source."""

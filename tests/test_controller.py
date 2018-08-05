@@ -3,13 +3,13 @@ import pytest
 from zoflite.controller import Controller, ControllerSettings
 from mock_driver import MockDriver
 
+
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
 
 
 class MockSettings(ControllerSettings):
-    driver_class = MockDriver
-    exit_signals = []
+    driver_class = MockDriver  # type: ignore
 
 
 class BasicController(Controller):
