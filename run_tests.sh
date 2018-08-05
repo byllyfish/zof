@@ -14,7 +14,7 @@ set -eu
 PYLINT_ARGS="--pylint-error-types=WEF --pylint-rcfile=/dev/null"
 COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=90"
 
-python -m pytest --pylint $PYLINT_ARGS \
+python -m pytest -s -v --pylint $PYLINT_ARGS \
                  --mypy \
                  --cov=zoflite $COVERAGE_ARGS
 
