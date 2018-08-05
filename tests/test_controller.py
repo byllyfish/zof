@@ -3,6 +3,7 @@ import pytest
 from zoflite.controller import Controller, ControllerSettings
 from mock_driver import MockDriver
 
+# pylint: disable=unused-argument
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
@@ -192,12 +193,13 @@ async def test_packet_in_async(caplog):
     class _Controller(BasicController):
 
         packet_limit = 1000
+        packet_count = 0
+        start_time = 0
 
         async def on_start(self):
             self.zof_driver.channel_wait = 0.001
             self.zof_driver.packet_count = self.packet_limit
             self.events.append('START')
-            self.packet_count = 0
             self.start_time = _timer()
 
         async def on_packet_in(self, dp, event):
@@ -226,12 +228,13 @@ async def test_packet_in_sync(caplog):
     class _Controller(BasicController):
 
         packet_limit = 1000
+        packet_count = 0
+        start_time = 0
 
         async def on_start(self):
             self.zof_driver.channel_wait = 0.001
             self.zof_driver.packet_count = self.packet_limit
             self.events.append('START')
-            self.packet_count = 0
             self.start_time = _timer()
 
         def on_packet_in(self, dp, event):

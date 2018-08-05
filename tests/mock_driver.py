@@ -1,11 +1,14 @@
 import asyncio
 
 
+# pylint: disable=unused-argument
+
 class MockDriver:
     """Implements a mock OpenFlow driver."""
 
     channel_wait = 0.001
     packet_count = 0
+    sim_task = None
 
     def __init__(self, dispatch=None):
         self.dispatch = dispatch
@@ -16,7 +19,7 @@ class MockDriver:
     async def __aexit__(self, *args):
         await self.sim_task
 
-    async def listen(self, endpoint: str, options=(), versions=()):
+    async def listen(self, endpoint, options=(), versions=()):
         self.sim_task = asyncio.ensure_future(self._simulate_channel(2))
         return 1
 
