@@ -1,5 +1,3 @@
-
-
 class RequestError(Exception):
     """Represents a failure of the request() api.
 

@@ -4,7 +4,6 @@ import logging
 from ipaddress import IPv4Address, IPv6Address
 from zoflite.exception import RequestError
 
-
 LOGGER = logging.getLogger(__package__)
 
 
@@ -14,7 +13,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
     def __init__(self, dispatch, loop):
         """Initialize protocol."""
 
-        self.dispatch = dispatch 
+        self.dispatch = dispatch
         self._loop = loop
         self._recv_buf = bytearray()
         self._transport = None

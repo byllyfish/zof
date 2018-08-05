@@ -3,7 +3,6 @@
 import logging
 from zoflite.taskset import TaskSet
 
-
 LOGGER = logging.getLogger(__package__)
 
 
@@ -28,7 +27,7 @@ class Datapath:
         """Send message to datapath and wait for reply."""
 
         LOGGER.debug('Send %r dp=%r', msg['type'], self)
-        
+
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)
 
@@ -43,4 +42,5 @@ class Datapath:
         self.tasks.cancel()
 
     def __repr__(self):
-        return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id, self.datapath_id)
+        return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id,
+                                                  self.datapath_id)

@@ -11,7 +11,6 @@ from zoflite.driver import Driver
 from zoflite.datapath import Datapath
 from zoflite.taskset import TaskSet
 
-
 LOGGER = logging.getLogger(__package__)
 
 if os.getenv('ZOFDEBUG'):
@@ -212,8 +211,8 @@ class Controller:
         """Tell driver to listen on specific endpoints."""
 
         if self.zof_settings.listen_endpoints:
-            LOGGER.debug('Listen on %r, versions %r', 
-                         self.zof_settings.listen_endpoints, 
+            LOGGER.debug('Listen on %r, versions %r',
+                         self.zof_settings.listen_endpoints,
                          self.zof_settings.listen_versions)
             coros = [
                 self.zof_driver.listen(
