@@ -147,7 +147,7 @@ async def test_request_benchmark(caplog):
     class _Controller(BasicController):
 
         async def on_start(self):
-            self.zof_driver.channel_wait = 0.25
+            self.zof_driver.channel_wait = 1.0
             self.events.append('START')
 
         async def on_channel_up(self, dp, event):

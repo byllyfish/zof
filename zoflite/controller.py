@@ -132,7 +132,7 @@ class Controller:
             else:
                 dp = self.zof_find_dp(event)
                 if event_type == 'PACKET_IN':
-                    self.zof_convert_packet_in(event)
+                    event = dp.zof_convert_packet_in(event)
 
             handler = self.zof_find_handler(event_type)
             if handler:
@@ -192,10 +192,6 @@ class Controller:
                 LOGGER.warning('Unknown conn_id %r', conn_id)
 
         return dp
-
-    def zof_convert_packet_in(self, event):
-        """Convert incoming packet_in message to easier to digest format."""
-        pass
 
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
