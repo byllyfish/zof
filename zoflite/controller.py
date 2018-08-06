@@ -8,6 +8,7 @@ import signal
 
 from zoflite.driver import Driver
 from zoflite.datapath import Datapath
+from zoflite.packet import Packet
 from zoflite.taskset import TaskSet
 
 LOGGER = logging.getLogger(__package__)
@@ -132,7 +133,7 @@ class Controller:
             else:
                 dp = self.zof_find_dp(event)
                 if event_type == 'PACKET_IN':
-                    event = dp.zof_convert_packet_in(event)
+                    Packet.zof_convert_packet_in(event)
 
             handler = self.zof_find_handler(event_type)
             if handler:

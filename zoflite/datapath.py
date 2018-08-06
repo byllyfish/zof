@@ -1,6 +1,8 @@
 """Implements a Datapath class."""
 
 import logging
+
+from zoflite.packet import Packet
 from zoflite.taskset import TaskSet
 
 LOGGER = logging.getLogger(__package__)
@@ -21,7 +23,7 @@ class Datapath:
         LOGGER.debug('Send %r dp=%r', msg['type'], self)
 
         if msg['type'] == 'PACKET_OUT':
-            msg = self.zof_convert_packet_out(msg)
+            Packet.zof_convert_packet_out(msg)
 
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
@@ -40,14 +42,6 @@ class Datapath:
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""
         self.tasks.cancel()
-
-    def zof_convert_packet_in(self, event):
-        """Convert incoming packet_in message to a user-friendly format."""
-        return event
-
-    def zof_convert_packet_out(self, event):
-        """Convert outgoing packet_out from its user-friendly format."""
-        return event
 
     def __repr__(self):
         """Return string representation of datapath."""
