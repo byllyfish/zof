@@ -36,8 +36,8 @@ class Packet(dict):
         for key, value in self.items():
             if isinstance(value, list):
                 for repeated_value in value:
-                    result.append({'field': key.upper(), 'value': repeated_value})
+                    result.append({'field': key.upper(),
+                                   'value': repeated_value})
             else:
                 result.append({'field': key.upper(), 'value': value})
         return result
-
