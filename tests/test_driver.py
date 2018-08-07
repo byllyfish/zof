@@ -2,7 +2,6 @@ import pytest
 from zoflite.driver import Driver
 from zoflite.exception import RequestError
 
-
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
 
@@ -24,10 +23,13 @@ async def test_driver_request():
     async with Driver() as driver:
         assert driver.pid >= 0
 
-        request = { 'id': 1, 'method': 'OFP.DESCRIPTION' }
+        request = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         reply = await driver.request(request)
 
-        assert request == { 'id': 1, 'method': 'OFP.DESCRIPTION' }, 'Request modified'
+        assert request == {
+            'id': 1,
+            'method': 'OFP.DESCRIPTION'
+        }, 'Request modified'
         assert reply['api_version'] == '0.9'
         assert reply['sw_desc'].startswith('0.')
         assert reply['versions'] == list(range(1, 7))
@@ -67,7 +69,7 @@ async def test_driver_nonexistant_method():
     """Non-existant JSON-RPC method."""
 
     async with Driver() as driver:
-        request = { 'id': 1, 'method': 'NON_EXISTANT' }
+        request = {'id': 1, 'method': 'NON_EXISTANT'}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
         assert 'unknown method' in str(excinfo.value)
@@ -77,7 +79,7 @@ async def test_driver_invalid_rpc():
     """Non-existant JSON-RPC method."""
 
     async with Driver() as driver:
-        request = { 'id': 1, 'meth': 'INVALID' }
+        request = {'id': 1, 'meth': 'INVALID'}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
         assert "missing required key 'method'" in str(excinfo.value)
@@ -92,7 +94,7 @@ async def test_large_rpc_too_big():
         incoming.append(event)
 
     async with Driver(_dispatch) as driver:
-        request = { 'id': 1, 'method': 'FOO', 'params': 'x' * MSG_LIMIT }
+        request = {'id': 1, 'method': 'FOO', 'params': 'x' * MSG_LIMIT}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
@@ -111,7 +113,7 @@ async def test_large_rpc():
         incoming.append(event)
 
     async with Driver(_dispatch) as driver:
-        request = { 'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100) }
+        request = {'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100)}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
@@ -132,7 +134,7 @@ async def _driver_request_benchmark(name, loops):
                 await driver.request(DESC)
             return _timer() - start_time
 
-    bench = { 'benchmark': name, 'loops': loops, 'times': [] }
+    bench = {'benchmark': name, 'loops': loops, 'times': []}
 
     for _ in range(4):
         bench['times'].append(await _test(bench['loops']))

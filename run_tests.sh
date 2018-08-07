@@ -20,7 +20,7 @@ python -m pytest -s -vv --timeout=10 \
                  --cov=zoflite $COVERAGE_ARGS
 
 echo "===== pycodestyle ====="
-pycodestyle zoflite
+pycodestyle zoflite tests
 
 echo "===== pydocstyle ====="
 pydocstyle zoflite

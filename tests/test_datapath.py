@@ -4,14 +4,14 @@ from mock_driver import MockDriver
 import pytest
 
 
-class MockController:   
+class MockController:
     def __init__(self, loop=None):
         self.zof_loop = loop
         self.zof_driver = MockDriver()
 
 
 def _make_dp():
-    event = { 'type': 'CHANNEL_UP', 'datapath_id': '00:00:00:00:00:00:01'}
+    event = {'type': 'CHANNEL_UP', 'datapath_id': '00:00:00:00:00:00:01'}
     return Datapath(MockController(), 1, event)
 
 
@@ -32,7 +32,10 @@ def test_datapath_send():
         'conn_id': 1,
         'type': 'PACKET_OUT',
         'msg': {
-            '_pkt': [{'field': 'A', 'value': 1}], 
+            '_pkt': [{
+                'field': 'A',
+                'value': 1
+            }],
             '_pkt_data': b'\x01\x02'
         }
     }

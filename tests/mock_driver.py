@@ -1,7 +1,7 @@
 import asyncio
 
-
 # pylint: disable=unused-argument
+
 
 class MockDriver:
     """Implements a mock OpenFlow driver."""
@@ -39,9 +39,20 @@ class MockDriver:
         self.dispatch(self, event)
 
     async def _simulate_channel(self, conn_id):
-        self.post_event({'type': 'CHANNEL_UP', 'conn_id': conn_id, 'datapath_id': '00:00:00:00:00:00:00:01'})
+        self.post_event({
+            'type': 'CHANNEL_UP',
+            'conn_id': conn_id,
+            'datapath_id': '00:00:00:00:00:00:00:01'
+        })
         for _ in range(self.packet_count):
-            packet_in = {'type': 'PACKET_IN', 'conn_id': conn_id, 'msg': {'_pkt': [], 'data': ''}}
+            packet_in = {
+                'type': 'PACKET_IN',
+                'conn_id': conn_id,
+                'msg': {
+                    '_pkt': [],
+                    'data': ''
+                }
+            }
             self.post_event(packet_in)
         if self.channel_wait >= 0:
             await asyncio.sleep(self.channel_wait)

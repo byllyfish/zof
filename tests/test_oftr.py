@@ -15,7 +15,9 @@ def test_zof_load_msg():
 def test_zof_dump_msg():
     """Test dump_msg api."""
     event = {
-        'info': [None, b'abc', ip_address('127.0.0.1'), ip_address('::1')]
+        'info': [None, b'abc',
+                 ip_address('127.0.0.1'),
+                 ip_address('::1')]
     }
     expected = b'{"info": [null, "616263", "127.0.0.1", "::1"]}\x00'
     assert oftr.zof_dump_msg(event) == expected

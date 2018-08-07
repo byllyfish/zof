@@ -32,11 +32,22 @@ def test_packet_unknown_attr():
 
 def test_packet_from_field_list():
     """Test from_field_list factory method."""
-    data = [{'field': 'A', 'value': 1}, 
-            {'field': 'B', 'value': 2}, 
-            {'field': 'B', 'value': 3},
-            {'field': 'B', 'value': 4},
-            {'field': 'PAYLOAD', 'value': b'xxx'}]
+    data = [{
+        'field': 'A',
+        'value': 1
+    }, {
+        'field': 'B',
+        'value': 2
+    }, {
+        'field': 'B',
+        'value': 3
+    }, {
+        'field': 'B',
+        'value': 4
+    }, {
+        'field': 'PAYLOAD',
+        'value': b'xxx'
+    }]
     pkt = Packet.zof_from_field_list(data)
     assert pkt.a == 1
     assert pkt.b == [2, 3, 4]
@@ -47,11 +58,22 @@ def test_packet_to_field_list():
     """Test to_field_list factory method."""
     pkt = Packet(a=1, b=[2, 3, 4], payload=b'xxx')
     data = pkt.zof_to_field_list()
-    assert data == [{'field': 'A', 'value': 1}, 
-                    {'field': 'B', 'value': 2}, 
-                    {'field': 'B', 'value': 3},
-                    {'field': 'B', 'value': 4},
-                    {'field': 'PAYLOAD', 'value': b'xxx'}]
+    assert data == [{
+        'field': 'A',
+        'value': 1
+    }, {
+        'field': 'B',
+        'value': 2
+    }, {
+        'field': 'B',
+        'value': 3
+    }, {
+        'field': 'B',
+        'value': 4
+    }, {
+        'field': 'PAYLOAD',
+        'value': b'xxx'
+    }]
 
 
 def test_from_packet_in():
@@ -59,7 +81,10 @@ def test_from_packet_in():
     event = {
         'type': 'PACKET_IN',
         'msg': {
-            '_pkt': [{'field': 'A', 'value': 1}],
+            '_pkt': [{
+                'field': 'A',
+                'value': 1
+            }],
             'data': '0102'
         }
     }
@@ -71,12 +96,7 @@ def test_from_packet_in():
 
 def test_from_packet_in_partial():
     """Test zof_from_packet_in method for incomplete event."""
-    event = {
-        'type': 'PACKET_IN',
-        'msg': {
-            'data': '0102'
-        }
-    }
+    event = {'type': 'PACKET_IN', 'msg': {'data': '0102'}}
     Packet.zof_from_packet_in(event)
     assert event['msg']['pkt'] == Packet(payload=b'\x01\x02')
     assert 'data' not in event['msg']

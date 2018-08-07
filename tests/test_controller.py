@@ -47,7 +47,6 @@ async def test_async_channel_up(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
     class _Controller(BasicController):
-
         async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             await asyncio.sleep(0)
@@ -56,7 +55,9 @@ async def test_async_channel_up(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    assert controller.events == ['START', 'CHANNEL_UP', 'NEXT', 'CHANNEL_DOWN', 'STOP']
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'NEXT', 'CHANNEL_DOWN', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -64,7 +65,6 @@ async def test_async_channel_up_cancel(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
     class _Controller(BasicController):
-
         def on_start(self):
             self.zof_driver.channel_wait = -1
             self.zof_loop.call_later(0.01, self.zof_exit, 0)
@@ -83,7 +83,9 @@ async def test_async_channel_up_cancel(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP']
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -91,7 +93,6 @@ async def test_async_channel_down(caplog):
     """Test controller event dispatch with an async channel_down handler."""
 
     class _Controller(BasicController):
-
         async def on_channel_down(self, dp, event):
             self.log_event(dp, event)
             await asyncio.sleep(0)
@@ -100,7 +101,9 @@ async def test_async_channel_down(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'NEXT', 'STOP']
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'NEXT', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -108,7 +111,6 @@ async def test_async_start(caplog):
     """Test controller event dispatch with async start."""
 
     class _Controller(BasicController):
-
         async def on_start(self):
             self.zof_loop.call_later(0.03, self.zof_exit, 0)
             self.events.append('START')
@@ -118,7 +120,9 @@ async def test_async_start(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    assert controller.events == ['START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert controller.events == [
+        'START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -126,7 +130,6 @@ async def test_exceptions(caplog):
     """Test exceptions in async handlers."""
 
     class _Controller(BasicController):
-
         async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             raise Exception('FAIL')
@@ -137,7 +140,9 @@ async def test_exceptions(caplog):
     controller = _Controller()
     await controller.run(settings=MockSettings())
 
-    assert controller.events == ['START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP']
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -145,7 +150,6 @@ async def test_request_benchmark(caplog):
     """Test datapath request() api."""
 
     class _Controller(BasicController):
-
         async def on_start(self):
             self.zof_driver.channel_wait = 1.0
             self.events.append('START')
@@ -153,7 +157,8 @@ async def test_request_benchmark(caplog):
         async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             try:
-                print(await _controller_request_benchmark('controller_request', dp, 1000))
+                print(await _controller_request_benchmark(
+                    'controller_request', dp, 1000))
             finally:
                 self.zof_exit(0)
 
@@ -177,7 +182,7 @@ async def _controller_request_benchmark(name, dp, loops):
             await driver.request(DESC)
         return _timer() - start_time
 
-    bench = { 'benchmark': name, 'loops': loops, 'times': [] }
+    bench = {'benchmark': name, 'loops': loops, 'times': []}
 
     for _ in range(4):
         bench['times'].append(await _test(bench['loops']))
@@ -186,7 +191,7 @@ async def _controller_request_benchmark(name, dp, loops):
 
 
 async def test_packet_in_async(caplog):
-    """Test packet_in api with async callback.""" 
+    """Test packet_in api with async callback."""
 
     from timeit import default_timer as _timer
 
@@ -206,7 +211,11 @@ async def test_packet_in_async(caplog):
             self.packet_count += 1
             if self.packet_count >= self.packet_limit:
                 t = _timer() - self.start_time
-                bench = { 'benchmark': 'packet_in_async', 'loops': self.packet_count, 'times': [t] }
+                bench = {
+                    'benchmark': 'packet_in_async',
+                    'loops': self.packet_count,
+                    'times': [t]
+                }
                 print(bench)
 
         def on_channel_down(self, dp, event):
@@ -221,7 +230,7 @@ async def test_packet_in_async(caplog):
 
 
 async def test_packet_in_sync(caplog):
-    """Test packet_in api with sync callback.""" 
+    """Test packet_in api with sync callback."""
 
     from timeit import default_timer as _timer
 
@@ -241,7 +250,11 @@ async def test_packet_in_sync(caplog):
             self.packet_count += 1
             if self.packet_count >= self.packet_limit:
                 t = _timer() - self.start_time
-                bench = { 'benchmark': 'packet_in_sync', 'loops': self.packet_count, 'times': [t] }
+                bench = {
+                    'benchmark': 'packet_in_sync',
+                    'loops': self.packet_count,
+                    'times': [t]
+                }
                 print(bench)
 
         def on_channel_down(self, dp, event):
