@@ -23,7 +23,7 @@ class Datapath:
         LOGGER.debug('Send %r dp=%r', msg['type'], self)
 
         if msg['type'] == 'PACKET_OUT':
-            Packet.zof_convert_packet_out(msg)
+            Packet.zof_to_packet_out(msg)
 
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)

@@ -1,5 +1,6 @@
 """Implements Packet class."""
 
+
 class Packet(dict):
     """Packet implementation."""
 
@@ -41,20 +42,19 @@ class Packet(dict):
                 result.append({'field': key.upper(), 'value': value})
         return result
 
-    @staticmethod
-    def zof_convert_packet_in(event):
+    @classmethod
+    def zof_from_packet_in(cls, event):
         """Convert packet fields and payload into a Packet object."""
         assert event['type'] == 'PACKET_IN'
 
         msg = event['msg']
-        fields = msg.pop('_pkt', [])
-        pkt = Packet.zof_from_field_list(fields)
+        pkt = cls.zof_from_field_list(msg.pop('_pkt', []))
         pkt_pos = pkt.pop('x_pkt_pos', 0)
         pkt['payload'] = bytes.fromhex(msg.pop('data', ''))[pkt_pos:]
         msg['pkt'] = pkt
 
     @staticmethod
-    def zof_convert_packet_out(event):
+    def zof_to_packet_out(event):
         """Convert Packet object back to packet fields and data."""
         assert event['type'] == 'PACKET_OUT'
 

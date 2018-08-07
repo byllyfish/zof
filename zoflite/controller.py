@@ -73,7 +73,7 @@ class Controller:
 
     def run_forever(self, *, settings=None):
         """Run controller synchronously in a new event loop."""
-        from .backport import asyncio_run
+        from zoflite.backport import asyncio_run
         return asyncio_run(self.run(settings=settings))
 
     async def run(self, *, settings=None):
@@ -133,7 +133,7 @@ class Controller:
             else:
                 dp = self.zof_find_dp(event)
                 if event_type == 'PACKET_IN':
-                    Packet.zof_convert_packet_in(event)
+                    Packet.zof_from_packet_in(event)
 
             handler = self.zof_find_handler(event_type)
             if handler:

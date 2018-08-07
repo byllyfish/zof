@@ -54,7 +54,7 @@ def test_packet_to_field_list():
                     {'field': 'PAYLOAD', 'value': b'xxx'}]
 
 
-def test_convert_packet_in():
+def test_from_packet_in():
     """Test convert_packet_in method."""
     event = {
         'type': 'PACKET_IN',
@@ -63,33 +63,33 @@ def test_convert_packet_in():
             'data': '0102'
         }
     }
-    Packet.zof_convert_packet_in(event)
+    Packet.zof_from_packet_in(event)
     assert event['msg']['pkt'] == Packet(a=1, payload=b'\x01\x02')
     assert '_pkt' not in event['msg']
     assert 'data' not in event['msg']
 
 
-def test_convert_packet_in_partial():
-    """Test convert_packet_in method for incomplete event."""
+def test_from_packet_in_partial():
+    """Test zof_from_packet_in method for incomplete event."""
     event = {
         'type': 'PACKET_IN',
         'msg': {
             'data': '0102'
         }
     }
-    Packet.zof_convert_packet_in(event)
+    Packet.zof_from_packet_in(event)
     assert event['msg']['pkt'] == Packet(payload=b'\x01\x02')
     assert 'data' not in event['msg']
 
 
-def test_convert_packet_out():
-    """Test convert__packet_out method."""
+def test_to_packet_out():
+    """Test zof_to_packet_out method."""
     event = {
         'type': 'PACKET_OUT',
         'msg': {
             'pkt': Packet(a=1, payload=b'\x01\x02')
         }
     }
-    Packet.zof_convert_packet_out(event)
+    Packet.zof_to_packet_out(event)
     assert event['msg']['_pkt'] == [{'field': 'A', 'value': 1}]
     assert event['msg']['_pkt_data'] == b'\x01\x02'
