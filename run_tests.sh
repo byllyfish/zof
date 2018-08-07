@@ -23,7 +23,7 @@ echo "===== pycodestyle ====="
 pycodestyle zoflite tests
 
 echo "===== pydocstyle ====="
-pydocstyle zoflite
+pydocstyle zoflite tests
 
 echo "===== pytype ====="
 pytype zoflite

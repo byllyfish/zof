@@ -1,3 +1,5 @@
+"""Mock Driver class for testing."""
+
 import asyncio
 
 # pylint: disable=unused-argument
@@ -11,22 +13,28 @@ class MockDriver:
     sim_task = None
 
     def __init__(self, dispatch=None):
+        """Initialize mock driver."""
         self.dispatch = dispatch
 
     async def __aenter__(self):
+        """Mock async context manager."""
         return self
 
     async def __aexit__(self, *args):
+        """Mock async context manager."""
         await self.sim_task
 
     async def listen(self, endpoint, options=(), versions=()):
+        """Mock listen method."""
         self.sim_task = asyncio.ensure_future(self._simulate_channel(2))
         return 1
 
     def send(self, msg):
+        """Mock send method."""
         assert isinstance(msg, dict)
 
     async def request(self, msg):
+        """Mock request method."""
         await asyncio.sleep(0)
         xid = msg.get('id')
         if xid is None:
@@ -36,6 +44,7 @@ class MockDriver:
             return {'id': xid}
 
     def post_event(self, event):
+        """Mock post_event method."""
         self.dispatch(self, event)
 
     async def _simulate_channel(self, conn_id):
