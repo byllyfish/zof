@@ -27,7 +27,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         """Send an OpenFlow/RPC message."""
         assert self._write
 
-        data = _dump_msg(msg)
+        data = zof_dump_msg(msg)
         self._write(data)
 
     def request(self, msg):
@@ -36,13 +36,9 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
         xid = msg.get('id')
         if xid is None:
-            params = msg.get('params')
-            if isinstance(params, dict):
-                xid = params['xid']
-            else:
-                raise ValueError('Missing xid: %r' % msg)
+            xid = msg['params']['xid']
 
-        data = _dump_msg(msg)
+        data = zof_dump_msg(msg)
         self._write(data)
 
         req_info = _RequestInfo(self._loop, 3.0)
@@ -63,14 +59,15 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             # If not found, reset buffer and return.
             if offset < 0:
                 if begin > 0:
-                    del buf[0:begin]
+                    del buf[0:begin]  # pytype: disable=wrong-arg-types
                 return
 
             # If message is non-empty, parse it and dispatch it.
             assert buf[offset] == 0
             if begin != offset:
-                msg = _load_msg(buf[begin:offset])
-                self.handle_msg(msg)
+                msg = zof_load_msg(buf[begin:offset])
+                if msg:
+                    self.handle_msg(msg)
 
             # Move on to next message in buffer (if present).
             offset += 1
@@ -142,7 +139,7 @@ class _RequestInfo:
 
     def handle_reply(self, msg):
         if 'type' in msg:
-            if msg['type'] == 'ERROR':
+            if msg['type'] in ('ERROR', 'CHANNEL_ALERT'):
                 self.future.set_exception(RequestError(msg))
             else:
                 self.future.set_result(msg)
@@ -164,27 +161,26 @@ class _RequestInfo:
         self.future.set_exception(RequestError(msg))
 
 
-def _load_msg(data):
+def zof_load_msg(data):
     try:
         return json.loads(data)
-    except Exception as ex:  # pylint: disable=broad-except
-        return {'type': 'DRIVER_ALERT', 'data': data, 'exception': ex}
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception('zof_load_msg exception: %r', data)
+    return None
 
 
-def _dump_msg(msg):
+def zof_dump_msg(msg):
     return json.dumps(
         msg, ensure_ascii=False, allow_nan=False,
-        check_circular=False).encode('utf-8') + b'\0'
+        check_circular=False, default=zof_json_serialize
+    ).encode('utf-8') + b'\0'
 
 
-def _json_serialize(obj):
+def zof_json_serialize(obj):
     """Support JSON serialization for common object types."""
     if isinstance(obj, bytes):
         return obj.hex()
     if isinstance(obj, (IPv4Address, IPv6Address)):
         return str(obj)
-    try:
-        return obj.__getstate__()
-    except AttributeError:
-        raise TypeError('Value "%s" of type %s is not JSON serializable' %
-                        (repr(obj), type(obj)))
+    raise TypeError('Value "%s" of type %s is not JSON serializable' %
+                    (repr(obj), type(obj)))

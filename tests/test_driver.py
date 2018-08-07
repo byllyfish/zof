@@ -10,6 +10,14 @@ pytestmark = pytest.mark.asyncio
 MSG_LIMIT = 2**20 - 1
 
 
+async def test_request_error():
+    """Test exception creation."""
+    event = {'abc': 1}
+    exc = RequestError(event)
+    assert str(exc) == "Other event: {'abc': 1}"
+    assert exc.event is event
+
+
 async def test_driver_request():
     """Driver context manager's request api."""
 
@@ -23,6 +31,12 @@ async def test_driver_request():
         assert reply['api_version'] == '0.9'
         assert reply['sw_desc'].startswith('0.')
         assert reply['versions'] == list(range(1, 7))
+
+        with pytest.raises(RequestError) as excinfo:
+            request = {'method': 'OFP.SEND', 'params': {'xid': 123}}
+            await driver.request(request)
+
+        assert "missing required key 'type'" in str(excinfo.value)
 
 
 async def test_driver_dispatch():
@@ -56,7 +70,7 @@ async def test_driver_nonexistant_method():
         request = { 'id': 1, 'method': 'NON_EXISTANT' }
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
-        assert 'unknown method' in excinfo.value.message
+        assert 'unknown method' in str(excinfo.value)
 
 
 async def test_driver_invalid_rpc():
@@ -66,7 +80,7 @@ async def test_driver_invalid_rpc():
         request = { 'id': 1, 'meth': 'INVALID' }
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
-        assert 'missing required key \'method\'' in excinfo.value.message
+        assert "missing required key 'method'" in str(excinfo.value)
 
 
 async def test_large_rpc_too_big():
@@ -83,7 +97,7 @@ async def test_large_rpc_too_big():
             await driver.request(request)
 
         # The reply error should be a closed error.
-        assert 'connection closed' in excinfo.value.message
+        assert 'connection closed' in str(excinfo.value)
 
     assert incoming == []
 
@@ -101,7 +115,7 @@ async def test_large_rpc():
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
-    assert 'unknown method' in excinfo.value.message
+    assert 'unknown method' in str(excinfo.value)
     assert incoming == []
 
 

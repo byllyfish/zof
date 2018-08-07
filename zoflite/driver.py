@@ -66,7 +66,8 @@ class Driver:
         # We do not want SIGINT signals sent from the terminal to reach
         # the subprocess.
         transport, protocol = await loop.subprocess_exec(
-            _proto_factory, *cmd, stderr=None, start_new_session=True)
+            _proto_factory, *cmd, stderr=None,
+            start_new_session=True)  # pytype: disable=wrong-arg-types
 
         self._protocol = protocol
         self.pid = transport.get_pid()
