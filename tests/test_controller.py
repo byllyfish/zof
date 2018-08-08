@@ -5,9 +5,6 @@ from mock_driver import MockDriver
 
 # pylint: disable=unused-argument
 
-# All test coroutines will be treated as marked.
-pytestmark = pytest.mark.asyncio
-
 
 class MockSettings(ControllerSettings):
     driver_class = MockDriver  # type: ignore
@@ -33,6 +30,7 @@ class BasicController(Controller):
     on_channel_down = log_event
 
 
+@pytest.mark.asyncio
 async def test_basic_controller(caplog):
     """Test controller event dispatch order with sync handlers."""
 
@@ -43,6 +41,17 @@ async def test_basic_controller(caplog):
     assert not caplog.record_tuples
 
 
+def test_basic_controller_run_forever(caplog):
+    """Test controller run_forever."""
+
+    controller = BasicController()
+    controller.run_forever(settings=MockSettings())
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
 async def test_async_channel_up(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
@@ -61,6 +70,7 @@ async def test_async_channel_up(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_async_channel_up_cancel(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
@@ -89,6 +99,7 @@ async def test_async_channel_up_cancel(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_async_channel_down(caplog):
     """Test controller event dispatch with an async channel_down handler."""
 
@@ -107,6 +118,7 @@ async def test_async_channel_down(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_async_start(caplog):
     """Test controller event dispatch with async start."""
 
@@ -126,6 +138,7 @@ async def test_async_start(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_exceptions(caplog):
     """Test exceptions in async handlers."""
 
@@ -146,6 +159,7 @@ async def test_exceptions(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_request_benchmark(caplog):
     """Test datapath request() api."""
 
@@ -169,6 +183,7 @@ async def test_request_benchmark(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def _controller_request_benchmark(name, dp, loops):
     """Benchmark making async requests."""
 
@@ -190,6 +205,7 @@ async def _controller_request_benchmark(name, dp, loops):
     return bench
 
 
+@pytest.mark.asyncio
 async def test_packet_in_async(caplog):
     """Test packet_in api with async callback."""
 
@@ -229,6 +245,7 @@ async def test_packet_in_async(caplog):
     assert not caplog.record_tuples
 
 
+@pytest.mark.asyncio
 async def test_packet_in_sync(caplog):
     """Test packet_in api with sync callback."""
 

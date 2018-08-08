@@ -13,9 +13,9 @@ from zoflite.taskset import TaskSet
 
 LOGGER = logging.getLogger(__package__)
 
-if os.getenv('ZOFDEBUG'):
+if os.getenv('ZOFDEBUG'):  # pragma: no cover
     logging.basicConfig()
-    LOGGER.setLevel(logging.DEBUG)  # pragma: no cover
+    LOGGER.setLevel(logging.DEBUG)
     LOGGER.debug('ZOFDEBUG enabled')
 
 
@@ -105,7 +105,7 @@ class Controller:
                 await self.zof_invoke('STOP')
 
                 qsize = self.zof_driver.event_queue.qsize()
-                if qsize > 0:
+                if qsize > 0:  # pragma: no cover
                     LOGGER.warning('Exiting with %d events in queue', qsize)
 
     def create_task(self, coro):
@@ -242,7 +242,7 @@ class Controller:
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        LOGGER.exception('EXCEPTION: %r', exc)
+        LOGGER.critical('EXCEPTION: %r', exc)
 
     def on_channel_alert(self, dp, event):
         """Handle CHANNEL_ALERT message."""

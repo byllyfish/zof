@@ -2,13 +2,11 @@ import pytest
 from zoflite.driver import Driver
 from zoflite.exception import RequestError
 
-# All test coroutines will be treated as marked.
-pytestmark = pytest.mark.asyncio
-
 # Max size of RPC message supported by oftr.
 MSG_LIMIT = 2**20 - 1
 
 
+@pytest.mark.asyncio
 async def test_request_error():
     """Test exception creation."""
     event = {'abc': 1}
@@ -17,6 +15,7 @@ async def test_request_error():
     assert exc.event is event
 
 
+@pytest.mark.asyncio
 async def test_driver_request():
     """Driver context manager's request api."""
 
@@ -42,6 +41,7 @@ async def test_driver_request():
         assert driver.event_queue.empty()
 
 
+@pytest.mark.asyncio
 async def test_driver_not_reentrant():
     """Driver context manager is not re-entrant."""
 
@@ -52,6 +52,7 @@ async def test_driver_not_reentrant():
                 pass
 
 
+@pytest.mark.asyncio
 async def test_driver_nonexistant_method():
     """Non-existant JSON-RPC method."""
 
@@ -63,6 +64,7 @@ async def test_driver_nonexistant_method():
         assert driver.event_queue.empty()
 
 
+@pytest.mark.asyncio
 async def test_driver_invalid_rpc():
     """Non-existant JSON-RPC method."""
 
@@ -74,6 +76,7 @@ async def test_driver_invalid_rpc():
         assert driver.event_queue.empty()
 
 
+@pytest.mark.asyncio
 async def test_large_rpc_too_big():
     """Large RPC payload (too big)."""
 
@@ -87,6 +90,7 @@ async def test_large_rpc_too_big():
         assert driver.event_queue.empty()
 
 
+@pytest.mark.asyncio
 async def test_large_rpc():
     """Large RPC payload (big, but not too big)."""
 
@@ -99,6 +103,7 @@ async def test_large_rpc():
         assert driver.event_queue.empty()
 
 
+@pytest.mark.asyncio
 async def _driver_request_benchmark(name, loops):
     """Benchmark making async requests."""
 
@@ -120,12 +125,14 @@ async def _driver_request_benchmark(name, loops):
     return bench
 
 
+@pytest.mark.asyncio
 async def test_driver_request_benchmark():
     """Benchmark making async requests."""
 
     print(await _driver_request_benchmark('driver_request', 1000))
 
 
+@pytest.mark.asyncio
 async def test_driver_openflow():
     """Connect agent driver to controller driver."""
 

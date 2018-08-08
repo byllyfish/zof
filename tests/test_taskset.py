@@ -2,14 +2,13 @@ import pytest
 import asyncio
 from zoflite.taskset import TaskSet
 
-# All test coroutines will be treated as marked.
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 async def _mock_task():
     await asyncio.sleep(5)
 
 
+@pytest.mark.asyncio
 async def test_taskset_container(event_loop):
     """Test basic container functionality."""
 
@@ -35,6 +34,7 @@ async def test_taskset_container(event_loop):
     assert list(tasks) == []
 
 
+@pytest.mark.asyncio
 async def test_taskset_cancel(event_loop):
     """Test task cancellation."""
 
@@ -58,6 +58,7 @@ async def test_taskset_cancel(event_loop):
     assert len(tasks) == 0
 
 
+@pytest.mark.asyncio
 async def test_taskset_cancel_nostart(event_loop):
     """Test task cancellation when task never gets time to start."""
 
@@ -75,6 +76,7 @@ async def test_taskset_cancel_nostart(event_loop):
     assert len(tasks) == 0
 
 
+@pytest.mark.asyncio
 async def test_taskset_wait_cancelled(event_loop):
     """Test wait_cancelled() raises an error when tasks don't cancel."""
 
