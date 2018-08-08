@@ -20,7 +20,7 @@ async def test_request_error():
 async def test_driver_request():
     """Driver context manager's request api."""
 
-    async with Driver() as driver:
+    async with Driver(debug=True) as driver:
         assert driver.pid >= 0
 
         request = {'id': 1, 'method': 'OFP.DESCRIPTION'}
@@ -39,20 +39,7 @@ async def test_driver_request():
             await driver.request(request)
 
         assert "missing required key 'type'" in str(excinfo.value)
-
-
-async def test_driver_dispatch():
-    """Driver context manager with simple dispatcher."""
-
-    incoming = []
-
-    def _dispatch(_driver, event):
-        incoming.append(event)
-
-    async with Driver(_dispatch, True) as driver:
-        assert driver.pid >= 0
-
-    assert incoming == []
+        assert driver.event_queue.empty()
 
 
 async def test_driver_not_reentrant():
@@ -73,6 +60,7 @@ async def test_driver_nonexistant_method():
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
         assert 'unknown method' in str(excinfo.value)
+        assert driver.event_queue.empty()
 
 
 async def test_driver_invalid_rpc():
@@ -83,42 +71,32 @@ async def test_driver_invalid_rpc():
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
         assert "missing required key 'method'" in str(excinfo.value)
+        assert driver.event_queue.empty()
 
 
 async def test_large_rpc_too_big():
     """Large RPC payload (too big)."""
 
-    incoming = []
-
-    def _dispatch(_driver, event):
-        incoming.append(event)
-
-    async with Driver(_dispatch) as driver:
+    async with Driver() as driver:
         request = {'id': 1, 'method': 'FOO', 'params': 'x' * MSG_LIMIT}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
         # The reply error should be a closed error.
         assert 'connection closed' in str(excinfo.value)
-
-    assert incoming == []
+        assert driver.event_queue.empty()
 
 
 async def test_large_rpc():
     """Large RPC payload (big, but not too big)."""
 
-    incoming = []
-
-    def _dispatch(_driver, event):
-        incoming.append(event)
-
-    async with Driver(_dispatch) as driver:
+    async with Driver() as driver:
         request = {'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100)}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
-    assert 'unknown method' in str(excinfo.value)
-    assert incoming == []
+        assert 'unknown method' in str(excinfo.value)
+        assert driver.event_queue.empty()
 
 
 async def _driver_request_benchmark(name, loops):
@@ -151,24 +129,25 @@ async def test_driver_request_benchmark():
 async def test_driver_openflow():
     """Connect agent driver to controller driver."""
 
-    controller_log = []
-    agent_log = []
+    def _iter(queue):
+        for _ in range(queue.qsize()):
+            yield queue.get_nowait()
 
-    def _handle_controller(_driver, event):
-        controller_log.append(event['type'])
+    def _events(queue):
+        return [event['type'] for event in _iter(queue)]
 
-    def _handle_agent(_driver, event):
-        agent_log.append(event['type'])
-
-    async with Driver(_handle_controller) as controller:
+    async with Driver() as controller:
         # Start controller listening on a port.
         await controller.listen('6653')
 
-        async with Driver(_handle_agent) as agent:
+        async with Driver() as agent:
             # Agent connects to controller.
             conn_id = await agent.connect('127.0.0.1:6653')
             agent.send(dict(type='BARRIER_REPLY', conn_id=conn_id))
             await agent.close(conn_id)
+
+    agent_log = _events(agent.event_queue)
+    controller_log = _events(controller.event_queue)
 
     assert controller_log == ['CHANNEL_UP', 'BARRIER_REPLY', 'CHANNEL_DOWN']
     assert agent_log == ['CHANNEL_UP', 'CHANNEL_DOWN']

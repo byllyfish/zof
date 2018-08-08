@@ -10,43 +10,17 @@ from zoflite.oftr import OftrProtocol
 LOGGER = logging.getLogger(__package__)
 
 
-def _noop(_driver, _event):  # pragma: no cover
-    pass
-
-
 class Driver:
-    """Concrete class that manages communication with oftr program.
+    """Concrete class that communicates with oftr.
 
     The driver implements the basic OpenFlow RPC commands: listen, connect,
     send and request. It facilitates request/reply pairing and dispatches
     incoming events to higher layers.
-
-    The driver is initialized with a `dispatcher` parameter. The dispatcher is
-    a 2-arg callable used to dispatch incoming events. The dispatcher arguments
-    are (driver, event).
-
-    Example (no dispatcher):
-
-        ofmsg = {'type': 'REQUEST.DESC'}
-
-        async with zof.Driver() as driver:
-            conn_id = await driver.connect('127.0.0.1:6653')
-            reply = await driver.request(ofmsg, conn_id=conn_id)
-            print(reply)
-
-    Example (with a dispatcher):
-
-        def dispatcher(driver, event):
-            print(event)
-
-        async with zof.Driver(dispatcher) as driver:
-            await driver.listen(':6653')
-            await asyncio.sleep(30)
     """
 
-    def __init__(self, dispatch=_noop, debug=False):
+    def __init__(self, *, debug=False):
         """Initialize event callback."""
-        self.dispatch = dispatch
+        self.event_queue = None
         self.pid = None
         self._debug = debug
         self._protocol = None
@@ -58,6 +32,7 @@ class Driver:
 
         cmd = self._oftr_cmd()
         loop = asyncio.get_event_loop()
+        self.event_queue = asyncio.Queue()
 
         def _proto_factory():
             return OftrProtocol(self.post_event, loop)
@@ -126,7 +101,7 @@ class Driver:
     def post_event(self, event):
         """Dispatch event."""
         assert 'type' in event, repr(event)
-        self.dispatch(self, event)
+        self.event_queue.put_nowait(event)
 
     def _oftr_cmd(self):
         """Return oftr command with args."""

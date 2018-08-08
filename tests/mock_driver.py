@@ -12,12 +12,13 @@ class MockDriver:
     packet_count = 0
     sim_task = None
 
-    def __init__(self, dispatch=None):
+    def __init__(self):
         """Initialize mock driver."""
-        self.dispatch = dispatch
+        self.event_queue = None
 
     async def __aenter__(self):
         """Mock async context manager."""
+        self.event_queue = asyncio.Queue()
         return self
 
     async def __aexit__(self, *args):
@@ -45,7 +46,7 @@ class MockDriver:
 
     def post_event(self, event):
         """Mock post_event method."""
-        self.dispatch(self, event)
+        self.event_queue.put_nowait(event)
 
     async def _simulate_channel(self, conn_id):
         self.post_event({

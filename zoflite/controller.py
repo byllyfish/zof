@@ -69,7 +69,6 @@ class Controller:
     zof_datapaths = None
     zof_exit_status = None
     zof_tasks = None
-    zof_event_queue = None
 
     def run_forever(self, *, settings=None):
         """Run controller synchronously in a new event loop."""
@@ -79,13 +78,12 @@ class Controller:
     async def run(self, *, settings=None):
         """Run controller in an event loop."""
         self.zof_settings = settings or ControllerSettings()
-        self.zof_driver = self.zof_settings.driver_class(self.zof_post_event)
+        self.zof_driver = self.zof_settings.driver_class()
 
         self.zof_loop = asyncio.get_event_loop()
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
         self.zof_tasks = TaskSet(self.zof_loop)
-        self.zof_event_queue = asyncio.Queue()
         self.zof_tasks.create_task(self.zof_event_loop())
 
         with self.zof_signals_handled():
@@ -106,7 +104,7 @@ class Controller:
                 await self.zof_tasks.wait_cancelled()
                 await self.zof_invoke('STOP')
 
-                qsize = self.zof_event_queue.qsize()
+                qsize = self.zof_driver.event_queue.qsize()
                 if qsize > 0:
                     LOGGER.warning('Exiting with %d events in queue', qsize)
 
@@ -114,14 +112,12 @@ class Controller:
         """Create a managed async task."""
         self.zof_tasks.create_task(coro)
 
-    def zof_post_event(self, _driver, event):
-        """Post incoming event to our event queue."""
-        self.zof_event_queue.put_nowait(event)
-
     async def zof_event_loop(self):
         """Dispatch events to handler functions."""
+        event_queue = self.zof_driver.event_queue
+
         while True:
-            event = await self.zof_event_queue.get()
+            event = await event_queue.get()
             assert isinstance(event, dict), repr(event)
             event_type = event['type'].replace('.', '_')
 

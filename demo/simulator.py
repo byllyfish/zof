@@ -10,7 +10,7 @@ class MySimulator:
     def __init__(self):
         self.controller_endpoint = '127.0.0.1:6653'
         self.dp_count = 5
-        self.driver = Driver(self._dispatch, debug=True)
+        self.driver = Driver(debug=True)
 
     async def run(self):
         async with self.driver:
@@ -18,18 +18,22 @@ class MySimulator:
             try:
                 coros = [self.driver.connect(self.controller_endpoint) for i in range(self.dp_count)]
                 await asyncio.gather(*coros)
+                task = asyncio.ensure_future(self._dispatch())
                 await asyncio.sleep(30)
             except RequestError as exc:
                 print('ERROR: %r' % exc)
-                return
+            finally:
+                task.cancel()
 
-    def _dispatch(self, _driver, event):
-        msg_type = event['type'].replace('.', '_')
-        msg_method = getattr(self, msg_type, None)
-        if msg_method:
-            msg_method(event)
-        else:
-            print('other: %r' % event)
+    async def _dispatch(self):
+        while True:
+            event = await self.driver.event_queue.get()
+            msg_type = event['type'].replace('.', '_')
+            msg_method = getattr(self, msg_type, None)
+            if msg_method:
+                msg_method(event)
+            else:
+                print('other: %r' % event)
 
     def CHANNEL_UP(self, event):
         asyncio.ensure_future(self.send_packet_in(event['conn_id']))
