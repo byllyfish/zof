@@ -3,7 +3,6 @@ from zoflite.controller import Controller
 
 
 class MyController(Controller):
-
     async def CHANNEL_UP(self, dp, event):
         try:
             print(dp, event)

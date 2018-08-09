@@ -16,7 +16,7 @@ class HubProactiveController(Controller):
                 'priority': 0,
                 'match': [],
                 'instructions': [instruction]
-            }  
+            }
         }
         dp.send(ofmsg)
 

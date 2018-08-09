@@ -4,7 +4,6 @@ from zoflite.backport import asyncio_run
 
 
 class MyController:
-
     def __init__(self):
         self.driver = Driver()
 
@@ -29,13 +28,9 @@ class MyController:
         asyncio.ensure_future(self._request_desc(event['conn_id']))
 
     async def _request_desc(self, conn_id):
-        ofmsg = {
-            'conn_id': conn_id,
-            'type': 'REQUEST.DESC'
-        }
+        ofmsg = {'conn_id': conn_id, 'type': 'REQUEST.DESC'}
         desc = await self.driver.request(ofmsg)
-        print('_request_desc %r' % desc)        
-
+        print('_request_desc %r' % desc)
 
 
 if __name__ == '__main__':

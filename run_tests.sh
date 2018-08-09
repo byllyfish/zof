@@ -12,7 +12,7 @@
 set -eu
 
 PYLINT_ARGS="--pylint-error-types=WEF --pylint-rcfile=/dev/null"
-COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=90"
+COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=95"
 
 python -m pytest -s -vv --timeout=10 \
                  --pylint $PYLINT_ARGS \
@@ -20,7 +20,7 @@ python -m pytest -s -vv --timeout=10 \
                  --cov=zoflite $COVERAGE_ARGS
 
 echo "===== pycodestyle ====="
-pycodestyle zoflite tests
+pycodestyle zoflite tests demo
 
 echo "===== pydocstyle ====="
 pydocstyle zoflite tests

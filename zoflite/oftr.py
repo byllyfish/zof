@@ -173,9 +173,11 @@ def zof_load_msg(data):
 def zof_dump_msg(msg):
     """Write to JSON bytes (with delimiter)."""
     return json.dumps(
-        msg, ensure_ascii=False, allow_nan=False,
-        check_circular=False, default=zof_json_serialize
-    ).encode('utf-8') + b'\0'
+        msg,
+        ensure_ascii=False,
+        allow_nan=False,
+        check_circular=False,
+        default=zof_json_serialize).encode('utf-8') + b'\0'
 
 
 def zof_json_serialize(obj):

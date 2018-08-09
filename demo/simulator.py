@@ -1,4 +1,3 @@
-
 import asyncio
 from zoflite.driver import Driver
 from zoflite.exception import RequestError
@@ -6,7 +5,6 @@ from zoflite.backport import asyncio_run
 
 
 class MySimulator:
-
     def __init__(self):
         self.controller_endpoint = '127.0.0.1:6653'
         self.dp_count = 5
@@ -16,7 +14,10 @@ class MySimulator:
         async with self.driver:
             # Make `dp_count` independent connections to `controller_endpoint`.
             try:
-                coros = [self.driver.connect(self.controller_endpoint) for i in range(self.dp_count)]
+                coros = [
+                    self.driver.connect(self.controller_endpoint)
+                    for i in range(self.dp_count)
+                ]
                 await asyncio.gather(*coros)
                 task = asyncio.ensure_future(self._dispatch())
                 await asyncio.sleep(30)
@@ -77,8 +78,6 @@ class MySimulator:
         self.driver.send(reply)
 
     def REQUEST_PORT_DESC(self, event):
-        print('PORT_DESC_REQUEST!')
-        #print('port_desc', event)
         conn_id = event['conn_id']
         xid = event['xid']
         reply = {
@@ -88,7 +87,6 @@ class MySimulator:
             'msg': [self._portdesc(i) for i in range(1, 5)]
         }
         self.driver.send(reply)
-
 
     def REQUEST_DESC(self, event):
         print('DESC_REQUEST')
@@ -106,7 +104,7 @@ class MySimulator:
                 'serial_num': 'sn'
             }
         }
-        self.driver.send(reply)        
+        self.driver.send(reply)
 
     @staticmethod
     def _portdesc(port_no):

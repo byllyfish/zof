@@ -6,7 +6,11 @@ class HubReactiveController(Controller):
 
     def on_channel_up(self, dp, _event):
         # Set up default flow table entry.
-        action = {'action': 'OUTPUT', 'port_no': 'CONTROLLER', 'max_len': 'NO_BUFFER'}
+        action = {
+            'action': 'OUTPUT',
+            'port_no': 'CONTROLLER',
+            'max_len': 'NO_BUFFER'
+        }
         instruction = {'instruction': 'APPLY_ACTIONS', 'actions': [action]}
         ofmsg = {
             'type': 'FLOW_MOD',
@@ -16,7 +20,7 @@ class HubReactiveController(Controller):
                 'priority': 0,
                 'match': [],
                 'instructions': [instruction]
-            }  
+            }
         }
         dp.send(ofmsg)
 

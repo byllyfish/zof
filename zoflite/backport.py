@@ -23,7 +23,10 @@ def asyncio_run(coro, *, debug=False):
         return loop.run_until_complete(coro)
     finally:
         try:
-            tasks = [task for task in asyncio.Task.all_tasks(loop) if not task.done()]
+            tasks = [
+                task for task in asyncio.Task.all_tasks(loop)
+                if not task.done()
+            ]
             assert not tasks, repr(tasks)
             loop.run_until_complete(loop.shutdown_asyncgens())
         finally:
