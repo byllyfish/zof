@@ -138,9 +138,9 @@ class Controller:
             else:
                 LOGGER.debug('Receive %r dp=%r (no handler)', event_type, dp)
 
-    async def _zof_dispatch_async(self, handler, dp, event):
+    async def _zof_wrap_async(self, coro):
         try:
-            await handler(dp, event)
+            await coro
         except asyncio.CancelledError:
             pass
         except Exception as ex:  # pylint: disable=broad-except
@@ -153,7 +153,7 @@ class Controller:
                 create_task = dp.create_task
             else:
                 create_task = self.create_task
-            create_task(self._zof_dispatch_async(handler, dp, event))
+            create_task(self._zof_wrap_async(handler(dp, event)))
             # Yield time to the newly created task.
             await asyncio.sleep(0)
         else:
