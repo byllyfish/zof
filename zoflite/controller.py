@@ -225,13 +225,11 @@ class Controller:
         """Notify app to start/stop."""
         LOGGER.debug('Invoke %r', event_type)
         handler = self.zof_find_handler(event_type)
-        if not handler:
-            return
-
-        if asyncio.iscoroutinefunction(handler):
-            await handler()
-        else:
-            handler()
+        if handler:
+            if asyncio.iscoroutinefunction(handler):
+                await handler()
+            else:
+                handler()
 
     def zof_find_handler(self, event_type):
         """Return handler function for given event type."""

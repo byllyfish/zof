@@ -124,7 +124,7 @@ async def test_async_start(caplog):
 
     class _Controller(BasicController):
         async def on_start(self):
-            self.zof_loop.call_later(0.03, self.zof_exit, 0)
+            self.zof_loop.call_later(0.1, self.zof_exit, 0)
             self.events.append('START')
             await asyncio.sleep(0.02)
             self.events.append('NEXT')

@@ -99,3 +99,55 @@ async def test_tasklist_wait_cancelled(event_loop):
 
     assert len(tasks) == 1
     await task
+
+
+@pytest.mark.asyncio
+async def test_tasklist_return_value(event_loop):
+    """Test task returned from create_task can be awaited."""
+
+    async def _my_task():
+        return 123
+
+    tasks = TaskList(event_loop)
+    task = tasks.create_task(_my_task())
+
+    result = await task
+    assert result == 123
+
+
+@pytest.mark.asyncio
+async def test_tasklist_exception(event_loop):
+    """Test task raises an exception."""
+
+    excs = []
+
+    def _on_exception(exc):
+        excs.append(exc)
+
+    # Test that loop's exception handler is NOT called.
+    def _exc_handler(_loop, context):
+        excs.append(context)
+
+    event_loop.set_exception_handler(_exc_handler)
+
+    async def _my_task():
+        raise RuntimeError('invalid')
+
+    tasks = TaskList(event_loop, _on_exception)
+    task = tasks.create_task(_my_task())
+
+    # This task we retain and await.
+    with pytest.raises(RuntimeError) as excinfo:
+        await task
+
+    assert len(excs) == 1
+    assert str(excinfo.value) == 'invalid'
+    assert excinfo.value is excs[0]
+
+    # This task is not retained or awaited...
+    excs.clear()
+    tasks.create_task(_my_task())
+    await tasks.wait_cancelled()
+
+    assert len(excs) == 1
+    assert str(excs[0]) == 'invalid'

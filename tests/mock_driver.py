@@ -23,7 +23,8 @@ class MockDriver:
 
     async def __aexit__(self, *args):
         """Mock async context manager."""
-        await self.sim_task
+        if not self.sim_task.done():
+            self.sim_task.cancel()
 
     async def listen(self, endpoint, options=(), versions=()):
         """Mock listen method."""
