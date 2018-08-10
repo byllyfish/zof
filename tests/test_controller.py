@@ -147,7 +147,8 @@ async def test_exceptions(caplog):
     await controller.run(settings=MockSettings())
 
     assert controller.events == [
-        'START', 'CHANNEL_UP', 'FAIL_SYNC', 'FAIL_ASYNC', 'CHANNEL_DOWN', 'STOP'
+        'START', 'CHANNEL_UP', 'FAIL_SYNC', 'FAIL_ASYNC', 'CHANNEL_DOWN',
+        'STOP'
     ]
     assert not caplog.record_tuples
 
