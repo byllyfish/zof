@@ -9,6 +9,9 @@ class MockController:
         self.zof_loop = loop
         self.zof_driver = MockDriver()
 
+    def on_exception(self, exc):
+        print('exception: %r' % exc)
+
 
 def _make_dp():
     event = {'type': 'CHANNEL_UP', 'datapath_id': '00:00:00:00:00:00:01'}

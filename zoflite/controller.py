@@ -9,7 +9,7 @@ import signal
 from zoflite.driver import Driver
 from zoflite.datapath import Datapath
 from zoflite.packet import Packet
-from zoflite.taskset import TaskSet
+from zoflite.tasklist import TaskList
 
 LOGGER = logging.getLogger(__package__)
 
@@ -44,7 +44,7 @@ class Controller:
 
         class HubController(Controller):
 
-            def PACKET_IN(self, dp, event):
+            def on_packet_in(self, dp, event):
                 # Construct a PACKET_OUT message and send it.
                 msg = event['msg']
                 action = {'action': 'OUTPUT', 'port_no': 'ALL'}
@@ -58,9 +58,10 @@ class Controller:
                 }
                 dp.send(ofmsg)
 
-        # Invoke your controller's run() coroutine in an event loop.
-        asyncio.run(HubController().run())
+        async def main():
+            await HubController().run()
 
+        asyncio.run(main())
     """
 
     zof_settings = None
@@ -83,7 +84,7 @@ class Controller:
         self.zof_loop = asyncio.get_event_loop()
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
-        self.zof_tasks = TaskSet(self.zof_loop)
+        self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
         self.zof_tasks.create_task(self.zof_event_loop())
 
         with self.zof_signals_handled():
@@ -153,7 +154,7 @@ class Controller:
                 create_task = dp.create_task
             else:
                 create_task = self.create_task
-            create_task(self._zof_wrap_async(handler(dp, event)))
+            create_task(handler(dp, event))
             # Yield time to the newly created task.
             await asyncio.sleep(0)
         else:

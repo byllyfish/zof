@@ -54,6 +54,11 @@ class MockDriver:
             'conn_id': conn_id,
             'datapath_id': '00:00:00:00:00:00:00:01'
         })
+        self.post_event({
+            'type': 'BOGUS_EVENT',
+            'conn_id': conn_id,
+            'datapath_id': '00:00:00:00:00:00:00:01'
+        })
         for _ in range(self.packet_count):
             packet_in = {
                 'type': 'PACKET_IN',

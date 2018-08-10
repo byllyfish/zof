@@ -1,4 +1,4 @@
-"""Implements a set of async tasks."""
+"""Implements a list of async tasks."""
 
 import asyncio
 import logging
@@ -6,7 +6,11 @@ import logging
 LOGGER = logging.getLogger(__package__)
 
 
-class TaskSet:
+def _ignore_exc(_exc):  # pragma: no cover
+    pass
+
+
+class TaskList:
     """Manages a collection of async tasks that can be cancelled.
 
     When a task is cancelled, it should be removed from `self._tasks`
@@ -14,10 +18,11 @@ class TaskSet:
     is scheduled via call_soon, so it typically takes 2 cycles.)
     """
 
-    def __init__(self, loop):
-        """Initialize empty task set."""
+    def __init__(self, loop, on_exception=None):
+        """Initialize empty task list."""
         self._loop = loop
         self._tasks = set()
+        self.on_exception = on_exception or _ignore_exc
 
     def create_task(self, coro):
         """Create a managed async task for a coroutine."""
@@ -32,6 +37,12 @@ class TaskSet:
         """Handle task cleanup."""
         LOGGER.debug('Task done %r', task)
         self._tasks.discard(task)
+        try:
+            exc = task.exception()
+            if exc:
+                self.on_exception(exc)
+        except asyncio.CancelledError:
+            pass
 
     def cancel(self):
         """Cancel all managed async tasks."""
@@ -46,16 +57,16 @@ class TaskSet:
 
         if self._tasks:
             raise RuntimeError(
-                'TaskSet: Cancelled tasks did not exit as expected')
+                'TaskList: Cancelled tasks did not exit as expected')
 
     def __len__(self):
         """Return length of task list."""
         return len(self._tasks)
 
     def __contains__(self, task):
-        """Return true if task is in set."""
+        """Return true if task is in list."""
         return task in self._tasks
 
     def __iter__(self):
-        """Return iterable for task set."""
+        """Return iterable for task list."""
         return iter(self._tasks)

@@ -3,7 +3,7 @@
 import logging
 
 from zoflite.packet import Packet
-from zoflite.taskset import TaskSet
+from zoflite.tasklist import TaskList
 
 LOGGER = logging.getLogger(__package__)
 
@@ -16,7 +16,7 @@ class Datapath:
         self.zof_driver = controller.zof_driver
         self.conn_id = conn_id
         self.datapath_id = event['datapath_id']
-        self.tasks = TaskSet(controller.zof_loop)
+        self.tasks = TaskList(controller.zof_loop, controller.on_exception)
 
     def send(self, msg):
         """Send message to datapath."""
