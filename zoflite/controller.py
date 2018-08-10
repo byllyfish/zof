@@ -71,11 +71,6 @@ class Controller:
     zof_exit_status = None
     zof_tasks = None
 
-    def run_forever(self, *, settings=None):
-        """Run controller synchronously in a new event loop."""
-        from zoflite.backport import asyncio_run
-        return asyncio_run(self.run(settings=settings))
-
     async def run(self, *, settings=None):
         """Run controller in an event loop."""
         self.zof_settings = settings or ControllerSettings()
@@ -138,14 +133,6 @@ class Controller:
                 await self.zof_dispatch_handler(handler, dp, event)
             else:
                 LOGGER.debug('Receive %r dp=%r (no handler)', event_type, dp)
-
-    async def _zof_wrap_async(self, coro):
-        try:
-            await coro
-        except asyncio.CancelledError:
-            pass
-        except Exception as ex:  # pylint: disable=broad-except
-            self.on_exception(ex)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""

@@ -1,12 +1,13 @@
+import asyncio
 from zoflite.controller import Controller
 
 
-class HubProactiveController(Controller):
+class HubProactive(Controller):
     """Demo OpenFlow app that implements a proactive hub."""
 
     def on_channel_up(self, dp, _event):
         # Set up default flow table entry.
-        action = {'action': 'OUTPUT', 'port_no': 'ALL', 'max_len': 0}
+        action = {'action': 'OUTPUT', 'port_no': 'ALL'}
         instruction = {'instruction': 'APPLY_ACTIONS', 'actions': [action]}
         ofmsg = {
             'type': 'FLOW_MOD',
@@ -22,5 +23,4 @@ class HubProactiveController(Controller):
 
 
 if __name__ == '__main__':
-    controller = HubProactiveController()
-    controller.run_forever()
+    asyncio.run(HubProactive().run())  # type: ignore

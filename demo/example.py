@@ -22,4 +22,4 @@ class MyController(Controller):
 
 
 if __name__ == '__main__':
-    MyController().run_forever()
+    asyncio.run(MyController().run())  # type: ignore

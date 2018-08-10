@@ -1,7 +1,8 @@
+import asyncio
 from zoflite.controller import Controller
 
 
-class HubReactiveController(Controller):
+class HubReactive(Controller):
     """Demo OpenFlow app that implements a reactive hub."""
 
     def on_channel_up(self, dp, _event):
@@ -40,5 +41,4 @@ class HubReactiveController(Controller):
 
 
 if __name__ == '__main__':
-    controller = HubReactiveController()
-    controller.run_forever()
+    asyncio.run(HubReactive().run())  # type: ignore

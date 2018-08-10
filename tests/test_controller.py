@@ -41,16 +41,6 @@ async def test_basic_controller(caplog):
     assert not caplog.record_tuples
 
 
-def test_basic_controller_run_forever(caplog):
-    """Test controller run_forever."""
-
-    controller = BasicController()
-    controller.run_forever(settings=MockSettings())
-
-    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
-    assert not caplog.record_tuples
-
-
 @pytest.mark.asyncio
 async def test_async_channel_up(caplog):
     """Test controller event dispatch with an async channel_up handler."""
@@ -145,7 +135,10 @@ async def test_exceptions(caplog):
     class _Controller(BasicController):
         async def on_channel_up(self, dp, event):
             self.log_event(dp, event)
-            raise Exception('FAIL')
+            raise Exception('FAIL_ASYNC')
+
+        def on_bogus_event(self, dp, event):
+            raise Exception('FAIL_SYNC')
 
         def on_exception(self, exc):
             self.events.append(str(exc))
@@ -154,7 +147,7 @@ async def test_exceptions(caplog):
     await controller.run(settings=MockSettings())
 
     assert controller.events == [
-        'START', 'CHANNEL_UP', 'FAIL', 'CHANNEL_DOWN', 'STOP'
+        'START', 'CHANNEL_UP', 'FAIL_SYNC', 'FAIL_ASYNC', 'CHANNEL_DOWN', 'STOP'
     ]
     assert not caplog.record_tuples
 
