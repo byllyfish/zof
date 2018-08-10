@@ -8,7 +8,7 @@ async def _mock_task():
 
 
 @pytest.mark.asyncio
-async def test_tasklist_container(event_loop):
+async def test_tasklist_container(event_loop, caplog):
     """Test basic container functionality."""
 
     tasks = TaskList(event_loop)
@@ -31,6 +31,8 @@ async def test_tasklist_container(event_loop):
     assert len(tasks) == 0
     assert task not in tasks
     assert list(tasks) == []
+
+    assert not caplog.record_tuples
 
 
 @pytest.mark.asyncio
@@ -116,7 +118,7 @@ async def test_tasklist_return_value(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_tasklist_exception(event_loop):
+async def test_tasklist_exception(event_loop, caplog):
     """Test task raises an exception."""
 
     excs = []
@@ -151,3 +153,5 @@ async def test_tasklist_exception(event_loop):
 
     assert len(excs) == 1
     assert str(excs[0]) == 'invalid'
+
+    assert not caplog.record_tuples
