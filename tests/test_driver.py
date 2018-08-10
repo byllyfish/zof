@@ -151,10 +151,21 @@ async def test_driver_openflow():
             # Agent connects to controller.
             conn_id = await agent.connect('127.0.0.1:6653')
             agent.send(dict(type='BARRIER_REPLY', conn_id=conn_id))
+
+            # Test controller request (tied to agent reply sent above).
+            reply = await controller.request(dict(type='BARRIER_REQUEST', conn_id=2))
+            assert reply['type'] == 'BARRIER_REPLY'
+            assert reply['conn_id'] == 2
+
+            # Test controller request timeout.
+            with pytest.raises(RequestError) as excinfo:
+                await controller.request(dict(type='BARRIER_REQUEST', conn_id=2))
+            assert 'request timeout' in str(excinfo.value)
+
             await agent.close(conn_id)
 
     agent_log = _events(agent.event_queue)
     controller_log = _events(controller.event_queue)
 
-    assert controller_log == ['CHANNEL_UP', 'BARRIER_REPLY', 'CHANNEL_DOWN']
-    assert agent_log == ['CHANNEL_UP', 'CHANNEL_DOWN']
+    assert agent_log == ['CHANNEL_UP', 'BARRIER_REQUEST', 'BARRIER_REQUEST', 'CHANNEL_DOWN']
+    assert controller_log == ['CHANNEL_UP', 'CHANNEL_DOWN']
