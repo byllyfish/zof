@@ -28,6 +28,11 @@ class ControllerSettings:
     # Default driver class.
     driver_class = Driver
 
+    def __init__(self, **kwds):
+        """Initialize settings by overriding defaults."""
+        assert all(hasattr(self, key) for key in kwds)
+        self.__dict__.update(kwds)
+
 
 class Controller:
     """Base class for a Controller app.
