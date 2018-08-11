@@ -13,11 +13,6 @@ from zoflite.tasklist import TaskList
 
 LOGGER = logging.getLogger(__package__)
 
-if os.getenv('ZOFDEBUG'):  # pragma: no cover
-    logging.basicConfig()
-    LOGGER.setLevel(logging.DEBUG)
-    LOGGER.debug('ZOFDEBUG enabled')
-
 
 class ControllerSettings:
     """Settings for a controller."""
@@ -58,24 +53,26 @@ class Controller:
                 }
                 dp.send(ofmsg)
 
-        async def main():
-            await HubController().run()
-
-        asyncio.run(main())
+        asyncio.run(HubController().run())
     """
 
-    zof_settings = None
-    zof_driver = None
     zof_loop = None
     zof_datapaths = None
     zof_exit_status = None
     zof_tasks = None
 
-    async def run(self, *, settings=None):
-        """Run controller in an event loop."""
+    def __init__(self, settings=None):
+        """Initialize controller with settings."""
         self.zof_settings = settings or ControllerSettings()
         self.zof_driver = self.zof_settings.driver_class()
 
+        if os.getenv('ZOFDEBUG'):  # pragma: no cover
+            logging.basicConfig()
+            LOGGER.setLevel(logging.DEBUG)
+            LOGGER.debug('ZOFDEBUG enabled')
+
+    async def run(self):
+        """Run controller in an event loop."""
         self.zof_loop = asyncio.get_event_loop()
         self.zof_exit_status = self.zof_loop.create_future()
         self.zof_datapaths = {}
