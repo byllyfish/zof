@@ -26,3 +26,16 @@ def test_zof_dump_msg():
         oftr.zof_dump_msg(1 + 3j)
 
     assert 'is not JSON serializable' in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_request_info(event_loop, caplog):
+    """Test RequestInfo."""
+
+    # pylint: disable=protected-access
+    info = oftr._RequestInfo(event_loop, 1.0)
+    info.handle_reply({})
+
+    assert caplog.record_tuples == [
+        ('zoflite', 40, 'OFTR: Unexpected reply: {}')
+    ]
