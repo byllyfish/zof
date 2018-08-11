@@ -1,7 +1,8 @@
-from zoflite.datapath import Datapath
-from zoflite.packet import Packet
-from mock_driver import MockDriver
 import pytest
+
+from mock_driver import MockDriver
+from zof.datapath import Datapath
+from zof.packet import Packet
 
 
 class MockController:

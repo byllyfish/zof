@@ -1,10 +1,10 @@
 import asyncio
-from zoflite.driver import Driver
+import zof
 
 
 class MyController:
     def __init__(self):
-        self.driver = Driver()
+        self.driver = zof.Driver()
 
     async def run(self):
         async with self.driver:

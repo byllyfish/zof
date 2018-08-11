@@ -1,8 +1,8 @@
 import asyncio
-from zoflite.controller import Controller
+import zof
 
 
-class HubReactive(Controller):
+class HubReactive(zof.Controller):
     """Demo OpenFlow app that implements a reactive hub."""
 
     def on_channel_up(self, dp, _event):

@@ -2,8 +2,8 @@
 
 import logging
 
-from zoflite.packet import Packet
-from zoflite.tasklist import TaskList
+from .packet import Packet
+from .tasklist import TaskList
 
 LOGGER = logging.getLogger(__package__)
 

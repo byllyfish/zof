@@ -3,11 +3,8 @@
 import asyncio
 import logging
 
+
 LOGGER = logging.getLogger(__package__)
-
-
-def _ignore_exc(_exc):  # pragma: no cover
-    pass
 
 
 class TaskList:
@@ -22,7 +19,7 @@ class TaskList:
         """Initialize empty task list."""
         self._loop = loop
         self._tasks = set()
-        self.on_exception = on_exception or _ignore_exc
+        self.on_exception = on_exception or any
 
     def create_task(self, coro):
         """Create a managed async task for a coroutine."""

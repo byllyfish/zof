@@ -5,7 +5,8 @@ import shutil
 import shlex
 import logging
 
-from zoflite.oftr import OftrProtocol
+from zof.oftr import OftrProtocol
+
 
 LOGGER = logging.getLogger(__package__)
 

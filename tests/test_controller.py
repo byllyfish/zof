@@ -1,7 +1,8 @@
 import asyncio
 import pytest
-from zoflite.controller import Controller, ControllerSettings
+
 from mock_driver import MockDriver
+from zof.controller import Controller, ControllerSettings
 
 # pylint: disable=unused-argument
 

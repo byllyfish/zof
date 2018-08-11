@@ -1,6 +1,7 @@
 import pytest
-from zoflite.driver import Driver
-from zoflite.exception import RequestError
+
+from zof.driver import Driver
+from zof.exception import RequestError
 
 # Max size of RPC message supported by oftr.
 MSG_LIMIT = 2**20 - 1

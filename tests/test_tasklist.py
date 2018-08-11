@@ -1,6 +1,7 @@
 import pytest
 import asyncio
-from zoflite.tasklist import TaskList
+
+from zof.tasklist import TaskList
 
 
 async def _mock_task():

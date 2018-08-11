@@ -6,10 +6,11 @@ import logging
 import os
 import signal
 
-from zoflite.driver import Driver
-from zoflite.datapath import Datapath
-from zoflite.packet import Packet
-from zoflite.tasklist import TaskList
+from zof.driver import Driver
+from zof.datapath import Datapath
+from zof.packet import Packet
+from zof.tasklist import TaskList
+
 
 LOGGER = logging.getLogger(__package__)
 

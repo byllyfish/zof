@@ -3,7 +3,7 @@
 import pytest
 from ipaddress import ip_address
 
-from zoflite import oftr
+from zof import oftr
 
 
 def test_zof_load_msg():
@@ -37,5 +37,5 @@ async def test_request_info(event_loop, caplog):
     info.handle_reply({})
 
     assert caplog.record_tuples == [
-        ('zoflite', 40, 'OFTR: Unexpected reply: {}')
+        ('zof', 40, 'OFTR: Unexpected reply: {}')
     ]

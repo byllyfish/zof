@@ -17,13 +17,13 @@ COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=95"
 python -m pytest -s -vv --timeout=30 \
                  --pylint $PYLINT_ARGS \
                  --mypy \
-                 --cov=zoflite $COVERAGE_ARGS
+                 --cov=zof $COVERAGE_ARGS
 
 echo "===== pycodestyle ====="
-pycodestyle zoflite tests demo
+pycodestyle zof tests demo
 
 echo "===== pydocstyle ====="
-pydocstyle zoflite tests
+pydocstyle zof tests
 
 echo "===== pytype ====="
-pytype zoflite
+pytype zof

@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'zof'
-copyright = u"2018, Bill Fisher"
+copyright = u"2018, Bill Fisher"  # pylint: disable=redefined-builtin
 author = u"Bill Fisher"
 
 # The version info for the project you're documenting, acts as replacement
@@ -106,7 +106,7 @@ htmlhelp_basename = 'zofdoc'
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_elements = {
+latex_elements = {  # type: ignore
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',

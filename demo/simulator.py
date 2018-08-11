@@ -1,13 +1,12 @@
 import asyncio
-from zoflite import RequestError
-from zoflite.driver import Driver
+import zof
 
 
 class MySimulator:
     def __init__(self):
         self.controller_endpoint = '127.0.0.1:6653'
         self.dp_count = 5
-        self.driver = Driver(debug=True)
+        self.driver = zof.Driver(debug=True)
 
     async def run(self):
         async with self.driver:
@@ -20,7 +19,7 @@ class MySimulator:
                 await asyncio.gather(*coros)
                 task = asyncio.ensure_future(self._dispatch())
                 await asyncio.sleep(30)
-            except RequestError as exc:
+            except zof.RequestError as exc:
                 print('ERROR: %r' % exc)
             finally:
                 task.cancel()

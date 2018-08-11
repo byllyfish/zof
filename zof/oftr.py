@@ -4,7 +4,9 @@ import asyncio
 import json
 import logging
 from ipaddress import IPv4Address, IPv6Address
-from zoflite.exception import RequestError
+
+from zof.exception import RequestError
+
 
 LOGGER = logging.getLogger(__package__)
 

@@ -1,8 +1,8 @@
 import asyncio
-from zoflite.controller import Controller
+import zof
 
 
-class MyController(Controller):
+class MyController(zof.Controller):
     async def CHANNEL_UP(self, dp, event):
         try:
             print(dp, event)

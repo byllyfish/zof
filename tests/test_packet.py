@@ -1,5 +1,6 @@
 import pytest
-from zoflite.packet import Packet
+
+from zof.packet import Packet
 
 
 def test_packet():
