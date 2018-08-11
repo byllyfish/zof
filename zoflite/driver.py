@@ -59,26 +59,21 @@ class Driver:
         self._protocol = None
         self.pid = None
 
-    def send(self, msg):
-        """Send an OpenFlow message.
-
-        OpenFlow messages may be modified by having an xid value assigned.
-        """
+    def send(self, event):
+        """Send a RPC or OpenFlow message."""
         assert self._protocol, 'Driver not open'
 
-        if 'method' not in msg:
-            msg = self._ofp_send(msg)
+        if 'method' not in event:
+            event = self._ofp_send(event)
+        self._protocol.send(event)
 
-        self._protocol.send(msg)
-
-    async def request(self, msg):
-        """Send an OpenFlow message and wait for a reply."""
+    async def request(self, event):
+        """Send a RPC or OpenFlow message and wait for a reply."""
         assert self._protocol, 'Driver not open'
 
-        if 'method' not in msg:
-            msg = self._ofp_send(msg)
-
-        return await self._protocol.request(msg)
+        if 'method' not in event:
+            event = self._ofp_send(event)
+        return await self._protocol.request(event)
 
     async def listen(self, endpoint, options=(), versions=()):
         """Listen for OpenFlow connections on a given endpoint."""
@@ -116,12 +111,12 @@ class Driver:
         self._last_xid += 1
         return self._last_xid
 
-    def _ofp_send(self, msg):
-        if 'type' not in msg:
-            return msg
-        if 'xid' not in msg:
-            msg['xid'] = self._assign_xid()
-        return {'method': 'OFP.SEND', 'params': msg}
+    def _ofp_send(self, event):
+        if 'type' not in event:
+            raise ValueError('Invalid event: %r' % event)
+        if 'xid' not in event:
+            event['xid'] = self._assign_xid()
+        return {'method': 'OFP.SEND', 'params': event}
 
     def _ofp_listen(self, endpoint, options, versions):
         return {

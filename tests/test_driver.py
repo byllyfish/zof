@@ -69,10 +69,17 @@ async def test_driver_invalid_rpc():
     """Non-existant JSON-RPC method."""
 
     async with Driver() as driver:
-        request = {'id': 1, 'meth': 'INVALID'}
+        request = {'id': 1, 'method': 'INVALID'}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
-        assert "missing required key 'method'" in str(excinfo.value)
+        assert 'unknown method' in str(excinfo.value)
+        assert driver.event_queue.empty()
+
+        # Missing 'method' or 'type'
+        request = {'id': 1, 'methd': 'INVALID'}
+        with pytest.raises(ValueError) as excinfo:
+            await driver.request(request)
+        assert 'Invalid event' in str(excinfo.value)
         assert driver.event_queue.empty()
 
 
