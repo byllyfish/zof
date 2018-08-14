@@ -170,7 +170,7 @@ def _build_kwds(request, route_vars, post_data=None):
     for var in route_vars:
         multi, key = _is_multiple_value(var)
         if multi:
-            kwds[key] = request.query.getall(var)
+            kwds[key] = request.query.getall(var, [])
         else:
             kwds[key] = request.query.get(var)
     if post_data is not None:

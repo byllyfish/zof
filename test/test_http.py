@@ -52,6 +52,9 @@ class HttpTestCase(AsyncTestCase):
         data = await client.get_json('http://127.0.0.1:9010/test1/foo?var2[]=bar&var2[]=boo')
         self.assertEqual(data, {'var1': 'foo', 'var2': ['bar', 'boo']})
 
+        data = await client.get_json('http://127.0.0.1:9010/test1/foo')
+        self.assertEqual(data, {'var1': 'foo', 'var2': []})
+
         data = await client.get_json('http://127.0.0.1:9010/test/xyz')
         self.assertEqual(data, {'var1': 'xyz', 'var2': None})
 
