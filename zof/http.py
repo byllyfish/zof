@@ -41,6 +41,7 @@ class HttpServer:
         self.web_app = web.Application()
         self.web_runner = None
         self.web_site = None
+        self.serve_future = None
 
     async def start(self, endpoint):
         """Start web server listening on endpoint.
@@ -68,6 +69,18 @@ class HttpServer:
 
         if self.logger:
             self.logger.info('HttpServer: Stop listening on %s', self.endpoint)
+
+    async def serve_forever(self, endpoint):
+        """Start the web server and run until task is cancelled."""
+        assert self.serve_future is None
+        try:
+            self.serve_future = asyncio.get_event_loop().create_future()
+            await self.start(endpoint)
+            await self.serve_future
+        except asyncio.CancelledError:
+            await self.stop()
+        finally:
+            self.serve_future = None
 
     def get(self, path, payload_type='text'):
         """Decorator for routing HTTP GET requests."""
