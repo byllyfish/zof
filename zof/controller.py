@@ -103,10 +103,6 @@ class Controller:
                 await self.zof_tasks.wait_cancelled()
                 await self.zof_invoke('STOP')
 
-                qsize = self.zof_driver.event_queue.qsize()
-                if qsize > 0:  # pragma: no cover
-                    LOGGER.warning('Exiting with %d events in queue', qsize)
-
     def create_task(self, coro):
         """Create a managed async task."""
         self.zof_tasks.create_task(coro)

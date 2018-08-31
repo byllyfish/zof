@@ -54,6 +54,10 @@ class Driver:
         """Async context manager exit point."""
         assert self._protocol, 'Driver not open'
 
+        qsize = self.event_queue.qsize()
+        if qsize > 0:
+            LOGGER.warning('Exiting with %d events in queue', qsize)
+
         # Tell the subprocess to stop, then wait for it to exit.
         await self._protocol.stop()
 
