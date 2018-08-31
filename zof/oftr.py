@@ -2,13 +2,10 @@
 
 import asyncio
 import json
-import logging
 from ipaddress import IPv4Address, IPv6Address
 
 from zof.exception import RequestError
-
-
-LOGGER = logging.getLogger(__package__)
+from zof.log import logger
 
 
 class OftrProtocol(asyncio.SubprocessProtocol):
@@ -91,7 +88,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         elif ofp_msg:
             self.dispatch(msg)
         else:
-            LOGGER.error('Driver.handle_msg: Ignored msg: %r', msg)
+            logger.error('Driver.handle_msg: Ignored msg: %r', msg)
 
     def connection_made(self, transport):
         """Handle new incoming connection."""
@@ -150,7 +147,7 @@ class _RequestInfo:
         elif 'error' in msg:
             self.future.set_exception(RequestError(msg))
         else:
-            LOGGER.error('OFTR: Unexpected reply: %r', msg)
+            logger.error('OFTR: Unexpected reply: %r', msg)
 
     def handle_timeout(self, xid):
         # Synthesize an error reply to stand in for the timeout error.
@@ -168,7 +165,7 @@ def zof_load_msg(data):
     try:
         return json.loads(data)
     except Exception:  # pylint: disable=broad-except
-        LOGGER.exception('zof_load_msg exception: %r', data)
+        logger.exception('zof_load_msg exception: %r', data)
     return None
 
 

@@ -1,10 +1,8 @@
 """Implements a list of async tasks."""
 
 import asyncio
-import logging
 
-
-LOGGER = logging.getLogger(__package__)
+from zof.log import logger
 
 
 class TaskList:
@@ -27,12 +25,12 @@ class TaskList:
         task = self._loop.create_task(coro)
         task.add_done_callback(self._task_done)
         self._tasks.add(task)
-        LOGGER.debug('Create task %r', task)
+        logger.debug('Create task %r', task)
         return task
 
     def _task_done(self, task):
         """Handle task cleanup."""
-        LOGGER.debug('Task done %r', task)
+        logger.debug('Task done %r', task)
         self._tasks.discard(task)
         try:
             exc = task.exception()
@@ -44,7 +42,7 @@ class TaskList:
     def cancel(self):
         """Cancel all managed async tasks."""
         for task in self._tasks:
-            LOGGER.debug('Cancel task %r', task)
+            logger.debug('Cancel task %r', task)
             task.cancel()
 
     async def wait_cancelled(self):

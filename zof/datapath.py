@@ -1,11 +1,8 @@
 """Implements a Datapath class."""
 
-import logging
-
-from .packet import Packet
-from .tasklist import TaskList
-
-LOGGER = logging.getLogger(__package__)
+from zof.log import logger
+from zof.packet import Packet
+from zof.tasklist import TaskList
 
 
 class Datapath:
@@ -20,7 +17,7 @@ class Datapath:
 
     def send(self, msg):
         """Send message to datapath."""
-        LOGGER.debug('Send %r dp=%r', msg['type'], self)
+        logger.debug('Send %r dp=%r', msg['type'], self)
 
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
@@ -30,7 +27,7 @@ class Datapath:
 
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
-        LOGGER.debug('Send %r dp=%r', msg['type'], self)
+        logger.debug('Send %r dp=%r', msg['type'], self)
 
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)

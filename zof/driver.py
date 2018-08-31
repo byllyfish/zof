@@ -3,12 +3,9 @@
 import asyncio
 import shutil
 import shlex
-import logging
 
+from zof.log import logger
 from zof.oftr import OftrProtocol
-
-
-LOGGER = logging.getLogger(__package__)
 
 
 class Driver:
@@ -56,7 +53,7 @@ class Driver:
 
         qsize = self.event_queue.qsize()
         if qsize > 0:
-            LOGGER.warning('Exiting with %d events in queue', qsize)
+            logger.warning('Exiting with %d events in queue', qsize)
 
         # Tell the subprocess to stop, then wait for it to exit.
         await self._protocol.stop()

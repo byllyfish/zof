@@ -2,17 +2,13 @@
 
 import asyncio
 import contextlib
-import logging
-import os
 import signal
 
 from zof.driver import Driver
 from zof.datapath import Datapath
+from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
-
-
-LOGGER = logging.getLogger(__package__)
 
 
 class ControllerSettings:
@@ -72,11 +68,6 @@ class Controller:
         self.zof_settings = settings or ControllerSettings()
         self.zof_driver = self.zof_settings.driver_class()
 
-        if os.getenv('ZOFDEBUG'):  # pragma: no cover
-            logging.basicConfig()
-            LOGGER.setLevel(logging.DEBUG)
-            LOGGER.debug('ZOFDEBUG enabled')
-
     async def run(self):
         """Run controller in an event loop."""
         self.zof_loop = asyncio.get_event_loop()
@@ -128,10 +119,10 @@ class Controller:
 
             handler = self.zof_find_handler(event_type)
             if handler:
-                LOGGER.debug('Receive %r dp=%r', event_type, dp)
+                logger.debug('Receive %r dp=%r', event_type, dp)
                 await self.zof_dispatch_handler(handler, dp, event)
             else:
-                LOGGER.debug('Receive %r dp=%r (no handler)', event_type, dp)
+                logger.debug('Receive %r dp=%r (no handler)', event_type, dp)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
@@ -173,14 +164,13 @@ class Controller:
         if conn_id is not None:
             dp = self.zof_datapaths.get(conn_id)
             if dp is None:
-                LOGGER.warning('Unknown conn_id %r', conn_id)
-
+                logger.warning('Unknown conn_id %r', conn_id)
         return dp
 
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
         if self.zof_settings.listen_endpoints:
-            LOGGER.debug('Listen on %r, versions %r',
+            logger.debug('Listen on %r, versions %r',
                          self.zof_settings.listen_endpoints,
                          self.zof_settings.listen_versions)
             coros = [
@@ -209,7 +199,7 @@ class Controller:
 
     async def zof_invoke(self, event_type):
         """Notify app to start/stop."""
-        LOGGER.debug('Invoke %r', event_type)
+        logger.debug('Invoke %r', event_type)
         handler = self.zof_find_handler(event_type)
         if handler:
             if asyncio.iscoroutinefunction(handler):
@@ -227,8 +217,8 @@ class Controller:
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        LOGGER.critical('EXCEPTION: %r', exc)
+        logger.critical('EXCEPTION: %r', exc)
 
     def on_channel_alert(self, dp, event):
         """Handle CHANNEL_ALERT message."""
-        LOGGER.error('CHANNEL_ALERT dp=%r %r', dp, event)
+        logger.error('CHANNEL_ALERT dp=%r %r', dp, event)
