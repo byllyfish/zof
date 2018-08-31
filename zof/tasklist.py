@@ -19,7 +19,7 @@ class TaskList:
         """Initialize empty task list."""
         self._loop = loop
         self._tasks = set()
-        self.on_exception = on_exception or any
+        self.on_exception = on_exception
 
     def create_task(self, coro):
         """Create a managed async task for a coroutine."""
@@ -36,7 +36,7 @@ class TaskList:
         self._tasks.discard(task)
         try:
             exc = task.exception()
-            if exc:
+            if exc and self.on_exception:
                 self.on_exception(exc)
         except asyncio.CancelledError:
             pass
