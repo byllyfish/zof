@@ -159,7 +159,7 @@ class Controller:
         conn_id = event['conn_id']
         assert conn_id not in self.zof_datapaths
 
-        dp = Datapath(self, conn_id, event)
+        dp = Datapath(self, conn_id, event['datapath_id'])
         self.zof_datapaths[conn_id] = dp
         return dp
 

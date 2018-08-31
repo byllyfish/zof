@@ -15,8 +15,7 @@ class MockController:
 
 
 def _make_dp():
-    event = {'type': 'CHANNEL_UP', 'datapath_id': '00:00:00:00:00:00:01'}
-    return Datapath(MockController(), 1, event)
+    return Datapath(MockController(), 1, '00:00:00:00:00:00:01')
 
 
 def test_datapath_repr():
