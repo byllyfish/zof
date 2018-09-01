@@ -123,13 +123,15 @@ class Controller:
                     logger.debug('Receive %r dp=%r', event_type, dp)
                     await self.zof_dispatch_handler(handler, dp, event)
                 else:
-                    logger.debug('Receive %r dp=%r (no handler)', event_type, dp)
+                    logger.debug('Receive %r dp=%r (no handler)', event_type,
+                                 dp)
 
             except asyncio.CancelledError:
                 return
 
             except Exception as ex:  # pylint: disable=broad-except
-                logger.critical('EXCEPTION in zof_event_loop: %r', ex, exc_info=True)
+                logger.critical(
+                    'EXCEPTION in zof_event_loop: %r', ex, exc_info=True)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
@@ -192,6 +194,7 @@ class Controller:
     @contextlib.contextmanager
     def zof_signals_handled(self):
         """Context manager for exit signal handling."""
+
         def _quit():
             self.zof_exit(0)
 

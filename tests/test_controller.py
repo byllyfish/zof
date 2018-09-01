@@ -297,7 +297,7 @@ async def test_controller_invalid_event(caplog):
     controller = _Controller()
     await controller.run()
 
-    assert controller.events == [
-        'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP'
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert caplog.record_tuples == [
+        ('zof', 50, "EXCEPTION in zof_event_loop: KeyError('type')")
     ]
-    assert caplog.record_tuples == [('zof', 50, "EXCEPTION in zof_event_loop: KeyError('type')")]

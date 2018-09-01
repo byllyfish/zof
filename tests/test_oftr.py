@@ -36,6 +36,4 @@ async def test_request_info(event_loop, caplog):
     info = oftr._RequestInfo(event_loop, 1.0)
     info.handle_reply({})
 
-    assert caplog.record_tuples == [
-        ('zof', 40, 'OFTR: Unexpected reply: {}')
-    ]
+    assert caplog.record_tuples == [('zof', 40, 'OFTR: Unexpected reply: {}')]
