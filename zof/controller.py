@@ -103,26 +103,33 @@ class Controller:
         event_queue = self.zof_driver.event_queue
 
         while True:
-            event = await event_queue.get()
-            assert isinstance(event, dict), repr(event)
-            event_type = event['type'].replace('.', '_')
+            try:
+                event = await event_queue.get()
+                assert isinstance(event, dict), repr(event)
+                event_type = event['type'].replace('.', '_')
 
-            # Update bookkeeping for connected datapaths.
-            if event_type == 'CHANNEL_UP':
-                dp = self.zof_channel_up(event)
-            elif event_type == 'CHANNEL_DOWN':
-                dp = self.zof_channel_down(event)
-            else:
-                dp = self.zof_find_dp(event)
-                if event_type == 'PACKET_IN':
-                    Packet.zof_from_packet_in(event)
+                # Update bookkeeping for connected datapaths.
+                if event_type == 'CHANNEL_UP':
+                    dp = self.zof_channel_up(event)
+                elif event_type == 'CHANNEL_DOWN':
+                    dp = self.zof_channel_down(event)
+                else:
+                    dp = self.zof_find_dp(event)
+                    if event_type == 'PACKET_IN':
+                        Packet.zof_from_packet_in(event)
 
-            handler = self.zof_find_handler(event_type)
-            if handler:
-                logger.debug('Receive %r dp=%r', event_type, dp)
-                await self.zof_dispatch_handler(handler, dp, event)
-            else:
-                logger.debug('Receive %r dp=%r (no handler)', event_type, dp)
+                handler = self.zof_find_handler(event_type)
+                if handler:
+                    logger.debug('Receive %r dp=%r', event_type, dp)
+                    await self.zof_dispatch_handler(handler, dp, event)
+                else:
+                    logger.debug('Receive %r dp=%r (no handler)', event_type, dp)
+
+            except asyncio.CancelledError:
+                return
+
+            except Exception as ex:  # pylint: disable=broad-except
+                logger.critical('EXCEPTION in zof_event_loop: %r', ex, exc_info=True)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
@@ -217,7 +224,7 @@ class Controller:
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        logger.critical('EXCEPTION: %r', exc)
+        logger.critical('EXCEPTION: %r', exc, exc_info=True)
 
     def on_channel_alert(self, dp, event):
         """Handle CHANNEL_ALERT message."""

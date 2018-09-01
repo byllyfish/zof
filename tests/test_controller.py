@@ -283,3 +283,21 @@ def test_controller_settings():
     settings = ControllerSettings(driver_class='x')
     assert settings.driver_class == 'x'
     assert settings.listen_versions == ControllerSettings.listen_versions
+
+
+@pytest.mark.asyncio
+async def test_controller_invalid_event(caplog):
+    """Test controller event dispatch with an invalid event."""
+
+    class _Controller(BasicController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            self.zof_driver.post_event({'notype': 'invalid'})
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP'
+    ]
+    assert caplog.record_tuples == [('zof', 50, "EXCEPTION in zof_event_loop: KeyError('type')")]
