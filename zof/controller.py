@@ -194,13 +194,9 @@ class Controller:
     @contextlib.contextmanager
     def zof_signals_handled(self):
         """Context manager for exit signal handling."""
-
-        def _quit():
-            self.zof_exit(0)
-
         signals = list(self.zof_settings.exit_signals)
         for signum in signals:
-            self.zof_loop.add_signal_handler(signum, _quit)
+            self.zof_loop.add_signal_handler(signum, self.zof_exit)
 
         yield
 
@@ -221,14 +217,14 @@ class Controller:
         """Return handler function for given event type."""
         return getattr(self, 'on_%s' % event_type.lower(), None)
 
-    def zof_exit(self, exit_status):
+    def zof_exit(self, exit_status=0):
         """Exit controller event loop."""
         self.zof_exit_status.set_result(exit_status)
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        logger.critical('EXCEPTION: %r', exc, exc_info=True)
+        logger.critical('EXCEPTION in zof handler: %r', exc, exc_info=True)
 
     def on_channel_alert(self, dp, event):
         """Handle CHANNEL_ALERT message."""
-        logger.error('CHANNEL_ALERT dp=%r %r', dp, event)
+        logger.warning('CHANNEL_ALERT dp=%r %r', dp, event)

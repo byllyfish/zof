@@ -301,3 +301,60 @@ async def test_controller_invalid_event(caplog):
     assert caplog.record_tuples == [
         ('zof', 50, "EXCEPTION in zof_event_loop: KeyError('type')")
     ]
+
+
+@pytest.mark.asyncio
+async def test_controller_unknown_connid(caplog):
+    """Test controller event dispatch with an invalid event."""
+
+    class _Controller(BasicController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            self.zof_driver.post_event({'conn_id': 1000, 'type': 'unknown'})
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert caplog.record_tuples == [('zof', 30, 'Unknown conn_id 1000')]
+
+
+@pytest.mark.asyncio
+async def test_controller_exception_in_handler(caplog):
+    """Test controller with async handler that throws exception."""
+
+    class _Controller(BasicController):
+        async def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            raise RuntimeError('oops')
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert caplog.record_tuples == [
+        ('zof', 50, "EXCEPTION in zof handler: RuntimeError('oops')")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_controller_channel_alert(caplog):
+    """Test controller with channel_alert."""
+
+    class _Controller(BasicController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            self.zof_driver.post_event({
+                'conn_id': dp.conn_id,
+                'type': 'CHANNEL_ALERT'
+            })
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert caplog.record_tuples == [(
+        'zof', 30,
+        "CHANNEL_ALERT dp=<Datapath conn_id=2 dpid=00:00:00:00:00:00:00:01> "
+        "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}"
+    )]
