@@ -160,4 +160,20 @@ texinfo_documents = [
 ]
 
 
+# -- Magic to run sphinx-apidoc automatically -----------------------------
+
+# See https://github.com/rtfd/readthedocs.org/issues/1139
+# on which this is based.
+
+def run_apidoc(_):
+    """Call sphinx-apidoc on zof module."""
+    from sphinx.apidoc import main as apidoc_main
+    apidoc_main(['-e', '-o', 'reference/apidoc', '../zof'])
+
+def setup(app):
+    """Over-ride Sphinx setup to trigger sphinx-apidoc."""
+    app.connect('builder-inited', run_apidoc)
+
+
+
 

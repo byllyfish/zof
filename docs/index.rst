@@ -8,7 +8,7 @@ Welcome to zof's documentation!
    readme
    installation
    usage
-   modules
+   reference/index
    contributing
    authors
    history
