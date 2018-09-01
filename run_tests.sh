@@ -9,7 +9,7 @@
 #   - pydocstyle
 #   - pytype
 
-set -eu
+set -e
 
 PYLINT_ARGS="--pylint-error-types=WEF --pylint-rcfile=/dev/null"
 COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=95"
@@ -27,4 +27,3 @@ pycodestyle zof tests demo
 
 echo "===== pydocstyle ====="
 pydocstyle zof tests
-
