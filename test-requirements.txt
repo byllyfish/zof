@@ -3,4 +3,6 @@ pytest-asyncio
 pytest-pylint
 pytest-mypy
 pytest-timeout
+pycodestyle
+pydocstyle
 pytype

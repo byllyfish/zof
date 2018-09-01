@@ -19,11 +19,12 @@ python -m pytest -s -vv --timeout=30 \
                  --mypy \
                  --cov=zof $COVERAGE_ARGS
 
+echo "===== pytype ====="
+pytype zof
+
 echo "===== pycodestyle ====="
 pycodestyle zof tests demo
 
 echo "===== pydocstyle ====="
 pydocstyle zof tests
 
-echo "===== pytype ====="
-pytype zof
