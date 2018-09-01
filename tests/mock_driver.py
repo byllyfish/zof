@@ -42,8 +42,7 @@ class MockDriver:
         if xid is None:
             xid = msg.get('xid')
             return {'xid': xid}
-        else:
-            return {'id': xid}
+        return {'id': xid}
 
     def post_event(self, event):
         """Mock post_event method."""
