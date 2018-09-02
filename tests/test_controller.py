@@ -294,7 +294,7 @@ async def test_controller_invalid_event(caplog):
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
-        ('zof', 50, "EXCEPTION in zof_event_loop: KeyError('type')")
+        ('zof', 50, "Exception in zof_event_loop: KeyError('type')")
     ]
 
 
@@ -328,7 +328,7 @@ async def test_controller_exception_in_handler(caplog):
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
-        ('zof', 50, "EXCEPTION in zof handler: RuntimeError('oops')")
+        ('zof', 50, "Exception in zof handler: RuntimeError('oops')")
     ]
 
 
@@ -348,11 +348,11 @@ async def test_controller_channel_alert(caplog):
     await controller.run()
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
-    assert caplog.record_tuples == [(
-        'zof', 30,
-        "CHANNEL_ALERT dp=<Datapath conn_id=2 dpid=00:00:00:00:00:00:00:01> "
-        "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}"
-    )]
+    assert caplog.record_tuples == [
+        ('zof', 30,
+         "CHANNEL_ALERT dp=<Datapath conn_id=2 dpid=00:00:00:00:00:00:00:01> "
+         "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}")
+    ]
 
 
 @pytest.mark.asyncio
@@ -385,7 +385,10 @@ async def test_controller_listen_bad_tls_args(caplog):
     exit_status = await controller.run()
 
     assert exit_status != 0
-    assert caplog.record_tuples == [('zof', 50, "Exception caught in run: RequestError('ERROR: PEM routines')")]
+    assert caplog.record_tuples == [
+        ('zof', 50,
+         "Exception in run: RequestError('ERROR: PEM routines')")
+    ]
 
 
 @pytest.mark.asyncio
@@ -398,7 +401,10 @@ async def test_controller_listen_bad_endpoints(caplog):
     exit_status = await controller.run()
 
     assert exit_status != 0
-    assert caplog.record_tuples == [('zof', 50, "Exception caught in run: RequestError('ERROR: Address already in use')")]
+    assert caplog.record_tuples == [(
+        'zof', 50,
+        "Exception in run: RequestError('ERROR: Address already in use')"
+    )]
 
 
 @pytest.mark.asyncio

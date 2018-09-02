@@ -5,10 +5,13 @@ import contextlib
 
 from zof.configuration import Configuration
 from zof.datapath import Datapath
-from zof.exception import RequestError
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
+
+
+RUN_STATUS_OKAY = 0
+RUN_STATUS_ERROR = 10
 
 
 class Controller:
@@ -74,7 +77,7 @@ class Controller:
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
         self.zof_tasks.create_task(self.zof_event_loop())
 
-        exit_status = 0
+        exit_status = RUN_STATUS_OKAY
         with self.zof_signals_handled():
             async with self.zof_driver:
                 try:
@@ -88,9 +91,10 @@ class Controller:
                     await self.zof_cleanup()
                     await self.zof_invoke('STOP')
 
-                except RequestError as ex:
-                    logger.critical('Exception caught in run: %r', ex, exc_info=True)
-                    exit_status = 2
+                except Exception as ex:  # pylint: disable=broad-except
+                    logger.critical(
+                        'Exception in run: %r', ex, exc_info=True)
+                    exit_status = RUN_STATUS_ERROR
                     await self.zof_cleanup()
 
         return exit_status
@@ -153,7 +157,7 @@ class Controller:
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.critical(
-                    'EXCEPTION in zof_event_loop: %r', ex, exc_info=True)
+                    'Exception in zof_event_loop: %r', ex, exc_info=True)
 
     async def zof_dispatch_handler(self, handler, dp, event):
         """Dispatch to a specific handler function."""
@@ -204,22 +208,23 @@ class Controller:
         if not config.listen_endpoints:
             return
 
-        logger.debug('Listen on %r, versions %r',
-                     config.listen_endpoints,
+        logger.debug('Listen on %r, versions %r', config.listen_endpoints,
                      config.listen_versions)
 
         tls_id = 0
         if config.tls_cert:
             # Set up TLS.
-            tls_id = await self.zof_driver.add_identity(cert=config.tls_cert, cacert=config.tls_cacert, privkey=config.tls_privkey)
+            tls_id = await self.zof_driver.add_identity(
+                cert=config.tls_cert,
+                cacert=config.tls_cacert,
+                privkey=config.tls_privkey)
 
         coros = [
             self.zof_driver.listen(
                 endpoint,
                 options=['FEATURES_REQ'],
-                versions=config.listen_versions, 
-                tls_id=tls_id)
-            for endpoint in config.listen_endpoints
+                versions=config.listen_versions,
+                tls_id=tls_id) for endpoint in config.listen_endpoints
         ]
         await asyncio.gather(*coros)
 
@@ -263,7 +268,7 @@ class Controller:
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        logger.critical('EXCEPTION in zof handler: %r', exc, exc_info=True)
+        logger.critical('Exception in zof handler: %r', exc, exc_info=True)
 
     def on_channel_alert(self, dp, event):
         """Handle CHANNEL_ALERT message."""

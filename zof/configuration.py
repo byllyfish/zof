@@ -32,7 +32,6 @@ class Configuration:
     #: TLS private key.
     tls_privkey = ''
 
-
     def __init__(self, **kwds):
         """Initialize settings by overriding defaults."""
         assert all(hasattr(self, key) for key in kwds)

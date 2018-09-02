@@ -42,5 +42,4 @@ class Datapath:
 
     def __repr__(self):
         """Return string representation of datapath."""
-        return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id,
-                                                  self.id)
+        return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id, self.id)

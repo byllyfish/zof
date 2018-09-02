@@ -115,7 +115,7 @@ class Driver:
         return shlex.split(cmd % shutil.which('oftr'))
 
     def _assign_xid(self):
-        """Return the next xid to use for a request/send. (FIXME: wraparound"""
+        """Return the next xid to use for a request/send."""
         self._last_xid += 1
         return self._last_xid
 
