@@ -9,7 +9,6 @@ from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
 
-
 RUN_STATUS_OKAY = 0
 RUN_STATUS_ERROR = 10
 
@@ -92,8 +91,7 @@ class Controller:
                     await self.zof_invoke('STOP')
 
                 except Exception as ex:  # pylint: disable=broad-except
-                    logger.critical(
-                        'Exception in run: %r', ex, exc_info=True)
+                    logger.critical('Exception in run: %r', ex, exc_info=True)
                     exit_status = RUN_STATUS_ERROR
                     await self.zof_cleanup()
 

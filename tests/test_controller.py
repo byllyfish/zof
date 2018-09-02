@@ -386,8 +386,7 @@ async def test_controller_listen_bad_tls_args(caplog):
 
     assert exit_status != 0
     assert caplog.record_tuples == [
-        ('zof', 50,
-         "Exception in run: RequestError('ERROR: PEM routines')")
+        ('zof', 50, "Exception in run: RequestError('ERROR: PEM routines')")
     ]
 
 
@@ -401,10 +400,10 @@ async def test_controller_listen_bad_endpoints(caplog):
     exit_status = await controller.run()
 
     assert exit_status != 0
-    assert caplog.record_tuples == [(
-        'zof', 50,
-        "Exception in run: RequestError('ERROR: Address already in use')"
-    )]
+    assert caplog.record_tuples == [
+        ('zof', 50,
+         "Exception in run: RequestError('ERROR: Address already in use')")
+    ]
 
 
 @pytest.mark.asyncio
