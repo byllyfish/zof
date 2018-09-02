@@ -37,12 +37,13 @@ class Controller:
     To create an app, subclass `Controller`, then call the instance's run()
     coroutine function in an event loop.
 
-    Example:
+    Example::
 
-        class HubController(Controller):
+        import asyncio
+        import zof
 
+        class HubController(zof.Controller):
             def on_packet_in(self, dp, event):
-                # Construct a PACKET_OUT message and send it.
                 msg = event['msg']
                 action = {'action': 'OUTPUT', 'port_no': 'ALL'}
                 ofmsg = {
@@ -56,6 +57,23 @@ class Controller:
                 dp.send(ofmsg)
 
         asyncio.run(HubController().run())
+
+    To handle OpenFlow events, implement methods of the form::
+
+        on_channel_up(dp, event)
+        on_channel_down(dp, event)
+        on_channel_alert(dp, event)
+        on_packet_in(dp, event)
+        on_port_status(dp, event)
+        on_flow_removed(dp, event)
+        on_<MSGTYPE>(dp, event)
+
+    To handle lifecycle events, implement methods of the form::
+
+        on_start()
+        on_stop()
+        on_exception(exc)
+
     """
 
     zof_loop = None
@@ -95,8 +113,29 @@ class Controller:
                 await self.zof_invoke('STOP')
 
     def create_task(self, coro):
-        """Create a managed async task."""
-        self.zof_tasks.create_task(coro)
+        """Create an async task to run the coroutine.
+
+        The task will be automatically cancelled before the Controller
+        is stopped (if still running). If the task fails with an exception,
+        the Controller's on_exception(exc) handler will be called.
+
+        Args:
+            coro (coroutine object): coroutine to run in task
+
+        Returns:
+            asyncio.Task
+
+        """
+        return self.zof_tasks.create_task(coro)
+
+    def all_datapaths(self):
+        """Return a list of connected datapaths.
+
+        Returns:
+            List[zof.Datapath]
+
+        """
+        return list(self.zof_datapaths.values())
 
     async def zof_event_loop(self):
         """Dispatch events to handler functions."""

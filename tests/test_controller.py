@@ -358,3 +358,23 @@ async def test_controller_channel_alert(caplog):
         "CHANNEL_ALERT dp=<Datapath conn_id=2 dpid=00:00:00:00:00:00:00:01> "
         "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}"
     )]
+
+
+@pytest.mark.asyncio
+async def test_controller_all_datapaths(caplog):
+    """Test controller's all_datapaths method."""
+
+    class _Controller(BasicController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            assert dp in self.all_datapaths()
+
+        def on_channel_down(self, dp, event):
+            self.log_event(dp, event)
+            assert dp not in self.all_datapaths()
+
+    controller = _Controller()
+    await controller.run()
+
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples

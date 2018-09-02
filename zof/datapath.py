@@ -8,11 +8,11 @@ from zof.tasklist import TaskList
 class Datapath:
     """Stores info about each connected datapath."""
 
-    def __init__(self, controller, conn_id, datapath_id):
+    def __init__(self, controller, conn_id, dp_id):
         """Initialize datapath object."""
         self.zof_driver = controller.zof_driver
+        self.id = dp_id
         self.conn_id = conn_id
-        self.datapath_id = datapath_id
         self.tasks = TaskList(controller.zof_loop, controller.on_exception)
 
     def send(self, msg):
@@ -43,4 +43,4 @@ class Datapath:
     def __repr__(self):
         """Return string representation of datapath."""
         return '<Datapath conn_id=%d dpid=%s>' % (self.conn_id,
-                                                  self.datapath_id)
+                                                  self.id)
