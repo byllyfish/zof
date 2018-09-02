@@ -11,9 +11,6 @@ class Configuration:
     #: List of endpoints to listen for OpenFlow connections "host:port".
     listen_endpoints = ['6653']
 
-    #: Listen options for oftr.
-    listen_options = ['FEATURES_REQ']
-
     #: List of supported OpenFlow versions.
     listen_versions = [4]
 

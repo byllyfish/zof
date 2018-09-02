@@ -203,7 +203,7 @@ class Controller:
             coros = [
                 self.zof_driver.listen(
                     endpoint,
-                    options=self.zof_config.listen_options,
+                    options=['FEATURES_REQ'],
                     versions=self.zof_config.listen_versions)
                 for endpoint in self.zof_config.listen_endpoints
             ]
