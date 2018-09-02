@@ -2,7 +2,8 @@ import asyncio
 import pytest
 
 from mock_driver import MockDriver
-from zof.controller import Controller, ControllerSettings
+from zof.configuration import Configuration
+from zof.controller import Controller
 
 # pylint: disable=unused-argument
 
@@ -11,7 +12,7 @@ class BasicController(Controller):
     """Implements a test controller that uses a mock driver."""
 
     def __init__(self):
-        super().__init__(ControllerSettings(driver_class=MockDriver))
+        super().__init__(Configuration(driver_class=MockDriver))
         self.events = []
 
     def on_start(self):
@@ -275,14 +276,6 @@ async def test_packet_in_sync(caplog):
 
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
-
-
-def test_controller_settings():
-    """Test ControllerSettings class."""
-
-    settings = ControllerSettings(driver_class='x')
-    assert settings.driver_class == 'x'
-    assert settings.listen_versions == ControllerSettings.listen_versions
 
 
 @pytest.mark.asyncio

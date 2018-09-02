@@ -2,33 +2,12 @@
 
 import asyncio
 import contextlib
-import signal
 
-from zof.driver import Driver
+from zof.configuration import Configuration
 from zof.datapath import Datapath
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
-
-
-class ControllerSettings:
-    """Settings for a controller."""
-
-    # Options for listening for OpenFlow connections.
-    listen_endpoints = ['6653']
-    listen_options = ['FEATURES_REQ']
-    listen_versions = [4]
-
-    # Default exit signals.
-    exit_signals = [signal.SIGTERM, signal.SIGINT]
-
-    # Default driver class.
-    driver_class = Driver
-
-    def __init__(self, **kwds):
-        """Initialize settings by overriding defaults."""
-        assert all(hasattr(self, key) for key in kwds)
-        self.__dict__.update(kwds)
 
 
 class Controller:
@@ -81,10 +60,10 @@ class Controller:
     zof_exit_status = None
     zof_tasks = None
 
-    def __init__(self, settings=None):
-        """Initialize controller with settings."""
-        self.zof_settings = settings or ControllerSettings()
-        self.zof_driver = self.zof_settings.driver_class()
+    def __init__(self, config=None):
+        """Initialize controller with configuration object."""
+        self.zof_config = config or Configuration()
+        self.zof_driver = self.zof_config.driver_class()
 
     async def run(self):
         """Run controller in an event loop."""
@@ -217,23 +196,23 @@ class Controller:
 
     async def zof_listen(self):
         """Tell driver to listen on specific endpoints."""
-        if self.zof_settings.listen_endpoints:
+        if self.zof_config.listen_endpoints:
             logger.debug('Listen on %r, versions %r',
-                         self.zof_settings.listen_endpoints,
-                         self.zof_settings.listen_versions)
+                         self.zof_config.listen_endpoints,
+                         self.zof_config.listen_versions)
             coros = [
                 self.zof_driver.listen(
                     endpoint,
-                    options=self.zof_settings.listen_options,
-                    versions=self.zof_settings.listen_versions)
-                for endpoint in self.zof_settings.listen_endpoints
+                    options=self.zof_config.listen_options,
+                    versions=self.zof_config.listen_versions)
+                for endpoint in self.zof_config.listen_endpoints
             ]
             await asyncio.gather(*coros)
 
     @contextlib.contextmanager
     def zof_signals_handled(self):
         """Context manager for exit signal handling."""
-        signals = list(self.zof_settings.exit_signals)
+        signals = list(self.zof_config.exit_signals)
         for signum in signals:
             self.zof_loop.add_signal_handler(signum, self.zof_exit)
 
