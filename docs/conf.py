@@ -32,7 +32,7 @@ import zof
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib.asyncio']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -74,6 +74,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+# The default language to highlight source code in.
+highlight_language = 'python3'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -167,13 +170,17 @@ texinfo_documents = [
 
 def run_apidoc(_):
     """Call sphinx-apidoc on zof module."""
-    from sphinx.apidoc import main as apidoc_main
+    from sphinx.apidoc import main as apidoc_main  # type: ignore
     apidoc_main(['-e', '-o', 'reference/apidoc', '../zof'])
 
 def setup(app):
     """Over-ride Sphinx setup to trigger sphinx-apidoc."""
     app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-skip-member', autodoc_skip_member)
 
+def autodoc_skip_member(_app, _what, name, _obj, skip, _options):
+    """Skip members that are package private or event handlers."""
+    return skip or name.startswith('zof_') or name.startswith('on_')
 
 
 

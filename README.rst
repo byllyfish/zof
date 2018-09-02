@@ -56,7 +56,9 @@ Key Features
 Install
 -------
 
-Use pip to install zof::
+Use pip to install zof:
+
+.. code-block:: console
 
   $ pip install zof
 

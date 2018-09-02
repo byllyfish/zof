@@ -6,3 +6,4 @@ venv
 pytype_output
 __pycache__
 docs/_build/
+docs/reference/apidoc/
