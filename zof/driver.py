@@ -77,9 +77,9 @@ class Driver:
             event = self._ofp_send(event)
         return await self._protocol.request(event)
 
-    async def listen(self, endpoint, options=(), versions=()):
+    async def listen(self, endpoint, options=(), versions=(), tls_id=0):
         """Listen for OpenFlow connections on a given endpoint."""
-        request = self._ofp_listen(endpoint, options, versions)
+        request = self._ofp_listen(endpoint, options, versions, tls_id)
         reply = await self.request(request)
         return reply['conn_id']
 
@@ -95,6 +95,12 @@ class Driver:
         reply = await self.request(request)
         return reply['count']
 
+    async def add_identity(self, cert, cacert, privkey):
+        """Add TLS identity."""
+        request = self._ofp_add_identity(cert, cacert, privkey)
+        reply = await self.request(request)
+        return reply['tls_id']
+
     def post_event(self, event):
         """Dispatch event."""
         assert 'type' in event, repr(event)
@@ -109,25 +115,26 @@ class Driver:
         return shlex.split(cmd % shutil.which('oftr'))
 
     def _assign_xid(self):
-        """Return the next xid to use for a request/send."""
+        """Return the next xid to use for a request/send. (FIXME: wraparound"""
         self._last_xid += 1
         return self._last_xid
 
     def _ofp_send(self, event):
         if 'type' not in event:
-            raise ValueError('Invalid event: %r' % event)
+            raise ValueError('Invalid event (missing type): %r' % event)
         if 'xid' not in event:
             event['xid'] = self._assign_xid()
         return {'method': 'OFP.SEND', 'params': event}
 
-    def _ofp_listen(self, endpoint, options, versions):
+    def _ofp_listen(self, endpoint, options, versions, tls_id):
         return {
             'id': self._assign_xid(),
             'method': 'OFP.LISTEN',
             'params': {
                 'endpoint': endpoint,
                 'options': options,
-                'versions': versions
+                'versions': versions,
+                'tls_id': tls_id
             }
         }
 
@@ -146,5 +153,16 @@ class Driver:
             'method': 'OFP.CLOSE',
             'params': {
                 'conn_id': conn_id
+            }
+        }
+
+    def _ofp_add_identity(self, cert, cacert, privkey):
+        return {
+            'id': self._assign_xid(),
+            'method': 'OFP.ADD_IDENTITY',
+            'params': {
+                'cert': cert,
+                'cacert': cacert,
+                'privkey': privkey
             }
         }

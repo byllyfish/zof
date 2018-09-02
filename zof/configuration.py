@@ -8,17 +8,30 @@ from zof.driver import Driver
 class Configuration:
     """Stores Controller settings."""
 
-    #: List of endpoints to listen for OpenFlow connections "host:port".
-    listen_endpoints = ['6653']
-
-    #: List of supported OpenFlow versions.
-    listen_versions = [4]
+    #: Default driver class.
+    driver_class = Driver
 
     #: Default exit signals.
     exit_signals = [signal.SIGTERM, signal.SIGINT]
 
-    #: Default driver class.
-    driver_class = Driver
+    #: List of endpoints to listen for OpenFlow connections "host:port".
+    listen_endpoints = ['6653']
+
+    #: List of acceptable OpenFlow versions.
+    listen_versions = [4]
+
+    #: TLS certificate authority.
+    tls_cacert = ''
+
+    #: TLS certificate chain.
+    tls_cert = ''
+
+    #: TLS key log file.
+    tls_keylog = ''
+
+    #: TLS private key.
+    tls_privkey = ''
+
 
     def __init__(self, **kwds):
         """Initialize settings by overriding defaults."""

@@ -5,6 +5,7 @@ import contextlib
 
 from zof.configuration import Configuration
 from zof.datapath import Datapath
+from zof.exception import RequestError
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
@@ -73,23 +74,26 @@ class Controller:
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
         self.zof_tasks.create_task(self.zof_event_loop())
 
+        exit_status = 0
         with self.zof_signals_handled():
             async with self.zof_driver:
-                # Start app and OpenFlow listener.
-                await self.zof_invoke('START')
-                await self.zof_listen()
+                try:
+                    # Start app and OpenFlow listener.
+                    await self.zof_invoke('START')
+                    await self.zof_listen()
 
-                # Run until we're told to exit.
-                await self.zof_exit_status
+                    # Run until we're told to exit.
+                    await self.zof_exit_status
 
-                # Clean up datapath tasks.
-                for dp in self.zof_datapaths.values():
-                    dp.zof_cancel_tasks()
+                    await self.zof_cleanup()
+                    await self.zof_invoke('STOP')
 
-                # Clean up controller tasks and stop.
-                self.zof_tasks.cancel()
-                await self.zof_tasks.wait_cancelled()
-                await self.zof_invoke('STOP')
+                except RequestError as ex:
+                    logger.critical('Exception caught in run: %r', ex, exc_info=True)
+                    exit_status = 2
+                    await self.zof_cleanup()
+
+        return exit_status
 
     def create_task(self, coro):
         """Create an async task to run the coroutine.
@@ -195,19 +199,37 @@ class Controller:
         return dp
 
     async def zof_listen(self):
-        """Tell driver to listen on specific endpoints."""
-        if self.zof_config.listen_endpoints:
-            logger.debug('Listen on %r, versions %r',
-                         self.zof_config.listen_endpoints,
-                         self.zof_config.listen_versions)
-            coros = [
-                self.zof_driver.listen(
-                    endpoint,
-                    options=['FEATURES_REQ'],
-                    versions=self.zof_config.listen_versions)
-                for endpoint in self.zof_config.listen_endpoints
-            ]
-            await asyncio.gather(*coros)
+        """Tell driver to listen on configured endpoints."""
+        config = self.zof_config
+        if not config.listen_endpoints:
+            return
+
+        logger.debug('Listen on %r, versions %r',
+                     config.listen_endpoints,
+                     config.listen_versions)
+
+        tls_id = 0
+        if config.tls_cert:
+            # Set up TLS.
+            tls_id = await self.zof_driver.add_identity(cert=config.tls_cert, cacert=config.tls_cacert, privkey=config.tls_privkey)
+
+        coros = [
+            self.zof_driver.listen(
+                endpoint,
+                options=['FEATURES_REQ'],
+                versions=config.listen_versions, 
+                tls_id=tls_id)
+            for endpoint in config.listen_endpoints
+        ]
+        await asyncio.gather(*coros)
+
+    async def zof_cleanup(self):
+        """Clean up datapath and controller tasks."""
+        for dp in self.zof_datapaths.values():
+            dp.zof_cancel_tasks()
+
+        self.zof_tasks.cancel()
+        await self.zof_tasks.wait_cancelled()
 
     @contextlib.contextmanager
     def zof_signals_handled(self):
