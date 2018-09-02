@@ -10,10 +10,10 @@ class Datapath:
 
     def __init__(self, controller, conn_id, dp_id):
         """Initialize datapath object."""
-        self.zof_driver = controller.zof_driver
         self.id = dp_id
         self.conn_id = conn_id
-        self.tasks = TaskList(controller.zof_loop, controller.on_exception)
+        self.zof_driver = controller.zof_driver
+        self.zof_tasks = TaskList(controller.zof_loop, controller.on_exception)
 
     def send(self, msg):
         """Send message to datapath."""
@@ -34,11 +34,11 @@ class Datapath:
 
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
-        self.tasks.create_task(coro)
+        self.zof_tasks.create_task(coro)
 
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""
-        self.tasks.cancel()
+        self.zof_tasks.cancel()
 
     def __repr__(self):
         """Return string representation of datapath."""
