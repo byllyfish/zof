@@ -6,7 +6,13 @@ from zof.tasklist import TaskList
 
 
 class Datapath:
-    """Stores info about each connected datapath."""
+    """Stores info about each connected datapath.
+
+    Attributes:
+        id (str): Datapath ID
+        conn_id (int): Connection Identifier
+
+    """
 
     def __init__(self, controller, conn_id, dp_id):
         """Initialize datapath object."""

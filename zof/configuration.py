@@ -9,7 +9,7 @@ class Configuration:
     """Stores Controller settings."""
 
     #: Default driver class.
-    driver_class = Driver
+    zof_driver_class = Driver
 
     #: Default exit signals.
     exit_signals = [signal.SIGTERM, signal.SIGINT]

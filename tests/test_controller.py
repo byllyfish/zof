@@ -12,7 +12,7 @@ class MockController(Controller):
     """Implements a test controller that uses a mock driver."""
 
     def __init__(self, **kwds):
-        super().__init__(Configuration(driver_class=MockDriver, **kwds))
+        super().__init__(Configuration(zof_driver_class=MockDriver, **kwds))
         self.events = []
 
     def on_start(self):

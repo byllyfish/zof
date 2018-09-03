@@ -66,7 +66,7 @@ class Controller:
     def __init__(self, config=None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()
-        self.zof_driver = self.zof_config.driver_class()
+        self.zof_driver = self.zof_config.zof_driver_class()
 
     async def run(self):
         """Run controller in an event loop."""
