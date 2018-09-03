@@ -14,6 +14,18 @@ class Driver:
     The driver implements the basic OpenFlow RPC commands: listen, connect,
     send and request. It facilitates request/reply pairing and dispatches
     incoming events to higher layers.
+
+    A driver normally uses `async with`:
+
+        async with Driver() as driver:
+            conn_id = await driver.connect('127.0.0.1:6653')
+            ...
+            await driver.close(conn_id)
+
+    Attributes:
+        event_queue (Queue): Queue of incoming events.
+        pid (int): Process ID of oftr tool.
+
     """
 
     def __init__(self, *, debug=False):
@@ -95,6 +107,11 @@ class Driver:
         reply = await self.request(request)
         return reply['count']
 
+    def close_nowait(self, conn_id):
+        """Close an OpenFlow connection."""
+        request = self._ofp_close_nowait(conn_id)
+        self.send(request)
+
     async def add_identity(self, cert, cacert, privkey):
         """Add TLS identity."""
         request = self._ofp_add_identity(cert, cacert, privkey)
@@ -150,6 +167,14 @@ class Driver:
     def _ofp_close(self, conn_id):
         return {
             'id': self._assign_xid(),
+            'method': 'OFP.CLOSE',
+            'params': {
+                'conn_id': conn_id
+            }
+        }
+
+    def _ofp_close_nowait(self, conn_id):
+        return {
             'method': 'OFP.CLOSE',
             'params': {
                 'conn_id': conn_id

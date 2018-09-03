@@ -8,16 +8,21 @@ from zof.tasklist import TaskList
 class Datapath:
     """Stores info about each connected datapath.
 
+    Datapath instances are ephemeral. The instance is destroyed when
+    the datapath disconnects and a new instance is created when the
+    same datapath reconnects.
+
     Attributes:
         id (str): Datapath ID
         conn_id (int): Connection Identifier
-
+        closed (bool): True if datapath is closed
     """
 
     def __init__(self, controller, conn_id, dp_id):
         """Initialize datapath object."""
         self.id = dp_id
         self.conn_id = conn_id
+        self.closed = False
         self.zof_driver = controller.zof_driver
         self.zof_tasks = TaskList(controller.zof_loop, controller.on_exception)
 
@@ -41,6 +46,13 @@ class Datapath:
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
         self.zof_tasks.create_task(coro)
+
+    def close(self):
+        """Close the datapath preemptively."""
+        if not self.closed:
+            self.closed = True
+            self.zof_driver.close_nowait(self.conn_id)
+            self.zof_cancel_tasks()
 
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""

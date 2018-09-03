@@ -56,6 +56,12 @@ class Controller:
         on_stop()
         on_exception(exc)
 
+    Methods and attributes that begin with `zof_` are reserved.
+
+    Attributes:
+        zof_config (zof.Configuration): ZOF configuration object
+        zof_driver (zof.Driver): ZOF driver object
+
     """
 
     zof_loop = None
@@ -187,6 +193,7 @@ class Controller:
         """Remove the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
         dp = self.zof_datapaths.pop(conn_id)
+        dp.closed = True
         dp.zof_cancel_tasks()
         return dp
 
