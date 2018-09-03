@@ -174,12 +174,7 @@ class Driver:
         }
 
     def _ofp_close_nowait(self, conn_id):
-        return {
-            'method': 'OFP.CLOSE',
-            'params': {
-                'conn_id': conn_id
-            }
-        }
+        return {'method': 'OFP.CLOSE', 'params': {'conn_id': conn_id}}
 
     def _ofp_add_identity(self, cert, cacert, privkey):
         return {

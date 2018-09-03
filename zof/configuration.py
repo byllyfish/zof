@@ -9,13 +9,16 @@ class Configuration:
     """Stores Controller settings.
 
     Attributes:
-        exit_signals (List[Signal]): Unix signals that will exit the controller.
-        listen_endpoints (List[str]): List of endpoints to listen for OpenFlow connections.
+        exit_signals (List[Signal]): Unix signals that will stop the
+            controller.
+        listen_endpoints (List[str]): List of endpoints to listen for OpenFlow
+            connections.
         listen_versions (List[int]): List of acceptable OpenFlow versions.
         tls_cacert (str): TLS certificate authority.
         tls_cert (str): TLS certificate chain.
         tls_keylog (str): TLS key log file.
         tls_privkey (str): TLS private key.
+
     """
 
     zof_driver_class = Driver

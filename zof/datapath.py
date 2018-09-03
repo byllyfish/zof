@@ -6,16 +6,17 @@ from zof.tasklist import TaskList
 
 
 class Datapath:
-    """Stores info about each connected datapath.
+    """Reference to a connected datapath.
 
     Datapath instances are ephemeral. The instance is destroyed when
     the datapath disconnects and a new instance is created when the
-    same datapath reconnects.
+    same datapath ID reconnects.
 
     Attributes:
         id (str): Datapath ID
         conn_id (int): Connection Identifier
         closed (bool): True if datapath is closed
+
     """
 
     def __init__(self, controller, conn_id, dp_id):
