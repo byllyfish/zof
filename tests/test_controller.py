@@ -16,7 +16,7 @@ class MockController(Controller):
         self.events = []
 
     def on_start(self):
-        self.zof_loop.call_later(0.01, self.zof_exit, 0)
+        self.zof_loop.call_later(0.01, self.zof_quit)
         self.events.append('START')
 
     def on_stop(self):
@@ -68,7 +68,7 @@ async def test_async_channel_up_cancel(caplog):
     class _Controller(MockController):
         def on_start(self):
             self.zof_driver.channel_wait = -1
-            self.zof_loop.call_later(0.01, self.zof_exit, 0)
+            self.zof_loop.call_later(0.01, self.zof_quit)
             self.events.append('START')
 
         async def on_channel_up(self, dp, event):
@@ -115,7 +115,7 @@ async def test_async_start(caplog):
 
     class _Controller(MockController):
         async def on_start(self):
-            self.zof_loop.call_later(0.1, self.zof_exit, 0)
+            self.zof_loop.call_later(0.1, self.zof_quit)
             self.events.append('START')
             await asyncio.sleep(0.02)
             self.events.append('NEXT')
@@ -169,7 +169,7 @@ async def test_request_benchmark(caplog):
                 print(await _controller_request_benchmark(
                     'controller_request', dp, 1000))
             finally:
-                self.zof_exit(0)
+                self.zof_quit()
 
     controller = _Controller()
     await controller.run()
@@ -231,7 +231,7 @@ async def test_packet_in_async(caplog):
 
         def on_channel_down(self, dp, event):
             self.log_event(dp, event)
-            self.zof_exit(0)
+            self.zof_quit()
 
     controller = _Controller()
     await controller.run()
@@ -271,7 +271,7 @@ async def test_packet_in_sync(caplog):
 
         def on_channel_down(self, dp, event):
             self.log_event(dp, event)
-            self.zof_exit(0)
+            self.zof_quit()
 
     controller = _Controller()
     await controller.run()

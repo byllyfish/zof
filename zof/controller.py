@@ -64,23 +64,20 @@ class Controller:
 
     """
 
-    zof_loop = None
-    zof_datapaths = None
-    zof_exit_status = None
-    zof_tasks = None
-
     def __init__(self, config=None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()
         self.zof_driver = self.zof_config.zof_driver_class()
+        self.zof_datapaths = {}
+        self.zof_loop = None
+        self.zof_run_task = None
+        self.zof_tasks = None
 
     async def run(self):
         """Run controller in an event loop."""
         self.zof_loop = asyncio.get_event_loop()
-        self.zof_exit_status = self.zof_loop.create_future()
-        self.zof_datapaths = {}
+        self.zof_run_task = asyncio.Task.current_task(self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
-        self.zof_tasks.create_task(self.zof_event_loop())
 
         exit_status = RUN_STATUS_OKAY
         with self.zof_signals_handled():
@@ -90,8 +87,8 @@ class Controller:
                     await self.zof_invoke('START')
                     await self.zof_listen()
 
-                    # Run until we're told to exit.
-                    await self.zof_exit_status
+                    # Run until cancelled.
+                    await self.zof_event_loop()
 
                     await self.zof_cleanup()
                     await self.zof_invoke('STOP')
@@ -129,7 +126,10 @@ class Controller:
         return list(self.zof_datapaths.values())
 
     async def zof_event_loop(self):
-        """Dispatch events to handler functions."""
+        """Dispatch events to handler functions.
+
+        To exit the loop, cancel the task.
+        """
         event_queue = self.zof_driver.event_queue
 
         while True:
@@ -246,7 +246,7 @@ class Controller:
         """Context manager for exit signal handling."""
         signals = list(self.zof_config.exit_signals)
         for signum in signals:
-            self.zof_loop.add_signal_handler(signum, self.zof_exit)
+            self.zof_loop.add_signal_handler(signum, self.zof_quit)
 
         yield
 
@@ -267,9 +267,9 @@ class Controller:
         """Return handler function for given event type."""
         return getattr(self, 'on_%s' % event_type.lower(), None)
 
-    def zof_exit(self, exit_status=0):
-        """Exit controller event loop."""
-        self.zof_exit_status.set_result(exit_status)
+    def zof_quit(self):
+        """Quit controller event loop."""
+        self.zof_run_task.cancel()
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
