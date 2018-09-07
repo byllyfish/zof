@@ -446,7 +446,9 @@ async def test_controller_custom_event(caplog):
     exit_status = await controller.run()
 
     assert exit_status == 0
-    assert controller.events == ['START', 'CHANNEL_UP', 'FOO', 'CHANNEL_DOWN', 'STOP']
+    assert controller.events == [
+        'START', 'CHANNEL_UP', 'FOO', 'CHANNEL_DOWN', 'STOP'
+    ]
     assert not caplog.record_tuples
 
 
@@ -489,4 +491,6 @@ async def test_exception_in_start_stop(caplog):
 
     assert exit_status != 0
     assert controller.events == []
-    assert caplog.record_tuples == [('zof', 50, "Exception in run: RuntimeError('start failed')")]
+    assert caplog.record_tuples == [
+        ('zof', 50, "Exception in run: RuntimeError('start failed')")
+    ]
