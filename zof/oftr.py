@@ -132,11 +132,14 @@ class OftrProtocol(asyncio.SubprocessProtocol):
 
 
 class _RequestInfo:
+    """Manage information about in-flight requests."""
+
     def __init__(self, loop, timeout):
         self.future = loop.create_future()
         self.expiration = loop.time() + timeout
 
     def handle_reply(self, msg):
+        """Handle event that replies to a request."""
         if 'type' in msg:
             if msg['type'] in ('ERROR', 'CHANNEL_ALERT'):
                 self.future.set_exception(RequestError(msg))
@@ -150,11 +153,13 @@ class _RequestInfo:
             logger.error('OFTR: Unexpected reply: %r', msg)
 
     def handle_timeout(self, xid):
+        """Handle timeout of a request."""
         # Synthesize an error reply to stand in for the timeout error.
         msg = {'id': xid, 'error': {'message': 'request timeout'}}
         self.future.set_exception(RequestError(msg))
 
     def handle_closed(self, xid):
+        """Handle connection close while request in flight."""
         # Synthesize an error reply to stand in for close error.
         msg = {'id': xid, 'error': {'message': 'connection closed'}}
         self.future.set_exception(RequestError(msg))

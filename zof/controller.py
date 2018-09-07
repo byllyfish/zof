@@ -278,10 +278,10 @@ class Controller:
         """Quit controller event loop."""
         self.zof_run_task.cancel()
 
-    def on_exception(self, exc):
+    def on_exception(self, exc):  # pylint: disable=no-self-use
         """Report exception from a zof handler function."""
         logger.critical('Exception in zof handler: %r', exc, exc_info=True)
 
-    def on_channel_alert(self, dp, event):
+    def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
         logger.warning('CHANNEL_ALERT dp=%r %r', dp, event)
