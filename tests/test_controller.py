@@ -82,8 +82,9 @@ async def test_async_channel_up_cancel(caplog):
                 self.events.append('CANCEL')
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == [
         'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP'
     ]
@@ -101,8 +102,9 @@ async def test_async_channel_down(caplog):
             self.events.append('NEXT')
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == [
         'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'NEXT', 'STOP'
     ]
@@ -121,8 +123,9 @@ async def test_async_start(caplog):
             self.events.append('NEXT')
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == [
         'START', 'NEXT', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP'
     ]
@@ -145,8 +148,9 @@ async def test_exceptions(caplog):
             self.events.append(str(exc))
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == [
         'START', 'CHANNEL_UP', 'FAIL_SYNC', 'FAIL_ASYNC', 'CHANNEL_DOWN',
         'STOP'
@@ -172,8 +176,9 @@ async def test_request_benchmark(caplog):
                 self.zof_quit()
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
     assert not caplog.record_tuples
 
@@ -234,8 +239,9 @@ async def test_packet_in_async(caplog):
             self.zof_quit()
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
@@ -274,8 +280,9 @@ async def test_packet_in_sync(caplog):
             self.zof_quit()
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
@@ -290,8 +297,9 @@ async def test_controller_invalid_event(caplog):
             self.zof_driver.post_event({'notype': 'invalid'})
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
         ('zof', 50, "Exception in zof_event_loop: KeyError('type')")
@@ -308,8 +316,9 @@ async def test_controller_unknown_connid(caplog):
             self.zof_driver.post_event({'conn_id': 1000, 'type': 'unknown'})
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [('zof', 30, 'Unknown conn_id 1000')]
 
@@ -324,8 +333,9 @@ async def test_controller_exception_in_handler(caplog):
             raise RuntimeError('oops')
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
         ('zof', 50, "Exception in zof handler: RuntimeError('oops')")
@@ -345,8 +355,9 @@ async def test_controller_channel_alert(caplog):
             })
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
         ('zof', 30,
@@ -369,8 +380,9 @@ async def test_controller_all_datapaths(caplog):
             assert dp not in self.all_datapaths()
 
     controller = _Controller()
-    await controller.run()
+    exit_status = await controller.run()
 
+    assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
@@ -415,3 +427,66 @@ async def test_controller_no_listen(caplog):
 
     assert exit_status == 0
     assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_controller_custom_event(caplog):
+    """Test controller with a custom event."""
+
+    class _Controller(MockController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            self.zof_driver.post_event({'type': 'FOO'})
+
+        def on_foo(self, dp, event):
+            assert dp is None
+            self.log_event(dp, event)
+
+    controller = _Controller()
+    exit_status = await controller.run()
+
+    assert exit_status == 0
+    assert controller.events == ['START', 'CHANNEL_UP', 'FOO', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_controller_custom_event_loop(caplog):
+    """Test controller with a custom event in a loop.
+
+    This tests the Controller.zof_dispatch_count anti-starvation
+    mechanism.
+    """
+
+    class _Controller(MockController):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            self.zof_driver.post_event({'type': 'FOO'})
+
+        def on_foo(self, dp, event):
+            assert dp is None
+            # Post another foo event (creating a dispatch loop).
+            self.zof_driver.post_event({'type': 'FOO'})
+
+    controller = _Controller()
+    exit_status = await controller.run()
+
+    assert exit_status == 0
+    assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_exception_in_start_stop(caplog):
+    """Test controller with start handler that throws exception."""
+
+    class _Controller(MockController):
+        async def on_start(self):
+            raise RuntimeError('start failed')
+
+    controller = _Controller()
+    exit_status = await controller.run()
+
+    assert exit_status != 0
+    assert controller.events == []
+    assert caplog.record_tuples == [('zof', 50, "Exception in run: RuntimeError('start failed')")]

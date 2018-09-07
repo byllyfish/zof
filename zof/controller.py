@@ -72,6 +72,7 @@ class Controller:
         self.zof_loop = None
         self.zof_run_task = None
         self.zof_tasks = None
+        self._zof_dispatch_count = 0
 
     async def run(self):
         """Run controller in an event loop."""
@@ -173,12 +174,18 @@ class Controller:
             create_task(handler(dp, event))
             # Yield time to the newly created task.
             await asyncio.sleep(0)
+            self._zof_dispatch_count = 0
         else:
             # Invoke handler directly.
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
                 self.on_exception(ex)
+            # Avoid starving other tasks when there are many events.
+            self._zof_dispatch_count += 1
+            if self._zof_dispatch_count > 200:
+                await asyncio.sleep(0)
+                self._zof_dispatch_count = 0
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
