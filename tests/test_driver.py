@@ -105,7 +105,11 @@ async def test_large_rpc():
     """Large RPC payload (big, but not too big)."""
 
     async with Driver() as driver:
-        request = {'id': 1, 'method': 'FOO', 'params': 'x' * (_MSG_LIMIT - 100)}
+        request = {
+            'id': 1,
+            'method': 'FOO',
+            'params': 'x' * (_MSG_LIMIT - 100)
+        }
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 

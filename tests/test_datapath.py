@@ -9,6 +9,7 @@ from zof.packet import Packet
 
 class MockController:
     """Mock controler for testing datapath."""
+
     def __init__(self, loop=None):
         self.zof_loop = loop
         self.zof_driver = MockDriver()
