@@ -1,3 +1,5 @@
+"""Test zof.Datapath class."""
+
 import pytest
 
 from mock_driver import MockDriver
@@ -6,6 +8,7 @@ from zof.packet import Packet
 
 
 class MockController:
+    """Mock controler for testing datapath."""
     def __init__(self, loop=None):
         self.zof_loop = loop
         self.zof_driver = MockDriver()

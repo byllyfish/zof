@@ -1,3 +1,5 @@
+"""Test zof.Packet class."""
+
 import pytest
 
 from zof.packet import Packet

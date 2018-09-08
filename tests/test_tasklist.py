@@ -1,5 +1,7 @@
-import pytest
+"""Tests for TaskList class."""
+
 import asyncio
+import pytest
 
 from zof.tasklist import TaskList
 
@@ -29,7 +31,7 @@ async def test_tasklist_container(event_loop, caplog):
     await tasks.wait_cancelled()
 
     assert not tasks
-    assert len(tasks) == 0
+    assert len(tasks) == 0  # pylint: disable=len-as-condition
     assert task not in tasks
     assert list(tasks) == []
 
@@ -57,7 +59,7 @@ async def test_tasklist_cancel(event_loop):
         assert len(tasks) <= 1
         await asyncio.sleep(0)
 
-    assert len(tasks) == 0
+    assert not tasks
 
 
 @pytest.mark.asyncio
@@ -75,7 +77,7 @@ async def test_tasklist_cancel_nostart(event_loop):
         assert len(tasks) <= 1
         await asyncio.sleep(0)
 
-    assert len(tasks) == 0
+    assert not tasks
 
 
 @pytest.mark.asyncio

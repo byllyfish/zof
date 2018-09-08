@@ -1,3 +1,5 @@
+"""Test zof.Controller class."""
+
 import asyncio
 import pytest
 
@@ -5,7 +7,7 @@ from mock_driver import MockDriver
 from zof.configuration import Configuration
 from zof.controller import Controller
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument,missing-docstring
 
 
 class MockController(Controller):
@@ -191,10 +193,10 @@ async def _controller_request_benchmark(name, dp, loops):
 
     async def _test(loops):
         driver = dp.zof_driver
-        DESC = {'id': 1, 'method': 'OFP.DESCRIPTION'}
+        desc = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         start_time = _timer()
         for _ in range(loops):
-            await driver.request(DESC)
+            await driver.request(desc)
         return _timer() - start_time
 
     bench = {'benchmark': name, 'loops': loops, 'times': []}

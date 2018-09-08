@@ -1,3 +1,5 @@
+"""Test zof.Configuration class."""
+
 from zof.configuration import Configuration
 
 

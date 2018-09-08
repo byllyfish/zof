@@ -1,3 +1,5 @@
+"""Test zof.Driver class."""
+
 import pytest
 
 from zof.driver import Driver
@@ -118,11 +120,11 @@ async def _driver_request_benchmark(name, loops):
     from timeit import default_timer as _timer
 
     async def _test(loops):
-        DESC = {'id': 1, 'method': 'OFP.DESCRIPTION'}
+        desc = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         async with Driver() as driver:
             start_time = _timer()
             for _ in range(loops):
-                await driver.request(DESC)
+                await driver.request(desc)
             return _timer() - start_time
 
     bench = {'benchmark': name, 'loops': loops, 'times': []}

@@ -1,7 +1,7 @@
 """Test oftr api."""
 
-import pytest
 from ipaddress import ip_address
+import pytest
 
 from zof import oftr
 
