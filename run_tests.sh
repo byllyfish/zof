@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Run tests with code coverage.
+# Run tests with code coverage. All tests have a timeout of 30 seconds.
 #
 # Also run the following lint checks:
 #   - pylint (warning, error, failure)
@@ -20,7 +20,7 @@ python -m pytest -s -vv --timeout=30 \
                  --cov=zof $COVERAGE_ARGS
 
 echo "===== pytype ====="
-pytype zof
+pytype zof || echo 0
 
 echo "===== pycodestyle ====="
 pycodestyle zof tests demo
