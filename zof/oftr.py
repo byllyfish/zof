@@ -154,15 +154,11 @@ class _RequestInfo:
 
     def handle_timeout(self, xid):
         """Handle timeout of a request."""
-        # Synthesize an error reply to stand in for the timeout error.
-        msg = {'id': xid, 'error': {'message': 'request timeout'}}
-        self.future.set_exception(RequestError(msg))
+        self.future.set_exception(RequestError.zof_timeout(xid))
 
     def handle_closed(self, xid):
         """Handle connection close while request in flight."""
-        # Synthesize an error reply to stand in for close error.
-        msg = {'id': xid, 'error': {'message': 'connection closed'}}
-        self.future.set_exception(RequestError(msg))
+        self.future.set_exception(RequestError.zof_closed(xid))
 
 
 def zof_load_msg(data):

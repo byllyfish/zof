@@ -31,7 +31,7 @@ class Datapath:
     def send(self, msg):
         """Send message to datapath."""
         if self.closed:
-            raise RequestError.zof_closed(self.conn_id)
+            raise RequestError.zof_closed()
 
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
@@ -43,7 +43,7 @@ class Datapath:
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
         if self.closed:
-            raise RequestError.zof_closed(self.conn_id)
+            raise RequestError.zof_closed()
 
         logger.debug('Send %r dp=%r', msg['type'], self)
         msg['conn_id'] = self.conn_id

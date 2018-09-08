@@ -29,7 +29,13 @@ class RequestError(Exception):
         return 'Other event: %r' % event
 
     @classmethod
-    def zof_closed(cls, conn_id):
-        """Create exception for closed datapath."""
-        event = {'id': 0, 'error': { 'message': 'Connection %d closed' % conn_id }}
-        return cls(event)
+    def zof_timeout(cls, xid):
+        """Create exception for request timeout."""
+        msg = {'id': xid, 'error': {'message': 'request timeout'}}
+        return cls(msg)
+
+    @classmethod
+    def zof_closed(cls, xid=0):
+        """Create exception for closed connection."""
+        msg = {'id': xid, 'error': {'message': 'connection closed'}}
+        return cls(msg)
