@@ -3,6 +3,7 @@
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
+from zof.exception import RequestError
 
 
 class Datapath:
@@ -29,18 +30,22 @@ class Datapath:
 
     def send(self, msg):
         """Send message to datapath."""
-        logger.debug('Send %r dp=%r', msg['type'], self)
+        if self.closed:
+            raise RequestError.zof_closed(self.conn_id)
 
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
 
+        logger.debug('Send %r dp=%r', msg['type'], self)
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
 
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
-        logger.debug('Send %r dp=%r', msg['type'], self)
+        if self.closed:
+            raise RequestError.zof_closed(self.conn_id)
 
+        logger.debug('Send %r dp=%r', msg['type'], self)
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)
 
@@ -51,6 +56,7 @@ class Datapath:
     def close(self):
         """Close the datapath preemptively."""
         if not self.closed:
+            logger.debug('Close dp=%r', self)
             self.closed = True
             self.zof_driver.close_nowait(self.conn_id)
             self.zof_cancel_tasks()

@@ -44,6 +44,10 @@ class MockDriver:
             return {'xid': xid}
         return {'id': xid}
 
+    def close_nowait(self, conn_id):
+        """Mock close_nowait method."""
+        assert isinstance(conn_id, int)
+
     def post_event(self, event):
         """Mock post_event method."""
         self.event_queue.put_nowait(event)

@@ -99,6 +99,7 @@ async def test_async_channel_down(caplog):
 
     class _Controller(MockController):
         async def on_channel_down(self, dp, event):
+            assert dp.closed
             self.log_event(dp, event)
             await asyncio.sleep(0)
             self.events.append('NEXT')
@@ -374,10 +375,12 @@ async def test_controller_all_datapaths(caplog):
 
     class _Controller(MockController):
         def on_channel_up(self, dp, event):
+            assert not dp.closed
             self.log_event(dp, event)
             assert dp in self.all_datapaths()
 
         def on_channel_down(self, dp, event):
+            assert dp.closed
             self.log_event(dp, event)
             assert dp not in self.all_datapaths()
 

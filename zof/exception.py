@@ -27,3 +27,9 @@ class RequestError(Exception):
             assert 'id' in event
             return 'ERROR: %s' % event['error']['message']
         return 'Other event: %r' % event
+
+    @classmethod
+    def zof_closed(cls, conn_id):
+        """Create exception for closed datapath."""
+        event = {'id': 0, 'error': { 'message': 'Connection %d closed' % conn_id }}
+        return cls(event)

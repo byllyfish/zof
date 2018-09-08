@@ -3,7 +3,7 @@
 __version__ = '0.99.0'
 
 import sys
-if sys.version_info[:2] < (3, 7):
+if sys.version_info[:2] < (3, 7):  # pragma: no cover
     import platform
     raise NotImplementedError(
         'zof does not support Python %s. Python 3.7 required.'
