@@ -2,11 +2,11 @@
 
 import pytest
 
-from zof.driver import Driver
+from zof.driver import Driver, _MAX_RESERVED_XID
 from zof.exception import RequestError
 
 # Max size of RPC message supported by oftr.
-MSG_LIMIT = 2**20 - 1
+_MSG_LIMIT = 2**20 - 1
 
 
 @pytest.mark.asyncio
@@ -91,7 +91,7 @@ async def test_large_rpc_too_big():
     """Large RPC payload (too big)."""
 
     async with Driver() as driver:
-        request = {'id': 1, 'method': 'FOO', 'params': 'x' * MSG_LIMIT}
+        request = {'id': 1, 'method': 'FOO', 'params': 'x' * _MSG_LIMIT}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
@@ -105,7 +105,7 @@ async def test_large_rpc():
     """Large RPC payload (big, but not too big)."""
 
     async with Driver() as driver:
-        request = {'id': 1, 'method': 'FOO', 'params': 'x' * (MSG_LIMIT - 100)}
+        request = {'id': 1, 'method': 'FOO', 'params': 'x' * (_MSG_LIMIT - 100)}
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
 
@@ -163,8 +163,9 @@ async def test_driver_openflow():
             agent.send(dict(type='BARRIER_REPLY', conn_id=conn_id))
 
             # Test controller request (tied to agent reply sent above).
-            reply = await controller.request(
-                dict(type='BARRIER_REQUEST', conn_id=2))
+            request = dict(type='BARRIER_REQUEST', conn_id=2)
+            reply = await controller.request(request)
+            assert request['xid'] == _MAX_RESERVED_XID + 2
             assert reply['type'] == 'BARRIER_REPLY'
             assert reply['conn_id'] == 2
 

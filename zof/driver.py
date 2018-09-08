@@ -7,6 +7,11 @@ import shlex
 from zof.log import logger
 from zof.oftr import OftrProtocol
 
+# XID values 0-255 are reserved. XID values are only assigned
+# values between 256 and 2**32-1.
+_MAX_RESERVED_XID = 0xff
+_MAX_DYNAMIC_XID = 0xffffffff
+
 
 class Driver:
     """Concrete class that communicates with oftr.
@@ -34,7 +39,7 @@ class Driver:
         self.pid = None
         self._debug = debug
         self._protocol = None
-        self._last_xid = 0
+        self._xid = _MAX_RESERVED_XID
 
     async def __aenter__(self):
         """Async context manager entry point."""
@@ -133,8 +138,10 @@ class Driver:
 
     def _assign_xid(self):
         """Return the next xid to use for a request/send."""
-        self._last_xid += 1
-        return self._last_xid
+        self._xid += 1
+        if self._xid > _MAX_DYNAMIC_XID:
+            self._xid = _MAX_RESERVED_XID
+        return self._xid
 
     def _ofp_send(self, event):
         if 'type' not in event:

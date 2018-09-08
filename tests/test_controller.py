@@ -476,6 +476,7 @@ async def test_controller_custom_event_loop(caplog):
     exit_status = await controller.run()
 
     assert exit_status == 0
+    # CHANNEL_DOWN event is crowded out by the FOO event.
     assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
     assert not caplog.record_tuples
 
