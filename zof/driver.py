@@ -133,7 +133,6 @@ class Driver:
         cmd = '%s jsonrpc'
         if self._debug:
             cmd += ' --trace=rpc'
-
         return shlex.split(cmd % shutil.which('oftr'))
 
     def _assign_xid(self):

@@ -82,9 +82,10 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             xid = msg.get('id')
             ofp_msg = False
 
-        req_info = self._request_futures.pop(xid, None)
-        if req_info is not None:
-            req_info.handle_reply(msg)
+        req_info = self._request_futures.get(xid)
+        if req_info:
+            if req_info.handle_reply(msg):
+                del self._request_futures[xid]
         elif ofp_msg:
             self.dispatch(msg)
         else:
@@ -137,12 +138,24 @@ class _RequestInfo:
     def __init__(self, loop, timeout):
         self.future = loop.create_future()
         self.expiration = loop.time() + timeout
+        self.multipart_reply = None
 
     def handle_reply(self, msg):
-        """Handle event that replies to a request."""
+        """Handle event that replies to a request.
+
+        Returns:
+            bool: True if reply was fully received.
+        """
+        result = True
         if 'type' in msg:
+            flags = msg.get('flags')
             if msg['type'] in ('ERROR', 'CHANNEL_ALERT'):
                 self.future.set_exception(RequestError(msg))
+            elif flags and 'MORE' in flags:
+                self.handle_multipart_middle(msg)
+                result = False
+            elif self.multipart_reply is not None:
+                self.handle_multipart_last(msg)
             else:
                 self.future.set_result(msg)
         elif 'result' in msg:
@@ -151,6 +164,7 @@ class _RequestInfo:
             self.future.set_exception(RequestError(msg))
         else:
             logger.error('OFTR: Unexpected reply: %r', msg)
+        return result
 
     def handle_timeout(self, xid):
         """Handle timeout of a request."""
@@ -159,6 +173,24 @@ class _RequestInfo:
     def handle_closed(self, xid):
         """Handle connection close while request in flight."""
         self.future.set_exception(RequestError.zof_closed(xid))
+
+    def handle_multipart_middle(self, msg):
+        """Handle multipart message with the more flag."""
+        if self.multipart_reply is None:
+            self.multipart_reply = msg
+        else:
+            self._append_multipart(msg)
+
+    def handle_multipart_last(self, msg):
+        """Handle last multipart message."""
+        self._append_multipart(msg)
+        self.future.set_result(self.multipart_reply)
+
+    def _append_multipart(self, msg):
+        assert msg['type'] == self.multipart_reply['type']
+        assert isinstance(self.multipart_reply['msg'], list)
+        assert isinstance(msg['msg'], list)
+        self.multipart_reply['msg'].extend(msg['msg'])
 
 
 def zof_load_msg(data):

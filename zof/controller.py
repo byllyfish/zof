@@ -99,6 +99,7 @@ class Controller:
                     exit_status = RUN_STATUS_ERROR
                     await self.zof_cleanup()
 
+        logger.debug('Exit status %d', exit_status)
         return exit_status
 
     def create_task(self, coro):
@@ -158,6 +159,7 @@ class Controller:
                                  dp)
 
             except asyncio.CancelledError:
+                logger.debug('Event loop cancelled')
                 return
 
             except Exception as ex:  # pylint: disable=broad-except
