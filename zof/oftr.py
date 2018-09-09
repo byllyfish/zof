@@ -187,7 +187,9 @@ class _RequestInfo:
         self.future.set_result(self.multipart_reply)
 
     def _append_multipart(self, msg):
-        assert msg['type'] == self.multipart_reply['type']
+        if msg['type'] != self.multipart_reply['type']:
+            logger.warning('Inconsistent multipart type: %s (expected %s)', msg['type'], self.multipart_reply['type'])
+            return
         assert isinstance(self.multipart_reply['msg'], list)
         assert isinstance(msg['msg'], list)
         self.multipart_reply['msg'].extend(msg['msg'])

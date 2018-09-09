@@ -30,10 +30,38 @@ def test_zof_dump_msg():
 
 @pytest.mark.asyncio
 async def test_request_info(event_loop, caplog):
-    """Test RequestInfo."""
+    """Test RequestInfo with invalid reply."""
 
     # pylint: disable=protected-access
     info = oftr._RequestInfo(event_loop, 1.0)
-    info.handle_reply({})
+    assert info.handle_reply({})
 
     assert caplog.record_tuples == [('zof', 40, 'OFTR: Unexpected reply: {}')]
+
+
+@pytest.mark.asyncio
+async def test_request_info_multipart(event_loop, caplog):
+    """Test RequestInfo with multipart reply."""
+
+    # pylint: disable=protected-access
+    info = oftr._RequestInfo(event_loop, 1.0)
+    assert not info.handle_reply({'type': 'FOO', 'flags': ['MORE'], 'msg': [1]})
+    assert not info.handle_reply({'type': 'FOO', 'flags': ['MORE'], 'msg': [2]})
+    assert info.handle_reply({'type': 'FOO', 'msg': [3]})
+
+    assert info.multipart_reply == { 'type': 'FOO', 'flags': ['MORE'], 'msg': [1, 2, 3]}
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_request_info_multipart_inconsistent(event_loop, caplog):
+    """Test RequestInfo with inconsistent multipart reply."""
+
+    # pylint: disable=protected-access
+    info = oftr._RequestInfo(event_loop, 1.0)
+    assert not info.handle_reply({'type': 'FOO', 'flags': ['MORE'], 'msg': [1]})
+    assert not info.handle_reply({'type': 'BAR', 'flags': ['MORE'], 'msg': [2]})
+    assert info.handle_reply({'type': 'FOO', 'msg': [3]})
+
+    assert info.multipart_reply == { 'type': 'FOO', 'flags': ['MORE'], 'msg': [1, 3]}
+    assert caplog.record_tuples == [('zof', 30, 'Inconsistent multipart type: BAR (expected FOO)')]
