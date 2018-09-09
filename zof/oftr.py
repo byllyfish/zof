@@ -145,6 +145,7 @@ class _RequestInfo:
 
         Returns:
             bool: True if reply was fully received.
+
         """
         result = True
         if 'type' in msg:
@@ -188,7 +189,8 @@ class _RequestInfo:
 
     def _append_multipart(self, msg):
         if msg['type'] != self.multipart_reply['type']:
-            logger.warning('Inconsistent multipart type: %s (expected %s)', msg['type'], self.multipart_reply['type'])
+            logger.warning('Inconsistent multipart type: %s (expected %s)',
+                           msg['type'], self.multipart_reply['type'])
             return
         assert isinstance(self.multipart_reply['msg'], list)
         assert isinstance(msg['msg'], list)

@@ -6,8 +6,8 @@ import sys
 if sys.version_info[:2] < (3, 7):  # pragma: no cover
     import platform
     raise NotImplementedError(
-        'zof does not support Python %s. Python 3.7 required.'
-        % platform.python_version())
+        'zof does not support Python %s. Python 3.7 required.' %
+        platform.python_version())
 
 from zof.controller import Controller  # noqa: E402
 from zof.configuration import Configuration  # noqa: E402
