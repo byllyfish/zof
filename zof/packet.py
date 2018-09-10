@@ -50,10 +50,13 @@ class Packet(dict):
         assert event['type'] == 'PACKET_IN'
 
         msg = event['msg']
+        data = bytes.fromhex(msg['data'])
         pkt = cls.zof_from_field_list(msg.pop('_pkt', []))
         pkt_pos = pkt.pop('x_pkt_pos', 0)
-        pkt['payload'] = bytes.fromhex(msg.pop('data', ''))[pkt_pos:]
+        if pkt_pos > 0:
+            pkt['payload'] = data[pkt_pos:]
         msg['pkt'] = pkt
+        msg['data'] = data
 
     @staticmethod
     def zof_to_packet_out(event):

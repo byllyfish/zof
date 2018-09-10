@@ -19,7 +19,7 @@ def test_zof_dump_msg():
                  ip_address('127.0.0.1'),
                  ip_address('::1')]
     }
-    expected = b'{"info": [null, "616263", "127.0.0.1", "::1"]}\x00'
+    expected = b'{"info":[null,"616263","127.0.0.1","::1"]}\x00'
     assert oftr.zof_dump_msg(event) == expected
 
     with pytest.raises(TypeError) as excinfo:
