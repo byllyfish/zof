@@ -5,12 +5,12 @@ import zof
 
 
 class TfmRequest(zof.Controller):
-    """When a datapath connects, issue a TableFeatures request."""
+    """Demo app that issues a TableFeatures request."""
 
     async def on_channel_up(self, dp, _event):
         ofmsg = {'type': 'REQUEST.TABLE_FEATURES'}
         reply = await dp.request(ofmsg)
-        tables = [(table['table_id'], table['name']) for table in reply['msg']]
+        tables = [table['name'] for table in reply['msg']]
         print(tables)
 
 
