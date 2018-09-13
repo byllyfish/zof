@@ -97,7 +97,7 @@ class PktView(ObjectView):
 
     @property
     def ext_hdrs(self):
-        return self['ipv6_exthdr'] != 1
+        return self.get('ipv6_exthdr', 0) != 0
 
     def get(self, key, default=None):
         """Allows PktView to be treated as a Python dict.
