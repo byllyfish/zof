@@ -7,7 +7,7 @@ import zof
 FLOOD = 'ALL'
 
 
-class Layer2Switch(zof.Controller):
+class Layer2(zof.Controller):
     def __init__(self, config=None):
         super().__init__(config)
         self.mac_to_port = defaultdict(dict)
@@ -20,7 +20,6 @@ class Layer2Switch(zof.Controller):
     def on_packet_in(self, dp, event):
         msg = event['msg']
         pkt = msg['pkt']
-        print(msg)
 
         in_port = msg['in_port']
         self.mac_to_port[dp.id][pkt.eth_src] = in_port
@@ -90,8 +89,8 @@ def packet_out(buffer_id='NO_BUFFER', in_port=0, actions=None, data=b''):
 
 
 def flowmatch(**kwds):
-    return dict(**kwds)
+    return [{'field': key.upper(), 'value': value} for key, value in kwds.items()]
 
 
 if __name__ == '__main__':
-    asyncio.run(Layer2Switch().run())  # type: ignore
+    asyncio.run(Layer2().run())  # type: ignore
