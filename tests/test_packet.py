@@ -51,7 +51,7 @@ def test_packet_from_field_list():
         'field': 'PAYLOAD',
         'value': b'xxx'
     }]
-    pkt = Packet.zof_from_field_list(data)
+    pkt = Packet.zof_packet_from_field_list(data)
     assert pkt.a == 1
     assert pkt.b == [2, 3, 4]
     assert pkt.payload == b'xxx'
@@ -60,7 +60,7 @@ def test_packet_from_field_list():
 def test_packet_to_field_list():
     """Test to_field_list factory method."""
     pkt = Packet(a=1, b=[2, 3, 4], payload=b'xxx')
-    data = pkt.zof_to_field_list()
+    data = pkt.zof_packet_to_field_list()
     assert data == [{
         'field': 'A',
         'value': 1
