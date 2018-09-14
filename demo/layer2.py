@@ -89,7 +89,10 @@ def packet_out(buffer_id='NO_BUFFER', in_port=0, actions=None, data=b''):
 
 
 def flowmatch(**kwds):
-    return [{'field': key.upper(), 'value': value} for key, value in kwds.items()]
+    return [{
+        'field': key.upper(),
+        'value': value
+    } for key, value in kwds.items()]
 
 
 if __name__ == '__main__':
