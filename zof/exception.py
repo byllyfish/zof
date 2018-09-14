@@ -17,11 +17,10 @@ class RequestError(Exception):
     @staticmethod
     def _extract_message(event):
         """Extract message from event."""
-        if 'alert' in event:
+        if event.get('type') == 'CHANNEL_ALERT':
             # CHANNEL_ALERT reply with xid.
-            assert event['type'] == 'CHANNEL_ALERT'
             assert 'xid' in event
-            return 'ERROR: %s' % event['alert']
+            return 'ERROR: %s' % event['msg']['message']
         if 'error' in event:
             # RPC error reply with id.
             assert 'id' in event
