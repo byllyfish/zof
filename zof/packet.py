@@ -8,7 +8,7 @@ class Packet(dict):
     __setattr__ = dict.__setitem__  # type: ignore
 
     @classmethod
-    def zof_from_field_list(cls, fields):
+    def zof_packet_from_field_list(cls, fields):
         """Construct a Packet from a list of fields.
 
         Args:
@@ -30,7 +30,7 @@ class Packet(dict):
                 pkt[key] = value
         return pkt
 
-    def zof_to_field_list(self):
+    def zof_packet_to_field_list(self):
         """Return as list of fields."""
         result = []
         for key, value in self.items():
@@ -51,7 +51,7 @@ class Packet(dict):
 
         msg = event['msg']
         data = bytes.fromhex(msg['data'])
-        pkt = cls.zof_from_field_list(msg.pop('_pkt', []))
+        pkt = cls.zof_packet_from_field_list(msg.pop('_pkt', []))
         pkt_pos = pkt.pop('x_pkt_pos', 0)
         if pkt_pos > 0:
             pkt['payload'] = data[pkt_pos:]
@@ -69,4 +69,4 @@ class Packet(dict):
             payload = pkt.pop('payload', None)
             if payload is not None:
                 msg['_pkt_data'] = payload
-            msg['_pkt'] = pkt.zof_to_field_list()
+            msg['_pkt'] = pkt.zof_packet_to_field_list()
