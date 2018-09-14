@@ -3,6 +3,7 @@ venv
 .pytest_cache
 .DS_Store
 .coverage
+.vscode
 pytype_output
 __pycache__
 docs/_build/
