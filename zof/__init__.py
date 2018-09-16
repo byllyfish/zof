@@ -9,6 +9,8 @@ if sys.version_info[:2] < (3, 7):  # pragma: no cover
         'zof does not support Python %s. Python 3.7 required.' %
         platform.python_version())
 
+# pylint: disable=wrong-import-position
+
 from zof.controller import Controller  # noqa: E402
 from zof.configuration import Configuration  # noqa: E402
 from zof.datapath import Datapath  # noqa: E402
