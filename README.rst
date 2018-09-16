@@ -64,7 +64,7 @@ Use pip to install zof:
 
 zof uses the `oftr` command line tool to translate between JSON and OpenFlow messages.
 
-* Free software: Apache Software License 2.0
+* Free software: MIT License
 * Documentation: https://zof.readthedocs.io.
 
 
