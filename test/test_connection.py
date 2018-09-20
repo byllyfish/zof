@@ -60,7 +60,7 @@ class ConnectionTestCase(AsyncTestCase):
         result = await self.conn.readline()
         self.assertRegex(
             result,
-            b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","conn_id":0,"xid":12,'
+            b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","xid":12,"conn_id":0,'
         )
 
     async def test_rpc_send_missing_datapath(self):
@@ -224,7 +224,7 @@ class ConnectionTestCase(AsyncTestCase):
         result = await asyncio.wait_for(self.conn.readline(), 1.0)
         self.assertRegex(
             result,
-            b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","conn_id":0,"xid":133,'
+            b'{"method":"OFP.MESSAGE","params":{"type":"CHANNEL_ALERT","time":"[0-9.]+","xid":133,"conn_id":0,'
         )
         await self._still_alive()
 
