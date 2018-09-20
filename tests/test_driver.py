@@ -2,7 +2,7 @@
 
 import pytest
 
-from zof.driver import Driver, _MAX_RESERVED_XID
+from zof.driver import Driver, _MAX_RESERVED_XID, _MAX_DYNAMIC_XID
 from zof.exception import RequestError
 
 # Max size of RPC message supported by oftr.
@@ -188,3 +188,22 @@ async def test_driver_openflow():
         'CHANNEL_UP', 'BARRIER_REQUEST', 'BARRIER_REQUEST', 'CHANNEL_DOWN'
     ]
     assert controller_log == ['CHANNEL_UP', 'CHANNEL_DOWN']
+
+
+@pytest.mark.asyncio
+async def test_driver_close_nowait():
+    """Test driver's close_nowait method.
+
+    This function also tests xid wrap-around.
+    """
+
+    # pylint: disable=protected-access
+    async with Driver() as driver:
+        assert driver._xid == _MAX_RESERVED_XID
+        driver._xid = _MAX_DYNAMIC_XID
+        driver.close_nowait(100)
+        assert driver._xid == _MAX_DYNAMIC_XID
+
+        count = await driver.close(101)
+        assert count == 0
+        assert driver._xid == _MAX_RESERVED_XID + 1

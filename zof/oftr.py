@@ -83,7 +83,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             ofp_msg = False
 
         req_info = self._request_futures.get(xid)
-        if req_info:
+        if req_info and _valid_reply(ofp_msg, msg):
             if req_info.handle_reply(msg):
                 del self._request_futures[xid]
         elif ofp_msg:
@@ -195,6 +195,18 @@ class _RequestInfo:
         assert isinstance(self.multipart_reply['msg'], list)
         assert isinstance(msg['msg'], list)
         self.multipart_reply['msg'].extend(msg['msg'])
+
+
+def _valid_reply(ofp_msg, msg):
+    """Return true if `msg` is not an async OpenFlow message.
+
+    Args:
+        ofp_msg (bool): True if msg is OpenFlow message (instead of RPC).
+        msg (dict): OpenFlow message
+    """
+    if not ofp_msg:
+        return True
+    return msg['type'] not in ('PACKET_IN', 'FLOW_REMOVED', 'PORT_STATUS')
 
 
 def zof_load_msg(data):

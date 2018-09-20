@@ -1,6 +1,6 @@
 """zof framework."""
 
-__version__ = '0.99.0'
+__version__ = '0.50.0'
 
 import sys
 if sys.version_info[:2] < (3, 7):  # pragma: no cover

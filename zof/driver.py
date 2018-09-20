@@ -8,9 +8,9 @@ from zof.log import logger
 from zof.oftr import OftrProtocol
 
 # XID values 0-255 are reserved. XID values are only assigned
-# values between 256 and 2**32-1.
+# values between 256 and 2**32-255.
 _MAX_RESERVED_XID = 0xff
-_MAX_DYNAMIC_XID = 0xffffffff
+_MAX_DYNAMIC_XID = 0xffffff00
 
 
 class Driver:
@@ -139,7 +139,7 @@ class Driver:
         """Return the next xid to use for a request/send."""
         self._xid += 1
         if self._xid > _MAX_DYNAMIC_XID:
-            self._xid = _MAX_RESERVED_XID
+            self._xid = _MAX_RESERVED_XID + 1
         return self._xid
 
     def _ofp_send(self, event):
