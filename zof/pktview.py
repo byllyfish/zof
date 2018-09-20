@@ -17,7 +17,7 @@ def pktview_alias(name, converter=(lambda x: x)):
             return converter(self.__dict__[name])
         except KeyError:
             raise AttributeError(
-                'PktView object has no attribute "%s"' % name) from None
+                'PktView object has no attribute "%s": %r' % (name, self)) from None
 
     def _fset(self, value):
         self.__dict__[name] = value
@@ -97,7 +97,7 @@ class PktView(ObjectView):
 
     @property
     def ext_hdrs(self):
-        return self['ipv6_exthdr'] != 1
+        return self.get('ipv6_exthdr', 0) != 0
 
     def get(self, key, default=None):
         """Allows PktView to be treated as a Python dict.

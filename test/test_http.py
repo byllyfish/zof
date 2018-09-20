@@ -22,6 +22,7 @@ class HttpTestCase(AsyncTestCase):
             return 'test text1'
 
         @web.get('/test/{var1}?{var2}', 'json')
+        @web.get('/test1/{var1}?{var2[]}', 'json')
         async def _get(var1, var2):
             return {'var1': var1, 'var2': var2}
 
@@ -47,6 +48,12 @@ class HttpTestCase(AsyncTestCase):
 
         data = await client.get_json('http://127.0.0.1:9010/test/foo?var2=bar')
         self.assertEqual(data, {'var1': 'foo', 'var2': 'bar'})
+
+        data = await client.get_json('http://127.0.0.1:9010/test1/foo?var2[]=bar&var2[]=boo')
+        self.assertEqual(data, {'var1': 'foo', 'var2': ['bar', 'boo']})
+
+        data = await client.get_json('http://127.0.0.1:9010/test1/foo')
+        self.assertEqual(data, {'var1': 'foo', 'var2': []})
 
         data = await client.get_json('http://127.0.0.1:9010/test/xyz')
         self.assertEqual(data, {'var1': 'xyz', 'var2': None})

@@ -1,6 +1,6 @@
 import zof
 from ..http import HttpServer
-from ..pktview import pktview_from_list
+from ..pktview import pktview_from_list, pktview_to_list
 
 APP = zof.Application('rest_api')
 APP.http_endpoint = '127.0.0.1:8080'
@@ -28,6 +28,27 @@ def get_switches():
 async def get_flows(dpid):
     result = []
     async for ofmsg in FLOWDESC_REQ.request(datapath_id=_parse_dpid(dpid)):
+        _translate_flows(ofmsg['msg'])
+        result.extend(ofmsg['msg'])
+    return {dpid: result}
+
+
+@WEB.post('/stats/flow/{dpid}', 'json')
+async def post_flows(dpid, post_data):
+    match = pktview_to_list(post_data.get('match', {}))
+    flow_req = zof.compile({
+        'type': 'REQUEST.FLOW_DESC',
+        'msg': {
+            'table_id': post_data.get('table_id', 'ALL'),
+            'out_port': post_data.get('out_port', 'ANY'),
+            'out_group': post_data.get('out_group', 'ANY'),
+            'cookie': post_data.get('cookie', 0),
+            'cookie_mask': post_data.get('cookie_mask', 0),
+            'match': match
+        }
+    })
+    result = []
+    async for ofmsg in flow_req.request(datapath_id=_parse_dpid(dpid)):
         _translate_flows(ofmsg['msg'])
         result.extend(ofmsg['msg'])
     return {dpid: result}
@@ -70,6 +91,12 @@ async def modify_portdesc(post_data):
     # just a cheap trick to verify that the portmod *should* have been acted on.
     result = await BARRIER_REQ.request(datapath_id=dpid)
     return result['msg']
+
+
+@WEB.get('/stats/portdesc/{dpid}/{port}', 'json')
+async def get_portdesc_specific(dpid, port):
+    # FIXME(bfish): Filter by port...
+    return await get_portdesc(dpid)
 
 
 @WEB.get('/stats/portdesc/{dpid}', 'json')

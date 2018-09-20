@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+Version 0.18.0
+--------------
+
+- Update zof for recent oftr API changes (e.g. ext_hdrs, channel_alert).
+- REST API supports POST to /stats/flow/{dpid} to pass JSON parameters to search flows.
+- Add serve_forever() method to HTTP api.
+- REST API supports a multi-valued query string (using []).
+- Add REST API handler for portdesc request to specific port number.
+
 Version 0.17.0
 --------------
 

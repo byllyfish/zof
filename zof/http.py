@@ -8,7 +8,8 @@ import aiohttp.web as web
 from .objectview import to_json, from_json
 from .endpoint import Endpoint
 
-_VAR_REGEX = re.compile(r'^\{(\w+)\}$')
+# Query string variable may end with [].
+_VAR_REGEX = re.compile(r'^\{(\w+(?:\[\])?)\}$')
 _LOG_FORMAT = '%a "%r" %s %b "%{Referrer}i" "%{User-Agent}i"'
 
 ClientResponseError = aiohttp.ClientResponseError
@@ -40,6 +41,7 @@ class HttpServer:
         self.web_app = web.Application()
         self.web_runner = None
         self.web_site = None
+        self.serve_future = None
 
     async def start(self, endpoint):
         """Start web server listening on endpoint.
@@ -49,7 +51,6 @@ class HttpServer:
         """
         assert self.web_site is None
         self.endpoint = Endpoint(endpoint)
-        loop = asyncio.get_event_loop()
         self.web_runner = web.AppRunner(self.web_app)
         await self.web_runner.setup()
         self.web_site = web.TCPSite(self.web_runner, self.endpoint.host, self.endpoint.port)
@@ -68,6 +69,18 @@ class HttpServer:
 
         if self.logger:
             self.logger.info('HttpServer: Stop listening on %s', self.endpoint)
+
+    async def serve_forever(self, endpoint):
+        """Start the web server and run until task is cancelled."""
+        assert self.serve_future is None
+        try:
+            self.serve_future = asyncio.get_event_loop().create_future()
+            await self.start(endpoint)
+            await self.serve_future
+        except asyncio.CancelledError:
+            await self.stop()
+        finally:
+            self.serve_future = None
 
     def get(self, path, payload_type='text'):
         """Decorator for routing HTTP GET requests."""
@@ -155,10 +168,20 @@ _ROUTE_POST = {'json': _route_post_json, 'text': _route_post_text}
 def _build_kwds(request, route_vars, post_data=None):
     kwds = request.match_info.copy()
     for var in route_vars:
-        kwds[var] = request.query.get(var)
+        multi, key = _is_multiple_value(var)
+        if multi:
+            kwds[key] = request.query.getall(var, [])
+        else:
+            kwds[key] = request.query.get(var)
     if post_data is not None:
         kwds['post_data'] = post_data
     return kwds
+
+
+def _is_multiple_value(value):
+    if value.endswith('[]'):
+        return True, value[:-2]
+    return False, value
 
 
 async def _respond_json(func, kwds):
