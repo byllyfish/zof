@@ -207,3 +207,19 @@ async def test_driver_close_nowait():
         count = await driver.close(101)
         assert count == 0
         assert driver._xid == _MAX_RESERVED_XID + 1
+
+
+@pytest.mark.asyncio
+async def test_driver_invalid_send():
+    """Test driver's send method."""
+
+    async with Driver() as driver:
+        # Test send() where event does not include `type`.
+        with pytest.raises(ValueError) as excinfo:
+            driver.send({'not_type': 'FOO'})
+        assert 'Invalid event (missing type)' in str(excinfo.value)
+
+        # Test send() where event includes xid in dynamic range.
+        with pytest.raises(ValueError) as excinfo:
+            driver.send({'type': 'FOO', 'xid': _MAX_RESERVED_XID + 1})
+        assert 'Invalid event' in str(excinfo.value)

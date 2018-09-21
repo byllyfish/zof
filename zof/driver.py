@@ -147,6 +147,8 @@ class Driver:
             raise ValueError('Invalid event (missing type): %r' % event)
         if 'xid' not in event:
             event['xid'] = self._assign_xid()
+        elif event['xid'] > _MAX_RESERVED_XID:
+            raise ValueError('Invalid event (invalid xid): %r' % event)
         return {'method': 'OFP.SEND', 'params': event}
 
     def _ofp_listen(self, endpoint, options, versions, tls_id):
