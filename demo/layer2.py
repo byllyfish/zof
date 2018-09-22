@@ -63,7 +63,7 @@ class Layer2(zof.Controller):
                              in_port)
             fwd_table[pkt.eth_src] = in_port
 
-        # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
+        # Lookup output port for eth_dst. If not found, use 'ALL'.
         out_port = fwd_table.get(pkt.eth_dst, 'ALL')
 
         ofmsgs = []
@@ -71,6 +71,7 @@ class Layer2(zof.Controller):
             self.logger.info('%s Forward %s to port %s', dp.id, pkt.eth_dst,
                              out_port)
             ofmsgs.append(_table_learn(pkt.eth_dst, out_port))
+
         ofmsgs.append(_packet_out(out_port, data))
 
         for ofmsg in ofmsgs:
