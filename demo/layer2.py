@@ -12,7 +12,7 @@ class Layer2(zof.Controller):
         super().__init__(config)
         self.forwarding_table = {}
         self.logger = logging.getLogger('layer2')
-        self.logger.setLevel(logging.INFO)        
+        self.logger.setLevel(logging.INFO)
 
     def on_start(self):
         """Handle start event."""
@@ -21,7 +21,9 @@ class Layer2(zof.Controller):
     def on_channel_up(self, dp, event):
         """Handle CHANNEL_UP event."""
         msg = event['msg']
-        self.logger.info('%s Connected from %s (%d ports, version %d)', dp.id, msg['endpoint'], len(msg['features']['ports']), event['version'])
+        self.logger.info('%s Connected from %s (%d ports, version %d)', dp.id,
+                         msg['endpoint'], len(msg['features']['ports']),
+                         event['version'])
         self.logger.info('%s Remove all flows', dp.id)
 
         ofmsgs = [_delete_flows(), _barrier(), _table_miss()]
@@ -57,7 +59,8 @@ class Layer2(zof.Controller):
 
         # Update fwd_table based on eth_src and in_port.
         if pkt.eth_src not in fwd_table:
-            self.logger.info('%s Learn %s on port %s', dp.id, pkt.eth_src, in_port)
+            self.logger.info('%s Learn %s on port %s', dp.id, pkt.eth_src,
+                             in_port)
             fwd_table[pkt.eth_src] = in_port
 
         # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
@@ -65,7 +68,8 @@ class Layer2(zof.Controller):
 
         ofmsgs = []
         if out_port != 'ALL':
-            self.logger.info('%s Forward %s to port %s', dp.id, pkt.eth_dst, out_port)
+            self.logger.info('%s Forward %s to port %s', dp.id, pkt.eth_dst,
+                             out_port)
             ofmsgs.append(_table_learn(pkt.eth_dst, out_port))
         ofmsgs.append(_packet_out(out_port, data))
 
@@ -75,27 +79,22 @@ class Layer2(zof.Controller):
     def on_flow_removed(self, dp, event):
         """Handle FLOW_REMOVED event."""
         msg = event['msg']
-        match = {field['field'].lower(): field['value'] for field in msg['match']}
+        match = {
+            field['field'].lower(): field['value']
+            for field in msg['match']
+        }
         eth_dst = match['eth_dst']
         self.logger.info('%s Remove %s (%s)', dp.id, eth_dst, msg['reason'])
 
 
 def _delete_flows():
     """Delete all flows in table 0."""
-    return {
-        'type': 'FLOW_MOD',
-        'msg': {
-            'command': 'DELETE',
-            'table_id': 0
-        }
-    }
+    return {'type': 'FLOW_MOD', 'msg': {'command': 'DELETE', 'table_id': 0}}
 
 
 def _barrier():
     """Barrier request."""
-    return {
-        'type': 'BARRIER_REQUEST'
-    }
+    return {'type': 'BARRIER_REQUEST'}
 
 
 def _table_miss():
