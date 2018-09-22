@@ -3,5 +3,8 @@ python: 3.7
 dist: xenial
 sudo: true
 
+install:
+    - pip install -r test-requirements.txt
+
 script:
     - ./run_tests.sh
