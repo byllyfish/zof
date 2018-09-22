@@ -24,7 +24,7 @@ class Configuration:
     zof_driver_class = Driver
     exit_signals = [signal.SIGTERM, signal.SIGINT]
     listen_endpoints = ['6653']
-    listen_versions = [4]
+    listen_versions = [1, 4, 5, 6]
     tls_cacert = ''
     tls_cert = ''
     tls_keylog = ''

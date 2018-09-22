@@ -1,94 +1,151 @@
 """Layer 2 demo."""
 
 import asyncio
-from collections import defaultdict
+import logging
 import zof
-
-FLOOD = 'ALL'
 
 
 class Layer2(zof.Controller):
+    """Demo layer2 OpenFlow app."""
+
     def __init__(self, config=None):
         super().__init__(config)
-        self.mac_to_port = defaultdict(dict)
+        self.forwarding_table = {}
+        self.logger = logging.getLogger('layer2')
+        self.logger.setLevel(logging.INFO)        
 
-    def on_channel_up(self, dp, _event):
-        actions = [output('CONTROLLER', 'NO_BUFFER')]
-        ofmsg = flowmod(priority=0, actions=actions)
-        dp.send(ofmsg)
+    def on_start(self):
+        """Handle start event."""
+        self.logger.info('Listening on %s', self.zof_config.listen_endpoints)
 
-    def on_packet_in(self, dp, event):
+    def on_channel_up(self, dp, event):
+        """Handle CHANNEL_UP event."""
         msg = event['msg']
-        pkt = msg['pkt']
+        self.logger.info('%s Connected from %s (%d ports, version %d)', dp.id, msg['endpoint'], len(msg['features']['ports']), event['version'])
+        self.logger.info('%s Remove all flows', dp.id)
 
-        in_port = msg['in_port']
-        self.mac_to_port[dp.id][pkt.eth_src] = in_port
-        out_port = self.mac_to_port[dp.id].get(pkt.eth_dst, FLOOD)
-
-        actions = [output(out_port)]
-
-        if out_port != FLOOD:
-            match = flowmatch(
-                in_port=in_port, eth_dst=pkt.eth_dst, eth_src=pkt.eth_src)
-            ofmsg = flowmod(
-                priority=1,
-                match=match,
-                actions=actions,
-                buffer_id=msg['buffer_id'])
+        ofmsgs = [_delete_flows(), _barrier(), _table_miss()]
+        for ofmsg in ofmsgs:
             dp.send(ofmsg)
 
-            if msg['buffer_id'] != 'NO_BUFFER':
-                return
+    def on_channel_down(self, dp, _event):
+        """Handle CHANNEL_DOWN event."""
+        self.logger.info('%s Disconnected', dp.id)
+        self.forwarding_table.pop(dp.id, None)
 
-        data = msg['data'] if msg['buffer_id'] == 'NO_BUFFER' else b''
-        ofmsg = packet_out(
-            buffer_id=msg['buffer_id'],
-            in_port=in_port,
-            actions=actions,
-            data=data)
-        dp.send(ofmsg)
+    def on_packet_in(self, dp, event):
+        """Handle PACKET_IN event."""
+        self.logger.debug('PACKET_IN %r', event)
+
+        msg = event['msg']
+        in_port = msg['in_port']
+        data = msg['data']
+        pkt = msg['pkt']
+
+        # Drop LLDP.
+        if pkt.eth_type == 0x88cc:
+            self.logger.warning('Ignore LLDP')
+            return
+
+        # Check for incomplete packet data.
+        if len(data) < msg['total_len']:
+            self.logger.warning('Incomplete packet data: %r', event)
+            return
+
+        # Retrieve fwd_table for this datapath.
+        fwd_table = self.forwarding_table.setdefault(dp.id, {})
+
+        # Update fwd_table based on eth_src and in_port.
+        if pkt.eth_src not in fwd_table:
+            self.logger.info('%s Learn %s on port %s', dp.id, pkt.eth_src, in_port)
+            fwd_table[pkt.eth_src] = in_port
+
+        # Lookup output port for eth_dst. If not found, set output port to 'ALL'.
+        out_port = fwd_table.get(pkt.eth_dst, 'ALL')
+
+        ofmsgs = []
+        if out_port != 'ALL':
+            self.logger.info('%s Forward %s to port %s', dp.id, pkt.eth_dst, out_port)
+            ofmsgs.append(_table_learn(pkt.eth_dst, out_port))
+        ofmsgs.append(_packet_out(out_port, data))
+
+        for ofmsg in ofmsgs:
+            dp.send(ofmsg)
+
+    def on_flow_removed(self, dp, event):
+        """Handle FLOW_REMOVED event."""
+        msg = event['msg']
+        match = {field['field'].lower(): field['value'] for field in msg['match']}
+        eth_dst = match['eth_dst']
+        self.logger.info('%s Remove %s (%s)', dp.id, eth_dst, msg['reason'])
 
 
-def flowmod(table_id=0,
-            priority=0,
-            match=None,
-            actions=None,
-            buffer_id='NO_BUFFER'):
-    instructions = [apply_actions(actions)] if actions else None
+def _delete_flows():
+    """Delete all flows in table 0."""
     return {
         'type': 'FLOW_MOD',
         'msg': {
-            'table_id': table_id,
-            'command': 'ADD',
-            'buffer_id': buffer_id,
-            'priority': priority,
-            'match': match,
-            'instructions': instructions
+            'command': 'DELETE',
+            'table_id': 0
         }
     }
 
 
-def apply_actions(actions):
-    return {'instruction': 'APPLY_ACTIONS', 'actions': actions}
+def _barrier():
+    """Barrier request."""
+    return {
+        'type': 'BARRIER_REQUEST'
+    }
 
 
-def output(port, maxlen=0):
-    return {'action': 'OUTPUT', 'port_no': port, 'max_len': maxlen}
+def _table_miss():
+    """Add default flow to table 0 that sends packets to controller."""
+    return {
+        'type': 'FLOW_MOD',
+        'msg': {
+            'command': 'ADD',
+            'table_id': 0,
+            'priority': 0,
+            'instructions': [_apply_actions([_output('CONTROLLER')])]
+        }
+    }
 
 
-def packet_out(buffer_id='NO_BUFFER', in_port=0, actions=None, data=b''):
+def _table_learn(eth_dst, out_port):
+    """Add flow to table 0 to forward layer2 packets."""
+    return {
+        'type': 'FLOW_MOD',
+        'msg': {
+            'command': 'ADD',
+            'table_id': 0,
+            'hard_timeout': 60,
+            'priority': 10,
+            'flags': ['SEND_FLOW_REM'],
+            'match': _match(eth_dst=eth_dst),
+            'instructions': [_apply_actions([_output(out_port)])]
+        }
+    }
+
+
+def _packet_out(out_port, data):
     return {
         'type': 'PACKET_OUT',
         'msg': {
-            'buffer_id': buffer_id,
-            'in_port': in_port,
-            'actions': actions,
+            'actions': [_output(out_port)],
             'data': data
         }
     }
 
 
-def flowmatch(**kwds):
+def _apply_actions(actions):
+    return {'instruction': 'APPLY_ACTIONS', 'actions': actions}
+
+
+def _output(port):
+    return {'action': 'OUTPUT', 'port_no': port}
+
+
+def _match(**kwds):
     return [{
         'field': key.upper(),
         'value': value
@@ -96,4 +153,5 @@ def flowmatch(**kwds):
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
     asyncio.run(Layer2().run())  # type: ignore
