@@ -23,7 +23,7 @@ echo "===== pytype ====="
 pytype zof || true
 
 echo "===== pycodestyle ====="
-pycodestyle zof tests demo
+pycodestyle --max-line-length=95 zof tests demo
 
 echo "===== pydocstyle ====="
 pydocstyle zof tests
