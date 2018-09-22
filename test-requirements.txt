@@ -7,3 +7,4 @@ pytest-timeout
 pycodestyle
 pydocstyle
 pytype
+-r docs/requirements.txt
