@@ -409,18 +409,19 @@ async def test_controller_listen_bad_tls_args(caplog):
 
 @pytest.mark.asyncio
 async def test_controller_listen_bad_endpoints(caplog):
-    """Test controller listen argument with duplicated endpoint."""
+    """Test controller listen argument with invalid endpoint."""
 
     # N.B. This is _not_ using a mock driver.
-    config = Configuration(listen_endpoints=['[::1]:26653', '[::1]:26653'])
+    config = Configuration(listen_endpoints=['[::1]:FOO'])
     controller = Controller(config)
     exit_status = await controller.run()
 
     assert exit_status != 0
-    assert caplog.record_tuples == [
-        ('zof', 50,
-         "Exception in run: RequestError('ERROR: Address already in use')")
-    ]
+    assert len(caplog.record_tuples) == 1
+
+    log_tuple = caplog.record_tuples[0]
+    assert log_tuple[:2] == ('zof', 50)
+    assert log_tuple[2].startswith("Exception in run: RequestError('ERROR: YAML")
 
 
 @pytest.mark.asyncio
@@ -466,6 +467,12 @@ async def test_controller_custom_event_loop(caplog):
     """
 
     class _Controller(MockController):
+        done = False
+
+        def on_start(self):
+            self.zof_loop.call_later(0.01, self.quit)
+            self.events.append('START')
+
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             self.zof_driver.post_event({'type': 'FOO'})
@@ -473,14 +480,20 @@ async def test_controller_custom_event_loop(caplog):
         def on_foo(self, dp, event):
             assert dp is None
             # Post another foo event (creating a dispatch loop).
-            self.zof_driver.post_event({'type': 'FOO'})
+            if not self.done:
+                self.zof_driver.post_event({'type': 'FOO'})
+
+        def quit(self):
+            self.done = True
+            self.zof_loop.call_later(0.01, self.zof_quit)
 
     controller = _Controller()
     exit_status = await controller.run()
 
+    print(controller.zof_driver.event_queue)
+
     assert exit_status == 0
-    # CHANNEL_DOWN event is crowded out by the FOO event.
-    assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
 
