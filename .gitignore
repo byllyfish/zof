@@ -8,3 +8,7 @@ pytype_output
 __pycache__
 docs/_build/
 docs/reference/apidoc/
+
+build/
+dist/
+zof.egg-info/
