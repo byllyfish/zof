@@ -13,8 +13,7 @@ msg:
   hw_addr:         '00:01:02:03:04:05'
   config:          [ PORT_DOWN ]
   mask:            [ PORT_DOWN ]
-  ethernet:        
-    advertise:       [  ]
+  advertise:       [  ]
   properties:      
 ---
 # type: PORT_MOD
@@ -31,8 +30,7 @@ msg:
   hw_addr:         '00:01:02:03:04:05'
   config:          [  ]
   mask:            [ PORT_DOWN ]
-  ethernet:        
-    advertise:       [  ]
+  advertise:       [  ]
   properties:      
 ---
 # version: 5
@@ -55,8 +53,7 @@ msg:
   hw_addr:         '00:01:02:03:04:05'
   config:          [  ]
   mask:            [  ]
-  ethernet:        
-    advertise:       [  ]
+  advertise:       [  ]
   properties:      
     - property:        EXPERIMENTER
       experimenter:    0x01020304

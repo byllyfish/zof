@@ -134,10 +134,8 @@ class DatapathTestCase(unittest.TestCase):
             'name': 'Port 1',
             'state': ['LINK_DOWN'],
             'config': ['PORT_DOWN'],
-            'ethernet': {
-                'curr_speed': 1e6,
-                'max_speed': 2e6
-            }
+            'curr_speed': 1e6,
+            'max_speed': 2e6
         }
         dp1.add_ports([port1_desc])
 

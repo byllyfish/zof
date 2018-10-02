@@ -232,14 +232,12 @@ class Simulator(object):
             'name': 'port %d' % port_no,
             'config': [],
             'state': [],
-            'ethernet': {
-                'curr': [],
-                'advertised': [],
-                'supported': [],
-                'peer': [],
-                'curr_speed': 0,
-                'max_speed': 0
-            }
+            'curr': [],
+            'advertised': [],
+            'supported': [],
+            'peer': [],
+            'curr_speed': 0,
+            'max_speed': 0
         }
 
     def _portstats(self):
@@ -257,12 +255,10 @@ class Simulator(object):
             'tx_dropped': 0,
             'rx_errors': 0,
             'tx_errors': 0,
-            'ethernet': {
-                'rx_frame_err': 0,
-                'rx_over_err': 0,
-                'rx_crc_err': 0,
-                'collisions': 0
-            },
+            'rx_frame_err': 0,
+            'rx_over_err': 0,
+            'rx_crc_err': 0,
+            'collisions': 0,
             'properties': []
         }
 
