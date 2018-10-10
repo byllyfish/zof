@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Version 0.19.0
+--------------
+
+- Update zof for oftr API changes to Port structure, PortMod, and PortStats.
+
+
 Version 0.18.0
 --------------
 
@@ -9,6 +15,7 @@ Version 0.18.0
 - Add serve_forever() method to HTTP api.
 - REST API supports a multi-valued query string (using []).
 - Add REST API handler for portdesc request to specific port number.
+
 
 Version 0.17.0
 --------------

@@ -137,6 +137,7 @@ PORTMOD_REQ = zof.compile('''
         hw_addr: $hw_addr
         config: [$config]
         mask: [$mask]
+        advertise: []
 ''')
 
 BARRIER_REQ = zof.compile('''
