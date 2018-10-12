@@ -58,10 +58,6 @@ class Controller:
 
     Methods and attributes that begin with `zof_` are reserved.
 
-    Attributes:
-        zof_config (zof.Configuration): ZOF configuration object
-        zof_driver (zof.Driver): ZOF driver object
-
     """
 
     def __init__(self, config=None):
@@ -118,8 +114,26 @@ class Controller:
         """
         return self.zof_tasks.create_task(coro)
 
+    def get_config(self):
+        """Retrieve the configuration object.
+
+        Returns:
+            zof.Configuration
+
+        """
+        return self.zof_config
+
+    def get_driver(self):
+        """Retrieve the driver object.
+
+        Returns:
+            zof.Driver
+
+        """
+        return self.zof_driver
+
     def all_datapaths(self):
-        """Return a list of connected datapaths.
+        """Retrieve a list of connected datapaths.
 
         Returns:
             List[zof.Datapath]

@@ -10,14 +10,15 @@ class Configuration:
 
     Attributes:
         exit_signals (List[Signal]): Unix signals that will stop the
-            controller.
+            controller. Default is [SIGTERM, SIGINT].
         listen_endpoints (List[str]): List of endpoints to listen for OpenFlow
-            connections.
+            connections. Default is ['6653'].
         listen_versions (List[int]): List of acceptable OpenFlow versions.
-        tls_cacert (str): TLS certificate authority.
-        tls_cert (str): TLS certificate chain.
-        tls_keylog (str): TLS key log file.
-        tls_privkey (str): TLS private key.
+            Default is [1, 4, 5, 6].
+        tls_cacert (str): TLS certificate authority. Default is ''.
+        tls_cert (str): TLS certificate chain. Default is ''.
+        tls_keylog (str): TLS key log file. Default is ''.
+        tls_privkey (str): TLS private key. Default is ''.
 
     """
 

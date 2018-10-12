@@ -11,7 +11,8 @@ class Datapath:
 
     Datapath instances are ephemeral. The instance is destroyed when
     the datapath disconnects and a new instance is created when the
-    same datapath ID reconnects.
+    same datapath ID reconnects. Typically, you will never create a
+    Datapath instance; an existing one will be passed to you.
 
     Attributes:
         id (str): Datapath ID
