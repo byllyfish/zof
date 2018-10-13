@@ -158,3 +158,14 @@ async def test_tasklist_exception(event_loop, caplog):
     assert str(excs[0]) == 'invalid'
 
     assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_tasklist_exception_not_async(event_loop):
+    """Test that on_exception is never an async function."""
+
+    async def _on_exception(_exc):
+        pass
+
+    with pytest.raises(AssertionError):
+        TaskList(event_loop, _on_exception)
