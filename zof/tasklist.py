@@ -15,6 +15,8 @@ class TaskList:
 
     def __init__(self, loop, on_exception=None):
         """Initialize empty task list."""
+        assert (on_exception is None or
+                not asyncio.iscoroutinefunction(on_exception))
         self._loop = loop
         self._tasks = set()
         self.on_exception = on_exception
