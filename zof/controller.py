@@ -72,8 +72,8 @@ class Controller:
     async def run(self):
         """Run controller in an event loop."""
         self.zof_loop = asyncio.get_event_loop()
-        self.zof_run_task = asyncio.current_task(
-            self.zof_loop)  # pytype: disable=module-attr
+        self.zof_run_task = asyncio.current_task(  # pytype: disable=module-attr
+            self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
 
         exit_status = RUN_STATUS_OKAY

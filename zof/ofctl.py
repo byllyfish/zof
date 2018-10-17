@@ -1,10 +1,4 @@
-# N.B. This module must remain compatibile with Python 2.7.
-
-try:
-    # For Python 2.x compatibility.
-    _BASESTRING = basestring
-except NameError:
-    _BASESTRING = str
+"""ofctl compatibility api."""
 
 
 def _convert_tp_dst(_key, ofctl):
@@ -16,7 +10,7 @@ def _convert_tp_src(_key, ofctl):
 
 
 def _convert_vlan(vlan):
-    if isinstance(vlan, _BASESTRING):
+    if isinstance(vlan, str):
         vlan = int(vlan, 0)
     if vlan > 0:
         vlan |= _OFPVID_PRESENT

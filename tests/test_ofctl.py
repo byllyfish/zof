@@ -160,4 +160,3 @@ class TestOfctl(unittest.TestCase):
         ofctl = {'ipv4_src': ''}
         with self.assertRaisesRegex(ValueError, 'ipv4_src'):
             convert_from_ofctl(ofctl, validate=True)
-
