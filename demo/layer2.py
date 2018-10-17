@@ -22,8 +22,8 @@ class Layer2(zof.Controller):
         """Handle CHANNEL_UP event."""
         msg = event['msg']
         self.logger.info('%s Connected from %s (%d ports, version %d)', dp.id,
-                         msg['endpoint'], len(msg['features']['ports']),
-                         event['version'])
+                         msg['endpoint'],
+                         len(msg['features']['ports']), event['version'])
         self.logger.info('%s Remove all flows', dp.id)
 
         ofmsgs = [_delete_flows(), _barrier(), _table_miss()]
