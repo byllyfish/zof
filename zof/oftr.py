@@ -169,11 +169,13 @@ class _RequestInfo:
 
     def handle_timeout(self, xid):
         """Handle timeout of a request."""
-        self.future.set_exception(RequestError.zof_timeout(xid))
+        if not self.future.done():
+            self.future.set_exception(RequestError.zof_timeout(xid))
 
     def handle_closed(self, xid):
         """Handle connection close while request in flight."""
-        self.future.set_exception(RequestError.zof_closed(xid))
+        if not self.future.done():
+            self.future.set_exception(RequestError.zof_closed(xid))
 
     def handle_multipart_middle(self, msg):
         """Handle multipart message with the more flag."""
