@@ -222,6 +222,29 @@ object.
     async on_start and on_stop methods.
 
 
+Signals
+~~~~~~~
+
+By default, a zof controller process will respond to SIGINT and SIGTERM signals by shutting down 
+cleanly. You can control the signals that will exit the controller using the zof.Configuration object's
+`exit_signals` value. This defaults to [signal.SIGTERM, signal.SIGINT].
+
+If you want your controller to respond to other signals, use the asyncio API to add a new signal 
+handler in your on_start handler. Here is an example that adds a handler for SIGHUP.
+
+.. code-block:: python
+
+    class HelloSignal(zof.Controller):
+        def on_start(self):
+            asyncio.get_event_loop().add_signal_handler(signal.SIGHUP, self.handle_sighup)
+    
+        def on_stop(self):
+            asyncio.get_event_loop().remove_signal_handler(signal.SIGHUP)
+    
+        def handle_sighup(self):
+            print('SIGHUP')
+
+
 Conclusion
 ~~~~~~~~~~
 
