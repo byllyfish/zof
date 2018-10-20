@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import contextvars
 
 from zof.configuration import Configuration
 from zof.datapath import Datapath
@@ -11,6 +12,13 @@ from zof.tasklist import TaskList
 
 RUN_STATUS_OKAY = 0
 RUN_STATUS_ERROR = 10
+
+zof_controller_var = contextvars.ContextVar('zof_controller')
+
+
+def get_controller():
+    """Return currently running controller instance."""
+    return zof_controller_var.get()
 
 
 class Controller:
@@ -64,13 +72,15 @@ class Controller:
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()
         self.zof_driver = self.zof_config.zof_driver_class()
-        self.zof_datapaths = {}
+        self.zof_connections = {}
+        self.zof_dpids = {}
         self.zof_loop = None
         self.zof_run_task = None
         self.zof_tasks = None
 
     async def run(self):
         """Run controller in an event loop."""
+        ctxt_token = zof_controller_var.set(self)
         self.zof_loop = asyncio.get_event_loop()
         self.zof_run_task = asyncio.current_task(  # pytype: disable=module-attr
             self.zof_loop)
@@ -95,6 +105,7 @@ class Controller:
                     exit_status = RUN_STATUS_ERROR
                     await self.zof_cleanup()
 
+        zof_controller_var.reset(ctxt_token)
         logger.debug('Exit status %d', exit_status)
         return exit_status
 
@@ -132,6 +143,14 @@ class Controller:
         """
         return self.zof_driver
 
+    def get_datapath(self, dp_id):
+        """Retrieve the specified datapath, or None if not found.
+
+        Returns:
+            zof.Datapath
+        """
+        return self.zof_dpids.get(dp_id)
+
     def all_datapaths(self):
         """Retrieve a list of connected datapaths.
 
@@ -139,7 +158,7 @@ class Controller:
             List[zof.Datapath]
 
         """
-        return list(self.zof_datapaths.values())
+        return list(self.zof_connections.values())
 
     async def zof_event_loop(self):
         """Dispatch events to handler functions.
@@ -200,16 +219,20 @@ class Controller:
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
-        assert conn_id not in self.zof_datapaths
+        dp_id = int(event['datapath_id'].replace(':', ''), 16)  # FIXME(bfish)
+        assert conn_id not in self.zof_connections
+        assert dp_id not in self.zof_dpids
 
-        dp = Datapath(self, conn_id, event['datapath_id'])
-        self.zof_datapaths[conn_id] = dp
+        dp = Datapath(self, conn_id, dp_id)
+        self.zof_connections[conn_id] = dp
+        self.zof_dpids[dp_id] = dp
         return dp
 
     def zof_channel_down(self, event):
         """Remove the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
-        dp = self.zof_datapaths.pop(conn_id)
+        dp = self.zof_connections.pop(conn_id)
+        del self.zof_dpids[dp.id]
         dp.closed = True
         dp.zof_cancel_tasks()
         return dp
@@ -219,7 +242,7 @@ class Controller:
         dp = None
         conn_id = event.get('conn_id')
         if conn_id is not None:
-            dp = self.zof_datapaths.get(conn_id)
+            dp = self.zof_connections.get(conn_id)
             if dp is None:
                 logger.warning('Unknown conn_id %r', conn_id)
         return dp
@@ -252,7 +275,7 @@ class Controller:
 
     async def zof_cleanup(self):
         """Clean up datapath and controller tasks."""
-        for dp in self.zof_datapaths.values():
+        for dp in self.zof_connections.values():
             dp.zof_cancel_tasks()
 
         self.zof_tasks.cancel()
@@ -290,7 +313,7 @@ class Controller:
 
     def on_exception(self, exc):  # pylint: disable=no-self-use
         """Report exception from a zof handler function."""
-        logger.critical('Exception in zof handler: %r', exc, exc_info=True)
+        logger.critical('Exception in zof handler: %r', exc, exc_info=exc)
 
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
