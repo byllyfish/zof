@@ -1,4 +1,7 @@
-"""ofctl compatibility api."""
+"""ofctl compatibility api.
+
+This module provides the convert_from_ofctl function.
+"""
 
 
 def _convert_tp_dst(_key, ofctl):
@@ -38,6 +41,7 @@ def convert_from_ofctl(ofctl, validate=False):
     """Convert ofctl legacy field names."""
     if ofctl is None:
         return None
+    assert isinstance(ofctl, dict)
     result = {}
     for key, value in ofctl.items():
         key = convert_ofctl_field(key, ofctl)
