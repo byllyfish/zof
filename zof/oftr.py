@@ -1,11 +1,10 @@
 """Protocol class for oftr driver."""
 
 import asyncio
-import json
-from ipaddress import IPv4Address, IPv6Address
 
 from zof.exception import RequestError
 from zof.log import logger
+from zof.util import from_json, to_json
 
 
 class OftrProtocol(asyncio.SubprocessProtocol):
@@ -147,6 +146,8 @@ class _RequestInfo:
             bool: True if reply was fully received.
 
         """
+        if self.future.done():
+            return False
         result = True
         if 'type' in msg:
             flags = msg.get('flags')
@@ -214,7 +215,7 @@ def _valid_reply(ofp_msg, msg):
 def zof_load_msg(data):
     """Read from JSON bytes."""
     try:
-        return json.loads(data)
+        return from_json(data)
     except Exception:  # pylint: disable=broad-except
         logger.exception('zof_load_msg exception: %r', data)
     return None
@@ -222,18 +223,4 @@ def zof_load_msg(data):
 
 def zof_dump_msg(msg):
     """Write compact JSON bytes (with delimiter)."""
-    return json.dumps(
-        msg,
-        separators=(',', ':'),
-        ensure_ascii=False,
-        default=zof_json_serialize).encode('utf-8') + b'\0'
-
-
-def zof_json_serialize(obj):
-    """Support JSON serialization for common object types."""
-    if isinstance(obj, bytes):
-        return obj.hex()
-    if isinstance(obj, (IPv4Address, IPv6Address)):
-        return str(obj)
-    raise TypeError('Value "%s" of type %s is not JSON serializable' %
-                    (repr(obj), type(obj)))
+    return to_json(msg).encode('utf-8') + b'\0'
