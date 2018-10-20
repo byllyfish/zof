@@ -27,7 +27,7 @@ class TaskList:
         task = self._loop.create_task(coro)
         task.add_done_callback(self._task_done)
         self._tasks.add(task)
-        logger.debug('Create task %r', task)
+        logger.debug('Task create %r', task)
         return task
 
     def _task_done(self, task):
@@ -44,7 +44,7 @@ class TaskList:
     def cancel(self):
         """Cancel all managed async tasks."""
         for task in self._tasks:
-            logger.debug('Cancel task %r', task)
+            logger.debug('Task cancel %r', task)
             task.cancel()
 
     async def wait_cancelled(self):
