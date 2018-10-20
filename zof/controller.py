@@ -13,13 +13,6 @@ from zof.tasklist import TaskList
 RUN_STATUS_OKAY = 0
 RUN_STATUS_ERROR = 10
 
-zof_controller_var = ContextVar('zof_controller')  # type: ContextVar[Controller]
-
-
-def get_controller():
-    """Return currently running controller instance."""
-    return zof_controller_var.get()
-
 
 class Controller:
     """Base class for a Controller app.
@@ -80,7 +73,7 @@ class Controller:
 
     async def run(self):
         """Run controller in an event loop."""
-        ctxt_token = zof_controller_var.set(self)
+        ctxt_token = _zof_controller_var.set(self)
         self.zof_loop = asyncio.get_event_loop()
         self.zof_run_task = asyncio.current_task(  # pytype: disable=module-attr
             self.zof_loop)
@@ -105,7 +98,7 @@ class Controller:
                     exit_status = RUN_STATUS_ERROR
                     await self.zof_cleanup()
 
-        zof_controller_var.reset(ctxt_token)
+        _zof_controller_var.reset(ctxt_token)
         logger.debug('Exit status %d', exit_status)
         return exit_status
 
@@ -318,3 +311,16 @@ class Controller:
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
         logger.warning('CHANNEL_ALERT dp=%r %r', dp, event)
+
+
+# _zof_controller_var is a context variable that returns the currently
+# running controller instance. Rather than using this directly, use
+# the get_controller() function.
+
+_zof_controller_var = ContextVar('zof_controller')  # type: ContextVar[Controller]
+
+
+def get_controller():
+    """Return currently running controller instance."""
+    return _zof_controller_var.get()
+
