@@ -7,6 +7,28 @@ class Packet(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__  # type: ignore
 
+    _PROTO_FIELD = {
+        'ETHERNET': 'eth_type',
+        'ARP': 'arp_op',
+        'IPV4': 'ipv4_src',
+        'IPV6': 'ipv6_src',
+        'ICMPV4': 'icmpv4_type',
+        'ICMPV6': 'icmpv6_type',
+        'LLDP': 'x_lldp_ttl'
+    }
+
+    def get_protocol(self, protocol):
+        """Check if Packet is of specified type and return `self`.
+
+        Return None if packet does not match specified protocol name. This API is
+        intended to be similar to RYU's. The implementation is not intended to
+        exhaustively check every field; the oftr tool is reponsible for
+        populating all necessary protocol fields.
+        """
+        if Packet._PROTO_FIELD[protocol.upper()] in self:
+            return self
+        return None
+
     @classmethod
     def zof_packet_from_field_list(cls, fields):
         """Construct a Packet from a list of fields.
