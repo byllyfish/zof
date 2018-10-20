@@ -20,12 +20,12 @@ class MockController:
 
 
 def _make_dp():
-    return Datapath(MockController(), 1, '00:00:00:00:00:00:01')
+    return Datapath(MockController(), 1, 1)
 
 
 def test_datapath_repr():
     dp = _make_dp()
-    assert repr(dp) == '<Datapath conn_id=1 dpid=00:00:00:00:00:00:01>'
+    assert repr(dp) == '<Datapath conn_id=1 dp_id=1>'
 
 
 def test_datapath_send():

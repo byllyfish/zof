@@ -2,7 +2,7 @@
 
 import asyncio
 import contextlib
-import contextvars
+from contextvars import ContextVar
 
 from zof.configuration import Configuration
 from zof.datapath import Datapath
@@ -13,7 +13,7 @@ from zof.tasklist import TaskList
 RUN_STATUS_OKAY = 0
 RUN_STATUS_ERROR = 10
 
-zof_controller_var = contextvars.ContextVar('zof_controller')
+zof_controller_var = ContextVar('zof_controller')  # type: ContextVar[Controller]
 
 
 def get_controller():
@@ -219,7 +219,7 @@ class Controller:
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
-        dp_id = int(event['datapath_id'].replace(':', ''), 16)  # FIXME(bfish)
+        dp_id = int(event['datapath_id'].replace(':', ''), 16)
         assert conn_id not in self.zof_connections
         assert dp_id not in self.zof_dpids
 

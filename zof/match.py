@@ -1,5 +1,7 @@
 """Implements Match class."""
 
+import ipaddress
+
 
 class Match(dict):
     """Match implementation."""

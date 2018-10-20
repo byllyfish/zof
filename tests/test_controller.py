@@ -364,7 +364,7 @@ async def test_controller_channel_alert(caplog):
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
         ('zof', 30,
-         "CHANNEL_ALERT dp=<Datapath conn_id=2 dpid=00:00:00:00:00:00:00:01> "
+         "CHANNEL_ALERT dp=<Datapath conn_id=2 dp_id=1> "
          "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}")
     ]
 
