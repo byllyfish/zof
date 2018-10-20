@@ -48,7 +48,8 @@ class HttpServer:
         Args:
             endpoint (tuple): host, port pair
         """
-        assert isinstance(endpoint, tuple) and len(endpoint) == 2, repr(endpoint)
+        assert isinstance(endpoint,
+                          tuple) and len(endpoint) == 2, repr(endpoint)
         assert self.web_site is None
         self.endpoint = endpoint
         self.web_runner = web.AppRunner(self.web_app)

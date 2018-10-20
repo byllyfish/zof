@@ -317,10 +317,10 @@ class Controller:
 # running controller instance. Rather than using this directly, use
 # the get_controller() function.
 
-_zof_controller_var = ContextVar('zof_controller')  # type: ContextVar[Controller]
+_zof_controller_var = ContextVar(
+    'zof_controller')  # type: ContextVar[Controller]
 
 
 def get_controller():
     """Return currently running controller instance."""
     return _zof_controller_var.get()
-

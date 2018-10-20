@@ -363,8 +363,7 @@ async def test_controller_channel_alert(caplog):
     assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
-        ('zof', 30,
-         "CHANNEL_ALERT dp=<Datapath conn_id=2 dp_id=1> "
+        ('zof', 30, "CHANNEL_ALERT dp=<Datapath conn_id=2 dp_id=1> "
          "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}")
     ]
 
@@ -421,7 +420,8 @@ async def test_controller_listen_bad_endpoints(caplog):
 
     log_tuple = caplog.record_tuples[0]
     assert log_tuple[:2] == ('zof', 50)
-    assert log_tuple[2].startswith("Exception in run: RequestError('ERROR: YAML")
+    assert log_tuple[2].startswith(
+        "Exception in run: RequestError('ERROR: YAML")
 
 
 @pytest.mark.asyncio

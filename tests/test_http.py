@@ -46,7 +46,8 @@ async def test_http_server():
     data = await client.get_json('http://127.0.0.1:9010/test/foo?var2=bar')
     assert data == {'var1': 'foo', 'var2': 'bar'}
 
-    data = await client.get_json('http://127.0.0.1:9010/test1/foo?var2[]=bar&var2[]=boo')
+    data = await client.get_json(
+        'http://127.0.0.1:9010/test1/foo?var2[]=bar&var2[]=boo')
     assert data == {'var1': 'foo', 'var2': ['bar', 'boo']}
 
     data = await client.get_json('http://127.0.0.1:9010/test1/foo')
@@ -77,8 +78,7 @@ async def test_http_server():
 
     # "/test/a/" doesn't match because of the / at the end.
     with pytest.raises(ClientResponseError):
-        await client.post_json(
-            'http://127.0.0.1:9010/test/a/', post_data={})
+        await client.post_json('http://127.0.0.1:9010/test/a/', post_data={})
 
     await client.stop()
     await web.stop()
