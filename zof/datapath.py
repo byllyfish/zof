@@ -15,7 +15,7 @@ class Datapath:
     Datapath instance; an existing one will be passed to you.
 
     Attributes:
-        id (str): Datapath ID
+        id (int): Datapath ID
         conn_id (int): Connection Identifier
         closed (bool): True if datapath is closed
 
