@@ -6,7 +6,7 @@ import sys
 if sys.version_info[:2] < (3, 6):  # pragma: no cover
     import platform
     raise NotImplementedError(
-        'zof does not support Python %s. Python 3.7 required.' %
+        'zof does not support Python %s. Python 3.6 required.' %
         platform.python_version())
 
 # pylint: disable=wrong-import-position
