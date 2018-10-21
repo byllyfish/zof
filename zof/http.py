@@ -1,5 +1,4 @@
-"""Simple API for async web server and web client.
-"""
+"""Simple API for async web server and web client."""
 
 import asyncio
 import re
@@ -35,6 +34,7 @@ class HttpServer:
     """
 
     def __init__(self, *, logger=None):
+        """Initialize web server."""
         self.endpoint = None
         self.logger = logger
         self.web_app = web.Application()
@@ -84,7 +84,7 @@ class HttpServer:
             self.serve_future = None
 
     def get(self, path, payload_type='text'):
-        """Decorator for routing HTTP GET requests."""
+        """Decorate HTTP GET requests."""
         route_path, route_vars = _split_route(path)
         route_get = _ROUTE_GET[payload_type]
 
@@ -97,7 +97,7 @@ class HttpServer:
         return _wrap
 
     def post(self, path, payload_type):
-        """Decorator for routing HTTP POST requests."""
+        """Decorate HTTP POST requests."""
         route_path, route_vars = _split_route(path)
         route_post = _ROUTE_POST[payload_type]
 
@@ -224,6 +224,7 @@ class HttpClient:
     """
 
     def __init__(self):
+        """Initialize web client."""
         self._client = None
 
     async def start(self):

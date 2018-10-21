@@ -74,8 +74,7 @@ def _ip_proto_name(ofctl):
 
 
 def _map_arp_fields(ofctl):
-    """Translate nw_src/ipv4_src and nw_dst/ipv4_dst in the special case of
-    an ARP match.
+    """Translate nw_src/ipv4_src and nw_dst/ipv4_dst for ARP match.
 
     At the point this function is called, nw_src/nw_dst has already been
     renamed to ipv4_src/ipv4_dst.

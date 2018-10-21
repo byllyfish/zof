@@ -18,7 +18,7 @@ class MockController(Controller):
         self.events = []
 
     def on_start(self):
-        self.zof_loop.call_later(0.01, self.zof_quit)
+        self.zof_loop.call_later(0.02, self.zof_quit)
         self.events.append('START')
 
     def on_stop(self):
