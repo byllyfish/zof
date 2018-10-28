@@ -1,11 +1,7 @@
 language: python
 dist: xenial
 sudo: true
-
-matrix:
-  include:
-    - python: 3.6
-    - python: 3.7
+python: 3.7
 
 before_install:
   # Install oftr from launchpad.
@@ -19,3 +15,11 @@ install:
 
 script:
     - ./run_tests.sh
+
+# pytype requires python 3.6 to be installed also.
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:deadsnakes/ppa'
+    packages:
+      - python3.6
