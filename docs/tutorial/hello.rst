@@ -16,6 +16,7 @@ To get started, create a new text file and enter the following program.
 
 .. code-block:: python
 
+    import asyncio
     import zof
 
     class HelloWorld(zof.Controller):
@@ -27,7 +28,10 @@ To get started, create a new text file and enter the following program.
             print(event)
 
     controller = HelloWorld()
-    zof.run(controller.run())
+    asyncio.run(controller.run())
+
+In this program, you create a subclass of `zof.Controller` named `HelloWorld`, create
+a new instance of it, and then invoke the instance's `run()` async method in an event loop.
 
 Save this in a file named `hello.py` and run it.
 
@@ -42,8 +46,8 @@ terminal. If nothing is configured to connect to your computer on port 6653, thi
 program will never print anything. To stop the program, type control-C.
 
 The `on_channel_up` method is called when an OpenFlow switch connects and
-successfully negotiates a connection (called a CHANNEL_UP). The `on_channel_down` method is called
-when an OpenFlow switch disconnects (called a CHANNEL_DOWN). Under the hood, zof automatically
+successfully negotiates a connection (CHANNEL_UP). The `on_channel_down` method is called
+when an OpenFlow switch disconnects (CHANNEL_DOWN). Under the hood, zof automatically
 negotiates the underlying HELLO, FEATURES_REQUEST and PORT_DESC_REQUEST OpenFlow messages
 for you and combines this information into the CHANNEL_UP event.
 
@@ -66,12 +70,6 @@ event for a 2-port switch.
     $ ZOFDEBUG=1 python hello.py
 
     Try running the same program in debug mode to see the output.
-
-.. note:: zof.run() is a backport of asyncio.run() from Python 3.7. If you are running
-    Python 3.7, it is exactly asyncio.run().
-
-    To incorporate zof into other asyncio projects, you would run the coroutine
-    `controller.run()` in its own asyncio task.
 
 
 Lifecycle Events (Start, Stop, Exception)
@@ -249,5 +247,5 @@ Conclusion
 ~~~~~~~~~~
 
 You've seen the basic scaffolding for a controller app. In the next section, we'll show how
-to send OpenFlow messages in your event handlers, and implement a simple, reactive hub.
+to send OpenFlow messages in your event handlers.
 
