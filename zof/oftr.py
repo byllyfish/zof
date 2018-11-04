@@ -57,7 +57,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
             # If not found, reset buffer and return.
             if offset < 0:
                 if begin > 0:
-                    del buf[0:begin]  # pytype: disable=wrong-arg-types
+                    del buf[0:begin]
                 return
 
             # If message is non-empty, parse it and dispatch it.
