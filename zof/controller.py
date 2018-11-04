@@ -73,7 +73,7 @@ class Controller:
 
     async def run(self):
         """Run controller in an event loop."""
-        ctxt_token = _zof_controller_var.set(self)
+        ctxt_token = _ZOF_CONTROLLER.set(self)
         self.zof_loop = asyncio.get_running_loop()
         self.zof_run_task = asyncio.current_task(self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
@@ -97,7 +97,7 @@ class Controller:
                     exit_status = EXIT_STATUS_ERROR
                     await self.zof_cleanup()
 
-        _zof_controller_var.reset(ctxt_token)
+        _ZOF_CONTROLLER.reset(ctxt_token)
         logger.debug('Exit status %d', exit_status)
         return exit_status
 
@@ -313,14 +313,12 @@ class Controller:
         logger.warning('CHANNEL_ALERT dp=%r %r', dp, event)
 
 
-# _zof_controller_var is a context variable that returns the currently
-# running controller instance. Rather than using this directly, use
-# the get_controller() function.
+# _ZOF_CONTROLLER is a context variable that returns the currently
+# running controller instance.
 
-_zof_controller_var = ContextVar(
-    'zof_controller')  # type: ContextVar[Controller]
+_ZOF_CONTROLLER = ContextVar('zof_controller')  # type: ContextVar[Controller]
 
 
 def get_controller():
     """Return currently running controller instance."""
-    return _zof_controller_var.get()
+    return _ZOF_CONTROLLER.get()
