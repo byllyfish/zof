@@ -46,7 +46,7 @@ class Driver:
         assert not self._protocol, 'Driver already open'
 
         cmd = self._oftr_cmd()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         self.event_queue = asyncio.Queue()
 
         def _proto_factory():

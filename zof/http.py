@@ -75,7 +75,7 @@ class HttpServer:
         """Start the web server and run until task is cancelled."""
         assert self.serve_future is None
         try:
-            self.serve_future = asyncio.get_event_loop().create_future()
+            self.serve_future = asyncio.get_running_loop().create_future()
             await self.start(endpoint)
             await self.serve_future
         except asyncio.CancelledError:

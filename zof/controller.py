@@ -10,8 +10,8 @@ from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
 
-RUN_STATUS_OKAY = 0
-RUN_STATUS_ERROR = 10
+EXIT_STATUS_OKAY = 0
+EXIT_STATUS_ERROR = 10
 
 
 class Controller:
@@ -74,12 +74,12 @@ class Controller:
     async def run(self):
         """Run controller in an event loop."""
         ctxt_token = _zof_controller_var.set(self)
-        self.zof_loop = asyncio.get_event_loop()
+        self.zof_loop = asyncio.get_running_loop()
         self.zof_run_task = asyncio.current_task(  # pytype: disable=module-attr
             self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
 
-        exit_status = RUN_STATUS_OKAY
+        exit_status = EXIT_STATUS_OKAY
         with self.zof_signals_handled():
             async with self.zof_driver:
                 try:
@@ -95,7 +95,7 @@ class Controller:
 
                 except Exception as ex:  # pylint: disable=broad-except
                     logger.critical('Exception in run: %r', ex, exc_info=True)
-                    exit_status = RUN_STATUS_ERROR
+                    exit_status = EXIT_STATUS_ERROR
                     await self.zof_cleanup()
 
         _zof_controller_var.reset(ctxt_token)
