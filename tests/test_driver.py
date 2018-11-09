@@ -117,7 +117,6 @@ async def test_large_rpc():
         assert driver.event_queue.empty()
 
 
-@pytest.mark.asyncio
 async def _driver_request_benchmark(name, loops):
     """Benchmark making async requests."""
 
