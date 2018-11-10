@@ -39,27 +39,29 @@ class Driver:
         self.pid = None
         self._debug = debug
         self._protocol = None
+        self._process = None
         self._xid = _MAX_RESERVED_XID
 
     async def __aenter__(self):
         """Async context manager entry point."""
         assert not self._protocol, 'Driver already open'
 
-        cmd = self._oftr_cmd()
+        cmd, socket_path = self._oftr_cmd()
         loop = asyncio.get_running_loop()
         self.event_queue = asyncio.Queue()
-
-        def _proto_factory():
-            return OftrProtocol(self.post_event, loop)
 
         # When we create the subprocess, make it a session leader.
         # We do not want SIGINT signals sent from the terminal to reach
         # the subprocess.
-        transport, protocol = await loop.subprocess_exec(
-            _proto_factory, *cmd, stderr=None, start_new_session=True)
 
-        self._protocol = protocol
-        self.pid = transport.get_pid()
+        self._process = await asyncio.create_subprocess_exec(*cmd, stdin=None, stdout=None, stderr=None, start_new_session=True)
+        self.pid = self._process.pid
+        await asyncio.sleep(0.1)
+
+        def _proto_factory():
+            return OftrProtocol(self.post_event, loop)
+
+        _, self._protocol = await loop.create_unix_connection(_proto_factory, socket_path)
 
         return self
 
@@ -72,9 +74,14 @@ class Driver:
             logger.warning('Exiting with %d events in queue', qsize)
 
         # Tell the subprocess to stop, then wait for it to exit.
+        try:
+            self._process.terminate()
+        except ProcessLookupError:
+            pass
         await self._protocol.stop()
 
         self._protocol = None
+        self._process = None
         self.pid = None
 
     def send(self, event):
@@ -129,10 +136,14 @@ class Driver:
 
     def _oftr_cmd(self):
         """Return oftr command with args."""
+        socket_path = 'oftr.ipc'
         cmd = '%s jsonrpc'
         if self._debug:
             cmd += ' --trace=rpc'
-        return shlex.split(cmd % shutil.which('oftr'))
+        if socket_path:
+            cmd += ' --rpc-socket=%s' % socket_path
+        result = shlex.split(cmd % shutil.which('oftr'))
+        return result, socket_path
 
     def _assign_xid(self):
         """Return the next xid to use for a request/send."""

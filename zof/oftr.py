@@ -7,7 +7,7 @@ from zof.log import logger
 from zof.util import from_json, to_json
 
 
-class OftrProtocol(asyncio.SubprocessProtocol):
+class OftrProtocol(asyncio.Protocol):
     """Protocol subclass that implements communication with OFTR."""
 
     def __init__(self, dispatch, loop):
@@ -43,7 +43,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
         self._request_futures[xid] = req_info
         return req_info.future
 
-    def pipe_data_received(self, fd, data):
+    def data_received(self, data):
         """Read data from pipe into buffer and dispatch incoming messages."""
         buf = self._recv_buf
         offset = len(buf)
@@ -93,7 +93,7 @@ class OftrProtocol(asyncio.SubprocessProtocol):
     def connection_made(self, transport):
         """Handle new incoming connection."""
         self._transport = transport
-        self._write = transport.get_pipe_transport(0).write
+        self._write = transport.write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
 
@@ -124,9 +124,6 @@ class OftrProtocol(asyncio.SubprocessProtocol):
     async def stop(self):
         """Stop the OpenFlow driver."""
         if self._transport:
-            # N.B. Do not call close(); it's unreliable under uvloop.
-            self._transport.terminate()
-
             # Wait for connection_lost to be called.
             await self._closed_future
 
