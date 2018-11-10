@@ -54,14 +54,16 @@ class Driver:
         # We do not want SIGINT signals sent from the terminal to reach
         # the subprocess.
 
-        self._process = await asyncio.create_subprocess_exec(*cmd, stdin=None, stdout=None, stderr=None, start_new_session=True)
+        self._process = await asyncio.create_subprocess_exec(
+            *cmd, stdin=None, stdout=None, stderr=None, start_new_session=True)
         self.pid = self._process.pid
         await asyncio.sleep(0.1)
 
         def _proto_factory():
             return OftrProtocol(self.post_event, loop)
 
-        _, self._protocol = await loop.create_unix_connection(_proto_factory, socket_path)
+        _, self._protocol = await loop.create_unix_connection(
+            _proto_factory, socket_path)
 
         return self
 
