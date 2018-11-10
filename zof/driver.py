@@ -29,14 +29,12 @@ class Driver:
 
     Attributes:
         event_queue (Queue): Queue of incoming events.
-        pid (int): Process ID of oftr tool.
 
     """
 
     def __init__(self, *, debug=False):
         """Initialize event callback."""
         self.event_queue = None
-        self.pid = None
         self._debug = debug
         self._protocol = None
         self._process = None
@@ -56,7 +54,6 @@ class Driver:
 
         self._process = await asyncio.create_subprocess_exec(
             *cmd, stdin=None, stdout=None, stderr=None, start_new_session=True)
-        self.pid = self._process.pid
         await asyncio.sleep(0.1)
 
         def _proto_factory():
@@ -84,7 +81,6 @@ class Driver:
 
         self._protocol = None
         self._process = None
-        self.pid = None
 
     def send(self, event):
         """Send a RPC or OpenFlow message."""

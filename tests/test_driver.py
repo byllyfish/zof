@@ -23,8 +23,6 @@ async def test_driver_request():
     """Driver context manager's request api."""
 
     async with Driver(debug=True) as driver:
-        assert driver.pid >= 0
-
         request = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         reply = await driver.request(request)
 
