@@ -1,8 +1,6 @@
 """Implements a Driver class for communicating with `oftr`."""
 
 import asyncio
-import shutil
-import shlex
 
 from zof.log import logger
 from zof.oftr import OftrProtocol
@@ -37,31 +35,14 @@ class Driver:
         self.event_queue = None
         self._debug = debug
         self._protocol = None
-        self._process = None
         self._xid = _MAX_RESERVED_XID
 
     async def __aenter__(self):
         """Async context manager entry point."""
         assert not self._protocol, 'Driver already open'
 
-        cmd, socket_path = self._oftr_cmd()
-        loop = asyncio.get_running_loop()
         self.event_queue = asyncio.Queue()
-
-        # When we create the subprocess, make it a session leader.
-        # We do not want SIGINT signals sent from the terminal to reach
-        # the subprocess.
-
-        self._process = await asyncio.create_subprocess_exec(
-            *cmd, stdin=None, stdout=None, stderr=None, start_new_session=True)
-        await asyncio.sleep(0.1)
-
-        def _proto_factory():
-            return OftrProtocol(self.post_event, loop)
-
-        _, self._protocol = await loop.create_unix_connection(
-            _proto_factory, socket_path)
-
+        self._protocol = await OftrProtocol.start(self.post_event, self._debug)
         return self
 
     async def __aexit__(self, *_args):
@@ -72,15 +53,8 @@ class Driver:
         if qsize > 0:
             logger.warning('Exiting with %d events in queue', qsize)
 
-        # Tell the subprocess to stop, then wait for it to exit.
-        try:
-            self._process.terminate()
-        except ProcessLookupError:
-            pass
         await self._protocol.stop()
-
         self._protocol = None
-        self._process = None
 
     def send(self, event):
         """Send a RPC or OpenFlow message."""
@@ -131,17 +105,6 @@ class Driver:
         """Dispatch event."""
         assert 'type' in event, repr(event)
         self.event_queue.put_nowait(event)
-
-    def _oftr_cmd(self):
-        """Return oftr command with args."""
-        socket_path = 'oftr.ipc'
-        cmd = '%s jsonrpc'
-        if self._debug:
-            cmd += ' --trace=rpc'
-        if socket_path:
-            cmd += ' --rpc-socket=%s' % socket_path
-        result = shlex.split(cmd % shutil.which('oftr'))
-        return result, socket_path
 
     def _assign_xid(self):
         """Return the next xid to use for a request/send."""

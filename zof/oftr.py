@@ -1,6 +1,8 @@
 """Protocol class for oftr driver."""
 
 import asyncio
+import shutil
+import shlex
 
 from zof.exception import RequestError
 from zof.log import logger
@@ -13,9 +15,9 @@ class OftrProtocol(asyncio.Protocol):
     def __init__(self, dispatch, loop):
         """Initialize protocol."""
         self.dispatch = dispatch
+        self.process = None
         self._loop = loop
         self._recv_buf = bytearray()
-        self._transport = None
         self._write = None
         self._request_futures = {}
         self._closed_future = None
@@ -92,7 +94,6 @@ class OftrProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         """Handle new incoming connection."""
-        self._transport = transport
         self._write = transport.write
         self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
@@ -103,7 +104,6 @@ class OftrProtocol(asyncio.Protocol):
         self._closed_future.set_result(1)
         self._idle_handle.cancel()
         self._write = None
-        self._transport = None
 
     def _idle(self):
         """Idle task handler."""
@@ -121,11 +121,52 @@ class OftrProtocol(asyncio.Protocol):
             info.handle_closed(xid)
         self._request_futures = {}
 
+    @classmethod
+    async def start(cls, post_event, debug):
+        """Connect to the the OpenFlow driver process."""
+        cmd, socket_path = OftrProtocol._oftr_cmd(debug)
+        loop = asyncio.get_running_loop()
+
+        # When we create the subprocess, make it a session leader.
+        # We do not want SIGINT signals sent from the terminal to reach
+        # the subprocess.
+
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, loop=loop, stdin=None, stdout=None, stderr=None, start_new_session=True)
+        await asyncio.sleep(0.1)
+
+        def _proto_factory():
+            return cls(post_event, loop)
+
+        _, protocol = await loop.create_unix_connection(_proto_factory, socket_path)
+        protocol.process = proc
+
+        return protocol
+
     async def stop(self):
         """Stop the OpenFlow driver."""
-        if self._transport:
+        if self.process:
+            # Tell the subprocess to stop, then wait for it to exit.
+            try:
+                self.process.terminate()
+            except ProcessLookupError:
+                pass
+
             # Wait for connection_lost to be called.
             await self._closed_future
+            self.process = None
+
+    @staticmethod
+    def _oftr_cmd(debug):
+        """Return oftr command with args."""
+        socket_path = 'oftr.ipc'
+        cmd = '%s jsonrpc'
+        if debug:
+            cmd += ' --trace=rpc'
+        if socket_path:
+            cmd += ' --rpc-socket=%s' % socket_path
+        result = shlex.split(cmd % shutil.which('oftr'))
+        return result, socket_path
 
 
 class _RequestInfo:
