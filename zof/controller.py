@@ -175,6 +175,8 @@ class Controller:
                     dp = self.zof_find_dp(event)
                     if event_type == 'PACKET_IN':
                         Packet.zof_from_packet_in(event)
+                    elif event_type == 'PORT_STATUS':
+                        dp.zof_from_port_status(event)
 
                 handler = self.zof_find_handler(event_type)
                 if handler:
@@ -217,6 +219,7 @@ class Controller:
         assert dp_id not in self.zof_dpids
 
         dp = Datapath(self, conn_id, dp_id)
+        dp.zof_from_channel_up(event)
         self.zof_connections[conn_id] = dp
         self.zof_dpids[dp_id] = dp
         return dp

@@ -56,7 +56,12 @@ class MockDriver:
         self.post_event({
             'type': 'CHANNEL_UP',
             'conn_id': conn_id,
-            'datapath_id': '00:00:00:00:00:00:00:01'
+            'datapath_id': '00:00:00:00:00:00:00:01',
+            'msg': {
+                'features': {
+                    'ports': []
+                }
+            }
         })
         self.post_event({
             'type': 'BOGUS_EVENT',

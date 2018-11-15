@@ -1,5 +1,7 @@
 """Implements a Datapath class."""
 
+from collections import OrderedDict
+
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
@@ -18,6 +20,7 @@ class Datapath:
         id (int): Datapath ID
         conn_id (int): Connection Identifier
         closed (bool): True if datapath is closed
+        ports (OrderedDict): Dictionary of port_no -> port_info_dict
 
     """
 
@@ -26,6 +29,7 @@ class Datapath:
         self.id = dp_id
         self.conn_id = conn_id
         self.closed = False
+        self.ports = OrderedDict()
         self.zof_driver = controller.zof_driver
         self.zof_tasks = TaskList(controller.zof_loop, controller.on_exception)
 
@@ -65,6 +69,26 @@ class Datapath:
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""
         self.zof_tasks.cancel()
+
+    def zof_from_channel_up(self, event):
+        """Initialize port information from a CHANNEL_UP event."""
+        assert event['type'] == 'CHANNEL_UP'
+        new_ports = event['msg']['features']['ports']
+        for new_port in new_ports:
+            port_no = new_port['port_no']
+            self.ports[port_no] = new_port
+
+    def zof_from_port_status(self, event):
+        """Update current port information given a PORT_STATUS event."""
+        assert event['type'] == 'PORT_STATUS'
+        port_status = event['msg']
+        port_no = port_status['port_no']
+        reason = port_status['reason']
+        if reason == 'DELETE':
+            self.ports.pop(port_no, None)
+        else:
+            # Updated port information includes "reason".
+            self.ports[port_no] = port_status
 
     def __repr__(self):
         """Return string representation of datapath."""

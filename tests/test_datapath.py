@@ -68,3 +68,57 @@ async def test_datapath_close():
 
     with pytest.raises(RequestError):
         await dp.request({'type': 'BARRIER_REQUEST'})
+
+
+def test_datapath_ports():
+    """Test handling of CHANNEL_UP and PORT_STATUS events."""
+    dp = _make_dp()
+
+    channel_up = {
+        'type': 'CHANNEL_UP',
+        'msg': {
+            'features': {
+                'ports': [
+                    {'port_no': 1},
+                    {'port_no': 2},
+                    {'port_no': 'LOCAL'}
+                ]
+            }
+        }
+    }
+    dp.zof_from_channel_up(channel_up)
+
+    assert dp.ports == {
+        1: {'port_no': 1},
+        2: {'port_no': 2},
+        'LOCAL': {'port_no': 'LOCAL'}
+    }
+
+    port_status = {
+        'type': 'PORT_STATUS',
+        'msg': {
+            'port_no': 2,
+            'reason': 'DELETE'
+        }
+    }
+    dp.zof_from_port_status(port_status)
+
+    assert dp.ports == {
+        1: {'port_no': 1},
+        'LOCAL': {'port_no': 'LOCAL'}
+    }
+
+    port_status = {
+        'type': 'PORT_STATUS',
+        'msg': {
+            'port_no': 3,
+            'reason': 'ADD'
+        }
+    }
+    dp.zof_from_port_status(port_status)
+
+    assert dp.ports == {
+        1: {'port_no': 1},
+        'LOCAL': {'port_no': 'LOCAL'},
+        3: {'port_no': 3, 'reason': 'ADD'}
+    }
