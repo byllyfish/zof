@@ -70,19 +70,14 @@ class Controller:
         self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
         self.zof_connections = {}  # type: Dict[int, Datapath]
         self.zof_dpids = {}  # type: Dict[str, Datapath]
-        self.zof_loop = None
+        self.zof_loop = None  # type: Optional[asyncio.AbstractEventLoop]
         self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
         self.zof_tasks = None  # type: Optional[TaskList]
 
     async def run(self) -> int:
         """Run controller in an event loop."""
-        ctxt_token = _ZOF_CONTROLLER.set(self)
-        self.zof_loop = asyncio.get_running_loop()
-        self.zof_run_task = asyncio.current_task(self.zof_loop)
-        self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
-
         exit_status = EXIT_STATUS_OKAY
-        with self.zof_signals_handled():
+        with self.zof_run_context():
             async with self.zof_driver:
                 try:
                     # Start app and OpenFlow listener.
@@ -100,7 +95,6 @@ class Controller:
                     exit_status = EXIT_STATUS_ERROR
                     await self.zof_cleanup()
 
-        _ZOF_CONTROLLER.reset(ctxt_token)
         logger.debug('Exit status %d', exit_status)
         return exit_status
 
@@ -283,8 +277,13 @@ class Controller:
         await self.zof_tasks.wait_cancelled()
 
     @contextlib.contextmanager
-    def zof_signals_handled(self):
-        """Context manager for exit signal handling."""
+    def zof_run_context(self):
+        """Context manager for runtime state and signal handling."""
+        ctxt_token = _ZOF_CONTROLLER.set(self)
+        self.zof_loop = asyncio.get_running_loop()
+        self.zof_run_task = asyncio.current_task(self.zof_loop)
+        self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
+
         signals = list(self.zof_config.exit_signals)
         for signum in signals:
             self.zof_loop.add_signal_handler(signum, self.zof_quit)
@@ -293,6 +292,11 @@ class Controller:
 
         for signum in signals:
             self.zof_loop.remove_signal_handler(signum)
+
+        self.zof_loop = None
+        self.zof_run_task = None
+        self.zof_tasks = None
+        _ZOF_CONTROLLER.reset(ctxt_token)
 
     async def zof_invoke(self, event_type):
         """Notify app to start/stop."""
