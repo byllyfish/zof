@@ -1,11 +1,14 @@
 """Implements a Controller base class."""
 
+from typing import Any, Dict, List, Optional  # pylint: disable=unused-import
+
 import asyncio
 import contextlib
 from contextvars import ContextVar
 
 from zof.configuration import Configuration
 from zof.datapath import Datapath
+from zof.driver import Driver
 from zof.log import logger
 from zof.packet import Packet
 from zof.tasklist import TaskList
@@ -61,17 +64,17 @@ class Controller:
 
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config: Optional[Configuration] = None):
         """Initialize controller with configuration object."""
-        self.zof_config = config or Configuration()
-        self.zof_driver = self.zof_config.zof_driver_class()
-        self.zof_connections = {}
-        self.zof_dpids = {}
+        self.zof_config = config or Configuration()  # type: Configuration
+        self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
+        self.zof_connections = {}  # type: Dict[int, Datapath]
+        self.zof_dpids = {}  # type: Dict[str, Datapath]
         self.zof_loop = None
-        self.zof_run_task = None
-        self.zof_tasks = None
+        self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
+        self.zof_tasks = None  # type: Optional[TaskList]
 
-    async def run(self):
+    async def run(self) -> int:
         """Run controller in an event loop."""
         ctxt_token = _ZOF_CONTROLLER.set(self)
         self.zof_loop = asyncio.get_running_loop()
@@ -115,9 +118,11 @@ class Controller:
             asyncio.Task
 
         """
+        if self.zof_tasks is None:
+            raise RuntimeError('Controller is not running.')
         return self.zof_tasks.create_task(coro)
 
-    def get_config(self):
+    def get_config(self) -> Configuration:
         """Retrieve the configuration object.
 
         Returns:
@@ -126,7 +131,7 @@ class Controller:
         """
         return self.zof_config
 
-    def get_driver(self):
+    def get_driver(self) -> Driver:
         """Retrieve the driver object.
 
         Returns:
@@ -135,7 +140,7 @@ class Controller:
         """
         return self.zof_driver
 
-    def get_datapath(self, dp_id):
+    def get_datapath(self, dp_id) -> Optional[Datapath]:
         """Retrieve the specified datapath, or None if not found.
 
         Returns:
@@ -144,7 +149,7 @@ class Controller:
         """
         return self.zof_dpids.get(dp_id)
 
-    def all_datapaths(self):
+    def all_datapaths(self) -> List[Datapath]:
         """Retrieve a list of connected datapaths.
 
         Returns:
@@ -322,6 +327,6 @@ class Controller:
 _ZOF_CONTROLLER = ContextVar('zof_controller')  # type: ContextVar[Controller]
 
 
-def get_controller():
+def get_controller() -> Controller:
     """Return currently running controller instance."""
     return _ZOF_CONTROLLER.get()
