@@ -3,7 +3,7 @@
 import asyncio
 import re
 import aiohttp
-import aiohttp.web as web
+from aiohttp import web
 from zof.util import from_json, to_json
 
 # Query string variable may end with [].
@@ -18,7 +18,7 @@ class HttpServer:
 
     Usage:
 
-        web = HttpServer()
+        web = HttpServer(('', 8000))
 
         @web.get('/foo')
         async def get_foo():
@@ -31,11 +31,23 @@ class HttpServer:
         await web.start()
         ...
         await web.stop()
+
+    Alternatively, you can create the HttpServer() instance, then run it
+    in a new task. Cancel the task to stop the server.
+
+        task = asyncio.create_task(web.serve_forever())
+        ...
+        task.cancel()
     """
 
-    def __init__(self, *, logger=None):
-        """Initialize web server."""
-        self.endpoint = None
+    def __init__(self, endpoint=None, logger=None):
+        """Initialize web server.
+
+        Args:
+            endpoint (tuple): host, port pair
+            logger (Logger): optional logger
+        """
+        self.endpoint = endpoint
         self.logger = logger
         self.web_app = web.Application()
         self.web_runner = None
@@ -120,10 +132,10 @@ def _split_route(path):
     route_path, rest = path.split('?', maxsplit=1)
     route_vars = []
     for name in rest.split('&'):
-        m = _VAR_REGEX.match(name)
-        if not m:
+        match = _VAR_REGEX.match(name)
+        if not match:
             raise ValueError("Invalid variable name: %s" % name)
-        route_vars.append(m.group(1))
+        route_vars.append(match.group(1))
     return route_path, route_vars
 
 
