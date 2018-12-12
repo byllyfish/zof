@@ -106,22 +106,22 @@ def barrier_request(event):
     APP.conn_to_sim[event['conn_id']].barrier_request(event)
 
 
-@APP.message('request.port_desc')
+@APP.message('port_desc_request')
 def request_portdesc(event):
     APP.conn_to_sim[event['conn_id']].request_portdesc(event)
 
 
-@APP.message('request.desc')
+@APP.message('desc_request')
 def request_desc(event):
     APP.conn_to_sim[event['conn_id']].request_desc(event)
 
 
-@APP.message('request.port_stats')
+@APP.message('port_stats_request')
 def request_portstats(event):
     APP.conn_to_sim[event['conn_id']].request_portstats(event)
 
 
-@APP.message('request.table_features')
+@APP.message('table_features_request')
 def request_tablefeatures(event):
     APP.conn_to_sim[event['conn_id']].request_tablefeatures(event)
 
@@ -184,7 +184,7 @@ class Simulator(object):
 
     def request_portdesc(self, event):
         msg = {
-            'type': 'REPLY.PORT_DESC',
+            'type': 'PORT_DESC_REPLY',
             'xid': event['xid'],
             'msg': self._portdescs()
         }
@@ -192,7 +192,7 @@ class Simulator(object):
 
     def request_desc(self, event):  # pylint: disable=no-self-use
         msg = {
-            'type': 'REPLY.DESC',
+            'type': 'DESC_REPLY',
             'xid': event['xid'],
             'msg': {
                 'hw_desc': 'sim hw_desc',
@@ -206,7 +206,7 @@ class Simulator(object):
 
     def request_portstats(self, event):
         msg = {
-            'type': 'REPLY.PORT_STATS',
+            'type': 'PORT_STATS_REPLY',
             'xid': event['xid'],
             'msg': self._portstats()
         }
@@ -215,7 +215,7 @@ class Simulator(object):
     def request_tablefeatures(self, event):
         # This code currently ignores the contents of the TableFeatures request.
         msg = {
-            'type': 'REPLY.TABLE_FEATURES',
+            'type': 'TABLE_FEATURES_REPLY',
             'xid': event['xid'],
             'msg': self._tablefeatures()
         }

@@ -1,7 +1,7 @@
 ---
 # # List all ports.
-# type: REQUEST.PORT_DESC
-type:            REQUEST.PORT_DESC
+# type: PORT_DESC_REQUEST
+type:            PORT_DESC_REQUEST
 flags:           [  ]
 xid:             0x00000000
 version:         0x04

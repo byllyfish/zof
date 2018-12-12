@@ -3,11 +3,11 @@ import zof
 APP = zof.Application('table_features', exception_fatal=True)
 
 DESC = zof.compile('''
-type: REQUEST.DESC
+type: DESC_REQUEST
 ''')
 
 TABLE_FEATURES = zof.compile('''
-type: REQUEST.TABLE_FEATURES
+type: TABLE_FEATURES_REQUEST
 msg: []
 ''')
 

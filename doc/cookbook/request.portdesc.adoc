@@ -6,5 +6,5 @@
 [source,yaml]
 ----
 # List all ports.
-type: REQUEST.PORT_DESC
+type: PORT_DESC_REQUEST
 ----

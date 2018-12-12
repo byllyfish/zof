@@ -420,9 +420,10 @@ class Controller(object):
         data_len = len(data_hex) / 2
         if len(data_hex) > 100:
             data_hex = '%s...' % data_hex[:100]
+        print(msg)
         LOGGER.warning(
             'Alert: %s data=%s (%d bytes) [conn_id=%s, datapath_id=%s, xid=%d]',
-            msg['alert'], data_hex, data_len, message['conn_id'],
+            msg['message'], data_hex, data_len, message['conn_id'],
             message.get('datapath_id'), msg_xid)
 
         for app in self.apps:

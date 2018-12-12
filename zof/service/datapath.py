@@ -39,8 +39,6 @@ class DatapathApp(zof.Application):
 
 APP = DatapathApp()
 
-PORTS_REQUEST = zof.compile('type: REQUEST.PORT_DESC')
-
 
 @APP.message('channel_up')
 def channel_up(event):

@@ -58,7 +58,7 @@ async def ports(target):
 
 
 PORT_STATS = zof.compile('''
-type: REQUEST.PORT_STATS
+type: PORT_STATS_REQUEST
 msg:
   port_no: ANY
 ''')

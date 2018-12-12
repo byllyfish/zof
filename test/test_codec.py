@@ -19,7 +19,7 @@ class CodecTestCase(unittest.TestCase):
         result = _oftr_call(OFTR_ENCODE, b'type: HELLO', 4)
         self.assertEqual(
             result,
-            b'\x06\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00~')
+            b'\x06\x00\x00\x08\x00\x00\x00\x00')
 
     def test_hello(self):
         result = encode('type: HELLO\nversion: 1')
@@ -28,13 +28,13 @@ class CodecTestCase(unittest.TestCase):
         result = encode('type: HELLO')
         self.assertEqual(
             result,
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+            b'\x04\x00\x00\x08\x00\x00\x00\x00'
         )
 
         result = encode('type: HELLO', version=0)
         self.assertEqual(
             result,
-            b'\x06\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00~')
+            b'\x06\x00\x00\x08\x00\x00\x00\x00')
 
     def test_hello_error(self):
         with self.assertRaisesRegex(
@@ -51,7 +51,7 @@ class CodecTestCase(unittest.TestCase):
         result = encode({'type': 'HELLO', 'version': 4})
         self.assertEqual(
             result,
-            b'\x04\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00\x08\x00\x00\x00\x10'
+            b'\x04\x00\x00\x08\x00\x00\x00\x00'
         )
 
     def test_decode_hello(self):
@@ -61,7 +61,6 @@ type:            HELLO
 xid:             0x00000000
 version:         0x01
 msg:             
-  versions:        [  ]
 ...
 """)
 
@@ -98,7 +97,6 @@ type:            HELLO
 xid:             0x00000000
 version:         0x01
 msg:             
-  versions:        [  ]
 ...
 """)
 

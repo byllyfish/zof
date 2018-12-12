@@ -106,7 +106,7 @@ async def get_portdesc(dpid):
 
 
 FLOWDESC_REQ = zof.compile('''
-    type: REQUEST.FLOW_DESC
+    type: FLOW_DESC_REQUEST
     msg:
         table_id: ALL
         out_port: ANY
@@ -117,17 +117,17 @@ FLOWDESC_REQ = zof.compile('''
 ''')
 
 GROUPDESC_REQ = zof.compile('''
-    type: REQUEST.GROUP_DESC
+    type: GROUP_DESC_REQUEST
 ''')
 
 PORTSTATS_REQ = zof.compile('''
-    type: REQUEST.PORT_STATS
+    type: PORT_STATS_REQUEST
     msg:
         port_no: $port_no
 ''')
 
 PORTDESC_REQ = zof.compile('''
-    type: REQUEST.PORT_DESC
+    type: PORT_DESC_REQUEST
 ''')
 
 PORTMOD_REQ = zof.compile('''
