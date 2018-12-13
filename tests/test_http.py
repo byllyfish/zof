@@ -7,7 +7,7 @@ from zof.http import HttpServer, HttpClient, ClientResponseError
 @pytest.mark.asyncio
 async def test_http_server():
     logger = logging.getLogger('zof.test_http')
-    web = HttpServer(logger=logger)
+    web = HttpServer(endpoint=('127.0.0.1', 9010), logger=logger)
 
     @web.get('/', 'text')
     @web.get('/abc', 'text')
@@ -32,7 +32,7 @@ async def test_http_server():
             'post_data': post_data
         }
 
-    await web.start(('127.0.0.1', 9010))
+    await web.start()
 
     client = HttpClient()
     await client.start()

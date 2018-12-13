@@ -49,25 +49,19 @@ class HttpServer:
         """
         self.endpoint = endpoint
         self.logger = logger
-        self.web_app = web.Application()
-        self.web_runner = None
-        self.web_site = None
-        self.serve_future = None
+        self._app = web.Application()
+        self._runner = None
+        self._site = None
 
-    async def start(self, endpoint):
-        """Start web server listening on endpoint.
+    async def start(self):
+        """Start web server listening on endpoint."""
+        assert self._site is None
+        assert len(self.endpoint) == 2
 
-        Args:
-            endpoint (tuple): host, port pair
-        """
-        assert isinstance(endpoint,
-                          tuple) and len(endpoint) == 2, repr(endpoint)
-        assert self.web_site is None
-        self.endpoint = endpoint
-        self.web_runner = web.AppRunner(self.web_app)
-        await self.web_runner.setup()
-        self.web_site = web.TCPSite(self.web_runner, endpoint[0], endpoint[1])
-        await self.web_site.start()
+        self._runner = web.AppRunner(self._app)
+        await self._runner.setup()
+        self._site = web.TCPSite(self._runner, self.endpoint[0], self.endpoint[1])
+        await self._site.start()
 
         if self.logger:
             self.logger.info('HttpServer: Start listening on %s',
@@ -75,25 +69,22 @@ class HttpServer:
 
     async def stop(self):
         """Stop web server."""
-        if self.web_site is None:
+        if self._site is None:
             return
 
-        await self.web_runner.cleanup()
+        await self._runner.cleanup()
 
         if self.logger:
             self.logger.info('HttpServer: Stop listening on %s', self.endpoint)
 
-    async def serve_forever(self, endpoint):
+    async def serve_forever(self):
         """Start the web server and run until task is cancelled."""
-        assert self.serve_future is None
         try:
-            self.serve_future = asyncio.get_running_loop().create_future()
-            await self.start(endpoint)
-            await self.serve_future
+            serve_future = asyncio.get_running_loop().create_future()
+            await self.start()
+            await serve_future
         except asyncio.CancelledError:
             await self.stop()
-        finally:
-            self.serve_future = None
 
     def get(self, path, payload_type='text'):
         """Decorate HTTP GET requests."""
@@ -103,7 +94,7 @@ class HttpServer:
         def _wrap(func):
             assert func is not None
             get = route_get(route_vars, func)
-            self.web_app.router.add_get(route_path, get)
+            self._app.router.add_get(route_path, get)
             return func
 
         return _wrap
@@ -116,7 +107,7 @@ class HttpServer:
         def _wrap(func):
             assert func is not None
             post = route_post(route_vars, func)
-            self.web_app.router.add_post(route_path, post)
+            self._app.router.add_post(route_path, post)
             return func
 
         return _wrap
