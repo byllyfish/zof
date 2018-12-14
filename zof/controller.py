@@ -562,7 +562,7 @@ def _timestamp():
 
 def _event_has_more(event):
     try:
-        return event['type'].startswith('REPLY.') and 'MORE' in event['flags']
+        return 'MORE' in event['flags']
     except KeyError:
         return False
 

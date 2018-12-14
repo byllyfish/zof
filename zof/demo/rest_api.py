@@ -37,7 +37,7 @@ async def get_flows(dpid):
 async def post_flows(dpid, post_data):
     match = pktview_to_list(post_data.get('match', {}))
     flow_req = zof.compile({
-        'type': 'REQUEST.FLOW_DESC',
+        'type': 'FLOW_DESC_REQUEST',
         'msg': {
             'table_id': post_data.get('table_id', 'ALL'),
             'out_port': post_data.get('out_port', 'ANY'),
