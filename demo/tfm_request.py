@@ -8,7 +8,7 @@ class TfmRequest(zof.Controller):
     """Demo app that issues a TableFeatures request."""
 
     async def on_channel_up(self, dp, _event):
-        ofmsg = {'type': 'REQUEST.TABLE_FEATURES'}
+        ofmsg = {'type': 'TABLE_FEATURES_REQUEST'}
         reply = await dp.request(ofmsg)
         tables = [table['name'] for table in reply['msg']]
         print(tables)

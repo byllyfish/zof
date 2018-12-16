@@ -27,8 +27,7 @@ class MySimulator:
     async def _dispatch(self):
         while True:
             event = await self.driver.event_queue.get()
-            msg_type = event['type'].replace('.', '_')
-            msg_method = getattr(self, msg_type, None)
+            msg_method = getattr(self, event['type'], None)
             if msg_method:
                 msg_method(event)
             else:
@@ -58,7 +57,6 @@ class MySimulator:
             self.driver.send(reply)
 
     def FEATURES_REQUEST(self, event):
-        print('FEATURES_REQUEST!')
         conn_id = event['conn_id']
         xid = event['xid']
         reply = {
@@ -75,25 +73,25 @@ class MySimulator:
         }
         self.driver.send(reply)
 
-    def REQUEST_PORT_DESC(self, event):
+    def PORT_DESC_REQUEST(self, event):
         conn_id = event['conn_id']
         xid = event['xid']
         reply = {
             'conn_id': conn_id,
             'xid': xid,
-            'type': 'REPLY.PORT_DESC',
+            'type': 'PORT_DESC_REPLY',
             'msg': [self._portdesc(i) for i in range(1, 5)]
         }
         self.driver.send(reply)
 
-    def REQUEST_DESC(self, event):
+    def DESC_REQUEST(self, event):
         print('DESC_REQUEST')
         conn_id = event['conn_id']
         xid = event['xid']
         reply = {
             'conn_id': conn_id,
             'xid': xid,
-            'type': 'REPLY.DESC',
+            'type': 'DESC_REPLY',
             'msg': {
                 'mfr_desc': 'mfr',
                 'hw_desc': 'hw',
