@@ -92,4 +92,5 @@ class Datapath:
 
     def __repr__(self):
         """Return string representation of datapath."""
-        return '<Datapath conn_id=%d dp_id=%s>' % (self.conn_id, self.id)
+        closed_str = ' CLOSED' if self.closed else ''
+        return '<Datapath 0x%x%s>' % (self.id, closed_str)

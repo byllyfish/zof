@@ -25,7 +25,7 @@ def _make_dp():
 
 def test_datapath_repr():
     dp = _make_dp()
-    assert repr(dp) == '<Datapath conn_id=1 dp_id=1>'
+    assert repr(dp) == '<Datapath 0x1>'
 
 
 def test_datapath_send():
