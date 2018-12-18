@@ -447,8 +447,8 @@ async def test_controller_custom_event(caplog):
 async def test_controller_custom_event_loop(caplog):
     """Test controller with a custom event in a loop.
 
-    This tests the Controller.zof_dispatch_count anti-starvation
-    mechanism.
+    This also tests the Controller's anti-starvation
+    mechanism in a dispatch loop.
     """
 
     class _Controller(MockController):

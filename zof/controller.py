@@ -193,6 +193,7 @@ class Controller:
         """Dispatch event to a handler function."""
         handler = self.zof_find_handler(event_type)
         if handler:
+            assert not asyncio.iscoroutinefunction(handler)
             logger.debug('Dispatch %r %r', dp, event_type)
             try:
                 handler(dp, event)
