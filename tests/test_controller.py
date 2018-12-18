@@ -48,7 +48,10 @@ async def test_async_channel_up(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
     class _Controller(MockController):
-        async def on_channel_up(self, dp, event):
+        def on_channel_up(self, dp, event):
+            dp.create_task(self._channel_up(dp, event))
+
+        async def _channel_up(self, dp, event):
             self.log_event(dp, event)
             await asyncio.sleep(0)
             self.events.append('NEXT')
@@ -73,22 +76,33 @@ async def test_async_channel_up_cancel(caplog):
             self.zof_loop.call_later(0.01, self.zof_quit)
             self.events.append('START')
 
-        async def on_channel_up(self, dp, event):
+        def on_channel_up(self, dp, event):
+            dp.create_task(self._channel_up(dp, event))
+
+        async def _channel_up(self, dp, event):
             try:
                 self.log_event(dp, event)
-                await asyncio.sleep(0)
-                # The next event is not logged because the task is cancelled.
-                self.events.append('NEXT')
+                for i in range(3):
+                    await asyncio.sleep(0)
+                    self.events.append('NEXT%d' % i)
+                    # The task is quickly cancelled.
             except asyncio.CancelledError:
                 # The cancel event is sequenced after the CHANNEL_DOWN.
                 self.events.append('CANCEL')
+
+        def __getattr__(self, attr):
+            assert attr.startswith('on_')
+
+            def _other(dp, event):
+                self.log_event(dp, event)
+            return _other
 
     controller = _Controller()
     exit_status = await controller.run()
 
     assert exit_status == 0
     assert controller.events == [
-        'START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'CANCEL', 'STOP'
+        'START', 'CHANNEL_UP', 'BOGUS_EVENT', 'NEXT0', 'CHANNEL_DOWN', 'CANCEL', 'STOP'
     ]
     assert not caplog.record_tuples
 
@@ -98,7 +112,10 @@ async def test_async_channel_down(caplog):
     """Test controller event dispatch with an async channel_down handler."""
 
     class _Controller(MockController):
-        async def on_channel_down(self, dp, event):
+        def on_channel_down(self, dp, event):
+            self.create_task(self._channel_down(dp, event))
+
+        async def _channel_down(self, dp, event):
             assert dp.closed
             self.log_event(dp, event)
             await asyncio.sleep(0)
@@ -140,7 +157,10 @@ async def test_exceptions(caplog):
     """Test exceptions in async handlers."""
 
     class _Controller(MockController):
-        async def on_channel_up(self, dp, event):
+        def on_channel_up(self, dp, event):
+            dp.create_task(self._channel_up(dp, event))
+
+        async def _channel_up(self, dp, event):
             self.log_event(dp, event)
             raise Exception('FAIL_ASYNC')
 
@@ -170,7 +190,10 @@ async def test_request_benchmark(caplog):
             self.zof_driver.channel_wait = 10.0
             self.events.append('START')
 
-        async def on_channel_up(self, dp, event):
+        def on_channel_up(self, dp, event):
+            dp.create_task(self._channel_up(dp, event))
+
+        async def _channel_up(self, dp, event):
             self.log_event(dp, event)
             try:
                 print(await _controller_request_benchmark(
@@ -206,47 +229,6 @@ async def _controller_request_benchmark(name, dp, loops):
         bench['times'].append(await _test(bench['loops']))
 
     return bench
-
-
-@pytest.mark.asyncio
-async def test_packet_in_async(caplog):
-    """Test packet_in api with async callback."""
-
-    from timeit import default_timer as _timer
-
-    class _Controller(MockController):
-
-        packet_limit = 1000
-        packet_count = 0
-        start_time = 0
-
-        async def on_start(self):
-            self.zof_driver.channel_wait = 0.001
-            self.zof_driver.packet_count = self.packet_limit
-            self.events.append('START')
-            self.start_time = _timer()
-
-        async def on_packet_in(self, dp, event):
-            self.packet_count += 1
-            if self.packet_count >= self.packet_limit:
-                t = _timer() - self.start_time
-                bench = {
-                    'benchmark': 'packet_in_async',
-                    'loops': self.packet_count,
-                    'times': [t]
-                }
-                print(bench)
-
-        def on_channel_down(self, dp, event):
-            self.log_event(dp, event)
-            self.zof_quit()
-
-    controller = _Controller()
-    exit_status = await controller.run()
-
-    assert exit_status == 0
-    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
-    assert not caplog.record_tuples
 
 
 @pytest.mark.asyncio
@@ -331,7 +313,10 @@ async def test_controller_exception_in_handler(caplog):
     """Test controller with async handler that throws exception."""
 
     class _Controller(MockController):
-        async def on_channel_up(self, dp, event):
+        def on_channel_up(self, dp, event):
+            dp.create_task(self._channel_up(dp, event))
+
+        async def _channel_up(self, dp, event):
             self.log_event(dp, event)
             raise RuntimeError('oops')
 

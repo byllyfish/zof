@@ -163,7 +163,7 @@ class Controller:
             try:
                 event = await event_queue.get()
                 assert isinstance(event, dict), repr(event)
-                event_type = event['type'].replace('.', '_')
+                event_type = event['type']
 
                 # Update bookkeeping for connected datapaths.
                 if event_type == 'CHANNEL_UP':
@@ -177,13 +177,9 @@ class Controller:
                     elif event_type == 'PORT_STATUS':
                         dp.zof_from_port_status(event)
 
-                handler = self.zof_find_handler(event_type)
-                if handler:
-                    logger.debug('Receive %r dp=%r', event_type, dp)
-                    await self.zof_dispatch_handler(handler, dp, event)
-                else:
-                    logger.debug('Receive %r dp=%r (no handler)', event_type,
-                                 dp)
+                # Dispatch event, then yield time to other tasks.
+                self.zof_dispatch_event(event_type, dp, event)
+                await asyncio.sleep(0)
 
             except asyncio.CancelledError:
                 logger.debug('Event loop cancelled')
@@ -193,22 +189,17 @@ class Controller:
                 logger.critical(
                     'Exception in zof_event_loop: %r', ex, exc_info=True)
 
-    async def zof_dispatch_handler(self, handler, dp, event):
-        """Dispatch to a specific handler function."""
-        if asyncio.iscoroutinefunction(handler):
-            if dp and event['type'] != 'CHANNEL_DOWN':
-                create_task = dp.create_task
-            else:
-                create_task = self.create_task
-            create_task(handler(dp, event))
-        else:
-            # Invoke handler directly.
+    def zof_dispatch_event(self, event_type, dp, event):
+        """Dispatch event to a handler function."""
+        handler = self.zof_find_handler(event_type)
+        if handler:
+            logger.debug('Dispatch %r %r', dp, event_type)
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
                 self.on_exception(ex)
-        # Yield time to any newly created tasks.
-        await asyncio.sleep(0)
+        else:
+            logger.debug('Dispatch %r %r (no handler)', dp, event_type)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""

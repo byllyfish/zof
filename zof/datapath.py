@@ -56,6 +56,7 @@ class Datapath:
 
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
+        assert not self.closed
         self.zof_tasks.create_task(coro)
 
     def close(self):
