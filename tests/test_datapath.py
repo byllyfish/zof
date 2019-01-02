@@ -5,7 +5,6 @@ import pytest
 from mock_driver import MockDriver
 from zof.datapath import Datapath
 from zof.packet import Packet
-from zof import RequestError
 
 
 class MockController:
@@ -58,16 +57,11 @@ async def test_datapath_request():
 
 @pytest.mark.asyncio
 async def test_datapath_close():
+    """Closing a datapath manually does not close immediately,"""
     dp = _make_dp()
     assert not dp.closed
     dp.close()
-    assert dp.closed
-
-    with pytest.raises(RequestError):
-        dp.send({'type': 'BARRIER_REQUEST'})
-
-    with pytest.raises(RequestError):
-        await dp.request({'type': 'BARRIER_REQUEST'})
+    assert not dp.closed
 
 
 def test_datapath_ports():

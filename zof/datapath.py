@@ -41,16 +41,16 @@ class Datapath:
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
 
-        logger.debug('Send %r dp=%r', msg['type'], self)
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
+        logger.debug('Send %r %s xid=%s', self, msg['type'], msg.get('xid'))
 
     async def request(self, msg):
         """Send message to datapath and wait for reply."""
         if self.closed:
             raise RequestError.zof_closed()
 
-        logger.debug('Send %r dp=%r', msg['type'], self)
+        logger.debug('Send %r %s (request)', self, msg['type'])
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)
 
@@ -60,12 +60,15 @@ class Datapath:
         self.zof_tasks.create_task(coro)
 
     def close(self):
-        """Close the datapath preemptively."""
+        """Close the datapath preemptively.
+
+        The datapath is not closed until the CHANNEL_DOWN
+        event is received from the connection manager. Your datapath
+        will still receive incoming events already in flight.
+        """
         if not self.closed:
-            logger.debug('Close dp=%r', self)
-            self.closed = True
+            logger.debug('Close %r', self)
             self.zof_driver.close_nowait(self.conn_id)
-            self.zof_cancel_tasks()
 
     def zof_cancel_tasks(self):
         """Cancel tasks when datapath disconnects."""

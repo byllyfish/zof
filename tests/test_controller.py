@@ -348,7 +348,7 @@ async def test_controller_channel_alert(caplog):
     assert exit_status == 0
     assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert caplog.record_tuples == [
-        ('zof', 30, "CHANNEL_ALERT dp=<Datapath 0x1 CLOSED> "
+        ('zof', 30, "CHANNEL_ALERT <Datapath 0x1 CLOSED> "
          "{'conn_id': 2, 'type': 'CHANNEL_ALERT'}")
     ]
 

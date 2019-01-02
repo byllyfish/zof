@@ -8,13 +8,22 @@ from zof.log import logger
 class TaskList:
     """Manages a collection of async tasks that can be cancelled.
 
-    When a task is cancelled, it should be removed from `self._tasks`
-    within 1-2 cycles through the event loop. (N.B. The "done callback"
-    is scheduled via call_soon, so it typically takes 2 cycles.)
+    A TaskList is designed to manage tasks associated with some scope.
+    You can create a task that is tied to a scope. When the scope
+    ends, you can automatically cancel all of its tasks.
+
+    The task list contains the running tasks. When a task finishes, it
+    removes itself from the list. Any exceptions raises by a task
+    are directed to a specified handler.
+
+    The primary API is synchronous:
+
+        create_task - create a task and add it to the list.
+        cancel - cancel all tasks in the list.
     """
 
     def __init__(self, loop, on_exception=None):
-        """Initialize empty task list."""
+        """Initialize an empty task list."""
         assert (on_exception is None
                 or not asyncio.iscoroutinefunction(on_exception))
         self._loop = loop
@@ -47,14 +56,13 @@ class TaskList:
             logger.debug('Task cancel %r', task)
             task.cancel()
 
-    async def wait_cancelled(self):
+    async def wait_cancelled(self, timeout=1.0):
         """Wait for cancelled tasks to complete."""
-        for _ in range(2):
-            await asyncio.sleep(0)
-
         if self._tasks:
-            raise RuntimeError(
-                'TaskList: Cancelled tasks did not exit as expected')
+            _, pending = await asyncio.wait(self._tasks, timeout=timeout)
+            if pending:
+                raise RuntimeError(
+                    'TaskList: Tasks did not exit as expected: %r' % pending)
 
     def __len__(self):
         """Return length of task list."""

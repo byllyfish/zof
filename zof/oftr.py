@@ -20,7 +20,6 @@ class OftrProtocol(asyncio.Protocol):
         self._recv_buf = bytearray()
         self._write = None
         self._request_futures = {}
-        self._closed_future = None
         self._idle_handle = None
 
     def send(self, msg):
@@ -95,13 +94,11 @@ class OftrProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         """Handle new incoming connection."""
         self._write = transport.write
-        self._closed_future = self._loop.create_future()
         self._idle_handle = self._loop.call_later(0.5, self._idle)
 
     def connection_lost(self, exc):
         """Handle disconnect."""
         self._cancel_requests()
-        self._closed_future.set_result(1)
         self._idle_handle.cancel()
         self._write = None
 
@@ -119,7 +116,7 @@ class OftrProtocol(asyncio.Protocol):
         """Cancel all pending requests."""
         for xid, info in self._request_futures.items():
             info.handle_closed(xid)
-        self._request_futures = {}
+        self._request_futures.clear()
 
     @classmethod
     async def start(cls, post_event, debug):
@@ -152,8 +149,7 @@ class OftrProtocol(asyncio.Protocol):
             except ProcessLookupError:
                 pass
 
-            # Wait for connection_lost to be called.
-            await self._closed_future
+            await self.process.wait()
             self.process = None
 
     @staticmethod

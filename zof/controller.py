@@ -93,7 +93,6 @@ class Controller:
                 except Exception as ex:  # pylint: disable=broad-except
                     logger.critical('Exception in run: %r', ex, exc_info=True)
                     exit_status = EXIT_STATUS_ERROR
-                    await self.zof_cleanup()
 
         logger.debug('Exit status %d', exit_status)
         return exit_status
@@ -194,13 +193,13 @@ class Controller:
         handler = self.zof_find_handler(event_type)
         if handler:
             assert not asyncio.iscoroutinefunction(handler)
-            logger.debug('Dispatch %r %r', dp, event_type)
+            logger.debug('Receive %r %s xid=%s', dp, event_type, event.get('xid'))
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
                 self.on_exception(ex)
         else:
-            logger.debug('Dispatch %r %r (no handler)', dp, event_type)
+            logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type, event.get('xid'))
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -314,7 +313,7 @@ class Controller:
 
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
-        logger.warning('CHANNEL_ALERT dp=%r %r', dp, event)
+        logger.warning('CHANNEL_ALERT %r %r', dp, event)
 
 
 # _ZOF_CONTROLLER is a context variable that returns the currently
