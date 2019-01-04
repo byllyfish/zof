@@ -27,22 +27,24 @@ class TaskList:
         assert (on_exception is None
                 or not asyncio.iscoroutinefunction(on_exception))
         self._loop = loop
-        self._tasks = set()
+        self._cancelled = False
+        self.tasks = set()
         self.on_exception = on_exception
 
     def create_task(self, coro):
         """Create a managed async task for a coroutine."""
         assert asyncio.iscoroutine(coro)
+        assert not self._cancelled
         task = self._loop.create_task(coro)
         task.add_done_callback(self._task_done)
-        self._tasks.add(task)
+        self.tasks.add(task)
         logger.debug('Task create %r', task)
         return task
 
     def _task_done(self, task):
         """Handle task cleanup."""
         logger.debug('Task done %r', task)
-        self._tasks.discard(task)
+        self.tasks.discard(task)
         try:
             exc = task.exception()
             if exc and self.on_exception:
@@ -50,28 +52,35 @@ class TaskList:
         except asyncio.CancelledError:
             pass
 
-    def cancel(self):
+    def cancel(self, parent_scope=None):
         """Cancel all managed async tasks."""
-        for task in self._tasks:
-            logger.debug('Task cancel %r', task)
-            task.cancel()
+        if not self._cancelled:
+            self._cancelled = True
+            for task in self.tasks:
+                logger.debug('Task cancel %r', task)
+                task.cancel()
+            # Copy cancelled tasks to parent scope.
+            if parent_scope is not None:
+                parent_scope.tasks.update(self.tasks)
+                self.tasks = parent_scope.tasks
 
     async def wait_cancelled(self, timeout=1.0):
         """Wait for cancelled tasks to complete."""
-        if self._tasks:
-            _, pending = await asyncio.wait(self._tasks, timeout=timeout)
+        if self.tasks:
+            logger.debug('TaskList: Waiting for %d tasks', len(self.tasks))
+            _, pending = await asyncio.wait(self.tasks, timeout=timeout)
             if pending:
                 raise RuntimeError(
                     'TaskList: Tasks did not exit as expected: %r' % pending)
 
     def __len__(self):
         """Return length of task list."""
-        return len(self._tasks)
+        return len(self.tasks)
 
     def __contains__(self, task):
         """Return true if task is in list."""
-        return task in self._tasks
+        return task in self.tasks
 
     def __iter__(self):
         """Return iterable for task list."""
-        return iter(self._tasks)
+        return iter(self.tasks)

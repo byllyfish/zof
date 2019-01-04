@@ -205,7 +205,7 @@ async def test_request_benchmark(caplog):
     exit_status = await controller.run()
 
     assert exit_status == 0
-    assert controller.events == ['START', 'CHANNEL_UP', 'STOP']
+    assert controller.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
 

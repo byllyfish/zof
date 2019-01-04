@@ -70,9 +70,9 @@ class Datapath:
             logger.debug('Close %r', self)
             self.zof_driver.close_nowait(self.conn_id)
 
-    def zof_cancel_tasks(self):
+    def zof_cancel_tasks(self, parent_scope):
         """Cancel tasks when datapath disconnects."""
-        self.zof_tasks.cancel()
+        self.zof_tasks.cancel(parent_scope)
 
     def zof_from_channel_up(self, event):
         """Initialize port information from a CHANNEL_UP event."""

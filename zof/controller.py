@@ -220,7 +220,7 @@ class Controller:
         dp = self.zof_connections.pop(conn_id)
         del self.zof_dpids[dp.id]
         dp.closed = True
-        dp.zof_cancel_tasks()
+        dp.zof_cancel_tasks(self.zof_tasks)
         return dp
 
     def zof_find_dp(self, event):
@@ -262,10 +262,13 @@ class Controller:
     async def zof_cleanup(self):
         """Clean up datapath and controller tasks."""
         for dp in self.zof_connections.values():
-            dp.zof_cancel_tasks()
+            if not dp.closed:
+                dp.closed = True
+                dp.zof_cancel_tasks(self.zof_tasks)
+                self.zof_dispatch_event('CHANNEL_DOWN', dp, _channel_down())
 
         self.zof_tasks.cancel()
-        await self.zof_tasks.wait_cancelled()
+        await self.zof_tasks.wait_cancelled(3.0)
 
     @contextlib.contextmanager
     def zof_run_context(self):
@@ -314,6 +317,13 @@ class Controller:
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
         logger.warning('CHANNEL_ALERT %r %r', dp, event)
+
+
+def _channel_down():
+    """Return a synthetic, minimal channel_down event."""
+    return {
+        'type': 'CHANNEL_DOWN'
+    }
 
 
 # _ZOF_CONTROLLER is a context variable that returns the currently
