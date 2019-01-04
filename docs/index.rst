@@ -8,6 +8,7 @@ Welcome to zof's documentation!
    readme
    installation
    usage
+   tutorial/index
    reference/index
    contributing
    authors
