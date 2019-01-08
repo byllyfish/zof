@@ -60,7 +60,8 @@ class HttpServer:
 
         self._runner = web.AppRunner(self._app)
         await self._runner.setup()
-        self._site = web.TCPSite(self._runner, self.endpoint[0], self.endpoint[1])
+        self._site = web.TCPSite(self._runner, self.endpoint[0],
+                                 self.endpoint[1])
         await self._site.start()
 
         if self.logger:

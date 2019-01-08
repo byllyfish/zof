@@ -194,13 +194,15 @@ class Controller:
         handler = self.zof_find_handler(event_type)
         if handler:
             assert not asyncio.iscoroutinefunction(handler)
-            logger.debug('Receive %r %s xid=%s', dp, event_type, event.get('xid'))
+            logger.debug('Receive %r %s xid=%s', dp, event_type,
+                         event.get('xid'))
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
                 self.on_exception(ex)
         else:
-            logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type, event.get('xid'))
+            logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type,
+                         event.get('xid'))
             if event_type == 'CHANNEL_ALERT':
                 self.on_channel_alert(dp, event)
 
@@ -328,9 +330,7 @@ class Controller:
 
 def _channel_down():
     """Return a synthetic, minimal channel_down event."""
-    return {
-        'type': 'CHANNEL_DOWN'
-    }
+    return {'type': 'CHANNEL_DOWN'}
 
 
 # ZOF_CONTROLLER is a context variable that returns the currently

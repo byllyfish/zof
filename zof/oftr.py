@@ -129,13 +129,19 @@ class OftrProtocol(asyncio.Protocol):
         # the subprocess.
 
         proc = await asyncio.create_subprocess_exec(
-            *cmd, loop=loop, stdin=None, stdout=None, stderr=None, start_new_session=True)
+            *cmd,
+            loop=loop,
+            stdin=None,
+            stdout=None,
+            stderr=None,
+            start_new_session=True)
         await asyncio.sleep(0.1)
 
         def _proto_factory():
             return cls(post_event, loop)
 
-        _, protocol = await loop.create_unix_connection(_proto_factory, socket_path)
+        _, protocol = await loop.create_unix_connection(
+            _proto_factory, socket_path)
         protocol.process = proc
 
         return protocol

@@ -1,3 +1,5 @@
+"""Public API."""
+
 from typing import Optional, List, Dict, Coroutine, Any
 
 import asyncio
@@ -8,11 +10,15 @@ from .datapath import Datapath
 from .driver import Driver
 from .exception import RequestError
 
+__all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath',
+           'create_task', 'post_event', 'get_driver', 'Configuration',
+           'Datapath', 'RequestError')
 
-__all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath', 'create_task', 'post_event', 'get_driver', 'Configuration', 'Datapath', 'RequestError')
 
-
-async def run_controller(app: object, *, config: Optional[Configuration] = None) -> int:
+async def run_controller(app: object,
+                         *,
+                         config: Optional[Configuration] = None) -> int:
+    """Run controller app using specified configuration."""
     controller = Controller(app, config)
     return await controller.run()
 
@@ -23,10 +29,12 @@ def _get_controller() -> Controller:
 
 
 def get_config() -> Configuration:
+    """Return current configuration."""
     return _get_controller().get_config()
 
 
 def get_datapaths() -> List[Datapath]:
+    """Return list of existing datapaths."""
     return _get_controller().get_datapaths()
 
 

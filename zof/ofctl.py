@@ -99,8 +99,8 @@ def _validate_ofctl(ofctl):
             raise ValueError(
                 'validate_ofctl: "%s" is not a valid field name' % key)
         if not valid_fn(value):
-            raise ValueError('validate_ofctl: field "%s: %s" is not valid' %
-                             (key, value))
+            raise ValueError(
+                'validate_ofctl: field "%s: %s" is not valid' % (key, value))
 
 
 def _valid_port_no(value):

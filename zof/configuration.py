@@ -25,7 +25,8 @@ class Configuration:
     """
 
     zof_driver_class = Driver  # type: Type[Driver]
-    exit_signals = [signal.SIGTERM, signal.SIGINT]  # type: List[signal.Signals]
+    exit_signals = [signal.SIGTERM,
+                    signal.SIGINT]  # type: List[signal.Signals]
     listen_endpoints = ['6653']  # type: List[str]
     listen_versions = [1, 4, 5, 6]  # type: List[int]
     tls_cacert = ''  # type: str
