@@ -2,7 +2,7 @@ import asyncio
 import zof
 
 
-class HelloWorld(zof.Controller):
+class HelloWorld:
 
     def on_channel_up(self, dp, event):
         print(dp, event)
@@ -11,5 +11,5 @@ class HelloWorld(zof.Controller):
         print(dp, event)
 
 
-controller = HelloWorld()
+controller = zof.Controller(HelloWorld())
 asyncio.run(controller.run())

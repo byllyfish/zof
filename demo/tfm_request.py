@@ -4,7 +4,7 @@ import asyncio
 import zof
 
 
-class TfmRequest(zof.Controller):
+class TfmRequest:
     """Demo app that issues a TableFeatures request."""
 
     async def on_channel_up(self, dp, _event):
@@ -15,4 +15,4 @@ class TfmRequest(zof.Controller):
 
 
 if __name__ == '__main__':
-    asyncio.run(TfmRequest().run())  # type: ignore
+    asyncio.run(zof.run_controller(TfmRequest()))  # type: ignore

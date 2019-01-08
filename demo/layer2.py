@@ -5,7 +5,7 @@ import logging
 import zof
 
 
-class Layer2(zof.Controller):
+class Layer2:
     """Demo layer2 OpenFlow app."""
 
     def __init__(self, config=None):
@@ -16,7 +16,7 @@ class Layer2(zof.Controller):
 
     def on_start(self):
         """Handle start event."""
-        self.logger.info('Listening on %s', self.zof_config.listen_endpoints)
+        self.logger.info('Listening on %s', zof.get_config().listen_endpoints)
 
     def on_channel_up(self, dp, event):
         """Handle CHANNEL_UP event."""
@@ -154,4 +154,4 @@ def _match(**kwds):
 
 if __name__ == '__main__':
     logging.basicConfig()
-    asyncio.run(Layer2().run())  # type: ignore
+    asyncio.run(zof.run_controller(Layer2()))

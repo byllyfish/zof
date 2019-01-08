@@ -4,7 +4,7 @@ import asyncio
 import zof
 
 
-class HubReactive(zof.Controller):
+class HubReactive:
     """Demo OpenFlow app that implements a reactive hub."""
 
     def on_channel_up(self, dp, _event):
@@ -43,4 +43,4 @@ class HubReactive(zof.Controller):
 
 
 if __name__ == '__main__':
-    asyncio.run(HubReactive().run())  # type: ignore
+    asyncio.run(zof.run_controller(HubReactive()))

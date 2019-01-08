@@ -64,7 +64,7 @@ class Controller:
 
     """
 
-    def __init__(self, config: Optional[Configuration] = None):
+    def __init__(self, app: object, config: Optional[Configuration] = None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()  # type: Configuration
         self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
@@ -73,6 +73,7 @@ class Controller:
         self.zof_loop = None  # type: Optional[asyncio.AbstractEventLoop]
         self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
         self.zof_tasks = None  # type: Optional[TaskList]
+        self.app = app
 
     async def run(self) -> int:
         """Run controller in an event loop."""
@@ -133,7 +134,7 @@ class Controller:
         """
         return self.zof_driver
 
-    def get_datapath(self, dp_id) -> Optional[Datapath]:
+    def find_datapath(self, dp_id) -> Optional[Datapath]:
         """Retrieve the specified datapath, or None if not found.
 
         Returns:
@@ -142,7 +143,7 @@ class Controller:
         """
         return self.zof_dpids.get(dp_id)
 
-    def all_datapaths(self) -> List[Datapath]:
+    def get_datapaths(self) -> List[Datapath]:
         """Retrieve a list of connected datapaths.
 
         Returns:
@@ -200,6 +201,8 @@ class Controller:
                 self.on_exception(ex)
         else:
             logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type, event.get('xid'))
+            if event_type == 'CHANNEL_ALERT':
+                self.on_channel_alert(dp, event)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -273,7 +276,7 @@ class Controller:
     @contextlib.contextmanager
     def zof_run_context(self):
         """Context manager for runtime state and signal handling."""
-        ctxt_token = _ZOF_CONTROLLER.set(self)
+        ctxt_token = ZOF_CONTROLLER.set(self)
         self.zof_loop = asyncio.get_running_loop()
         self.zof_run_task = asyncio.current_task(self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
@@ -290,7 +293,7 @@ class Controller:
         self.zof_loop = None
         self.zof_run_task = None
         self.zof_tasks = None
-        _ZOF_CONTROLLER.reset(ctxt_token)
+        ZOF_CONTROLLER.reset(ctxt_token)
 
     async def zof_invoke(self, event_type):
         """Notify app to start/stop."""
@@ -304,15 +307,19 @@ class Controller:
 
     def zof_find_handler(self, event_type):
         """Return handler function for given event type."""
-        return getattr(self, 'on_%s' % event_type.lower(), None)
+        return getattr(self.app, 'on_%s' % event_type.lower(), None)
 
     def zof_quit(self):
         """Quit controller event loop."""
         self.zof_run_task.cancel()
 
-    def on_exception(self, exc):  # pylint: disable=no-self-use
+    def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        logger.critical('Exception in zof handler: %r', exc, exc_info=exc)
+        exc_handler = getattr(self.app, 'on_exception', None)
+        if exc_handler:
+            exc_handler(exc)
+        else:
+            logger.critical('Exception in zof handler: %r', exc, exc_info=exc)
 
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
@@ -326,12 +333,7 @@ def _channel_down():
     }
 
 
-# _ZOF_CONTROLLER is a context variable that returns the currently
+# ZOF_CONTROLLER is a context variable that returns the currently
 # running controller instance.
 
-_ZOF_CONTROLLER = ContextVar('zof_controller')  # type: ContextVar[Controller]
-
-
-def get_controller() -> Controller:
-    """Return currently running controller instance."""
-    return _ZOF_CONTROLLER.get()
+ZOF_CONTROLLER = ContextVar('zof_controller')  # type: ContextVar[Controller]
