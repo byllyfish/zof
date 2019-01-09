@@ -12,18 +12,22 @@ import zof
 
 
 async def mock_controller(app, **kwds):
-    config = zof.Configuration(zof_driver_class=MockDriver, **kwds)
+    config = zof.Configuration(zof_driver_class=MockDriver, exit_signals=[signal.SIGUSR1], **kwds)
     return await zof.run_controller(app, config=config)
 
 
-class MockController:
+def _call_later(timeout, func):
+    asyncio.get_event_loop().call_later(timeout, func)
+
+
+class BasicApp:
     """Implements a test controller that uses a mock driver."""
 
     def __init__(self):
         self.events = []
 
     def on_start(self):
-        asyncio.get_event_loop().call_later(0.02, self.quit)
+        _call_later(0.02, self.quit)
         self.events.append('START')
 
     def on_stop(self):
@@ -33,7 +37,7 @@ class MockController:
         self.events.append(event.get('type', event))
 
     def quit(self):
-        os.kill(os.getpid(), signal.SIGTERM)
+        os.kill(os.getpid(), signal.SIGUSR1)
 
     on_channel_up = log_event
     on_channel_down = log_event
@@ -43,7 +47,7 @@ class MockController:
 async def test_basic_controller(caplog):
     """Test controller event dispatch order with sync handlers."""
 
-    app = MockController()
+    app = BasicApp()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -55,7 +59,7 @@ async def test_basic_controller(caplog):
 async def test_async_channel_up(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             assert not dp.closed
             assert dp in zof.get_datapaths()
@@ -67,7 +71,7 @@ async def test_async_channel_up(caplog):
             await asyncio.sleep(0)
             self.events.append('NEXT')
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -81,10 +85,10 @@ async def test_async_channel_up(caplog):
 async def test_async_channel_up_cancel(caplog):
     """Test controller event dispatch with an async channel_up handler."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_start(self):
             zof.get_driver().channel_wait = -1
-            asyncio.get_event_loop().call_later(0.01, self.quit)
+            _call_later(0.01, self.quit)
             self.events.append('START')
 
         def on_channel_up(self, dp, event):
@@ -108,7 +112,7 @@ async def test_async_channel_up_cancel(caplog):
                 self.log_event(dp, event)
             return _other
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -122,7 +126,7 @@ async def test_async_channel_up_cancel(caplog):
 async def test_async_channel_down(caplog):
     """Test controller event dispatch with an async channel_down handler."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_down(self, dp, event):
             assert dp.closed
             assert dp not in zof.get_datapaths()
@@ -134,7 +138,7 @@ async def test_async_channel_down(caplog):
             await asyncio.sleep(0)
             self.events.append('NEXT')
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -148,14 +152,14 @@ async def test_async_channel_down(caplog):
 async def test_async_start(caplog):
     """Test controller event dispatch with async start."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         async def on_start(self):
-            asyncio.get_event_loop().call_later(0.1, self.quit)
+            _call_later(0.1, self.quit)
             self.events.append('START')
             await asyncio.sleep(0.02)
             self.events.append('NEXT')
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -169,7 +173,7 @@ async def test_async_start(caplog):
 async def test_exceptions(caplog):
     """Test exceptions in async handlers."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             dp.create_task(self._channel_up(dp, event))
 
@@ -183,7 +187,7 @@ async def test_exceptions(caplog):
         def on_exception(self, exc):
             self.events.append(str(exc))
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -198,7 +202,7 @@ async def test_exceptions(caplog):
 async def test_request_benchmark(caplog):
     """Test datapath request() api."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         async def on_start(self):
             zof.get_driver().channel_wait = 10.0
             self.events.append('START')
@@ -214,7 +218,7 @@ async def test_request_benchmark(caplog):
             finally:
                 self.quit()
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -250,7 +254,7 @@ async def test_packet_in_sync(caplog):
 
     from timeit import default_timer as _timer
 
-    class _Controller(MockController):
+    class _App(BasicApp):
 
         packet_limit = 1000
         packet_count = 0
@@ -278,7 +282,7 @@ async def test_packet_in_sync(caplog):
             self.log_event(dp, event)
             self.quit()
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -290,12 +294,12 @@ async def test_packet_in_sync(caplog):
 async def test_controller_invalid_event(caplog):
     """Test controller event dispatch with an invalid event."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             zof.post_event({'notype': 'invalid'})
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -309,12 +313,12 @@ async def test_controller_invalid_event(caplog):
 async def test_controller_unknown_connid(caplog):
     """Test controller event dispatch with an invalid event."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             zof.post_event({'conn_id': 1000, 'type': 'unknown'})
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -326,7 +330,7 @@ async def test_controller_unknown_connid(caplog):
 async def test_controller_exception_in_handler(caplog):
     """Test controller with async handler that throws exception."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             dp.create_task(self._channel_up(dp, event))
 
@@ -334,7 +338,7 @@ async def test_controller_exception_in_handler(caplog):
             self.log_event(dp, event)
             raise RuntimeError('oops')
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -348,7 +352,7 @@ async def test_controller_exception_in_handler(caplog):
 async def test_controller_channel_alert(caplog):
     """Test controller with channel_alert."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             zof.post_event({
@@ -356,7 +360,7 @@ async def test_controller_channel_alert(caplog):
                 'type': 'CHANNEL_ALERT'
             })
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -371,7 +375,7 @@ async def test_controller_channel_alert(caplog):
 async def test_controller_all_datapaths(caplog):
     """Test controller's get_datapaths method."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             assert not dp.closed
             self.log_event(dp, event)
@@ -382,7 +386,7 @@ async def test_controller_all_datapaths(caplog):
             self.log_event(dp, event)
             assert dp not in zof.get_datapaths()
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -396,7 +400,7 @@ async def test_controller_listen_bad_tls_args(caplog):
 
     # N.B. This is _not_ using a mock driver.
     config = zof.Configuration(tls_cert='x')
-    app = MockController()
+    app = BasicApp()
     exit_status = await zof.run_controller(app, config=config)
 
     assert exit_status != 0
@@ -411,7 +415,7 @@ async def test_controller_listen_bad_endpoints(caplog):
 
     # N.B. This is _not_ using a mock driver.
     config = zof.Configuration(listen_endpoints=['[::1]:FOO'])
-    app = MockController()
+    app = BasicApp()
     exit_status = await zof.run_controller(app, config=config)
 
     assert exit_status != 0
@@ -427,7 +431,7 @@ async def test_controller_listen_bad_endpoints(caplog):
 async def test_controller_no_listen(caplog):
     """Test controller listen argument zero endpoints."""
 
-    app = MockController()
+    app = BasicApp()
     exit_status = await mock_controller(app, listen_endpoints=[])
 
     assert exit_status == 0
@@ -438,7 +442,7 @@ async def test_controller_no_listen(caplog):
 async def test_controller_custom_event(caplog):
     """Test controller with a custom event."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
             zof.post_event({'type': 'FOO'})
@@ -447,7 +451,7 @@ async def test_controller_custom_event(caplog):
             assert dp is None
             self.log_event(dp, event)
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -465,11 +469,11 @@ async def test_controller_custom_event_loop(caplog):
     mechanism in a dispatch loop.
     """
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         done = False
 
         def on_start(self):
-            asyncio.get_event_loop().call_later(0.01, self.stop)
+            _call_later(0.01, self.stop)
             self.events.append('START')
 
         def on_channel_up(self, dp, event):
@@ -484,9 +488,9 @@ async def test_controller_custom_event_loop(caplog):
 
         def stop(self):
             self.done = True
-            asyncio.get_event_loop().call_later(0.01, self.quit)
+            _call_later(0.01, self.quit)
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
@@ -498,11 +502,11 @@ async def test_controller_custom_event_loop(caplog):
 async def test_exception_in_start_stop(caplog):
     """Test controller with start handler that throws exception."""
 
-    class _Controller(MockController):
+    class _App(BasicApp):
         async def on_start(self):
             raise RuntimeError('start failed')
 
-    app = _Controller()
+    app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status != 0
