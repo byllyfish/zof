@@ -1,7 +1,9 @@
 """Common utility functions."""
 
 import json
-from ipaddress import IPv4Address, IPv6Address
+
+
+_ENCODER = json.JSONEncoder(ensure_ascii=False, separators=(',', ':'))
 
 
 def from_json(value):
@@ -11,18 +13,4 @@ def from_json(value):
 
 def to_json(value):
     """Serialize value to JSON."""
-    return json.dumps(
-        value,
-        separators=(',', ':'),
-        ensure_ascii=False,
-        default=_json_serialize)
-
-
-def _json_serialize(value):
-    """Support JSON serialization for common value types."""
-    if isinstance(value, bytes):
-        return value.hex()
-    if isinstance(value, (IPv4Address, IPv6Address)):
-        return str(value)
-    raise TypeError('Value "%s" of type %s is not JSON serializable' %
-                    (repr(value), type(value)))
+    return _ENCODER.encode(value)
