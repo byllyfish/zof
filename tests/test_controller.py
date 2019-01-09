@@ -57,6 +57,9 @@ async def test_async_channel_up(caplog):
 
     class _Controller(MockController):
         def on_channel_up(self, dp, event):
+            assert not dp.closed
+            assert dp in zof.get_datapaths()
+            assert zof.find_datapath(dp.id) is dp
             dp.create_task(self._channel_up(dp, event))
 
         async def _channel_up(self, dp, event):
@@ -121,10 +124,12 @@ async def test_async_channel_down(caplog):
 
     class _Controller(MockController):
         def on_channel_down(self, dp, event):
+            assert dp.closed
+            assert dp not in zof.get_datapaths()
+            assert zof.find_datapath(dp.id) is None
             zof.create_task(self._channel_down(dp, event))
 
         async def _channel_down(self, dp, event):
-            assert dp.closed
             self.log_event(dp, event)
             await asyncio.sleep(0)
             self.events.append('NEXT')

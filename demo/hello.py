@@ -11,5 +11,4 @@ class HelloWorld:
         print(dp, event)
 
 
-controller = zof.Controller(HelloWorld())
-asyncio.run(controller.run())
+asyncio.run(zof.run_controller(HelloWorld()))
