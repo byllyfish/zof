@@ -39,16 +39,20 @@ def get_datapaths() -> List[Datapath]:
 
 
 def find_datapath(datapath_id: int) -> Optional[Datapath]:
+    """Find datapath by datapath_id."""
     return _get_controller().find_datapath(datapath_id)
 
 
 def create_task(coro: Coroutine) -> asyncio.Task:
+    """Create a task."""
     return _get_controller().create_task(coro)
 
 
 def post_event(event: Dict[str, Any]) -> None:
+    """Post a custom event."""
     get_driver().post_event(event)
 
 
 def get_driver() -> Driver:
+    """Return current driver instance."""
     return _get_controller().get_driver()
