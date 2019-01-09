@@ -10,9 +10,10 @@ import zof
 
 
 # pylint: disable=unused-argument,missing-docstring
-async def mock_controller(app, **kwds):
-    config = zof.Configuration(
-        zof_driver_class=MockDriver, exit_signals=[signal.SIGUSR1], **kwds)
+async def mock_controller(app, mock_driver=True, **kwds):
+    config = zof.Configuration(exit_signals=[signal.SIGUSR1], **kwds)
+    if mock_driver:
+        config.zof_driver_class = MockDriver
     return await zof.run_controller(app, config=config)
 
 
@@ -398,9 +399,8 @@ async def test_controller_listen_bad_tls_args(caplog):
     """Test controller listen argument with bad TLS args."""
 
     # N.B. This is _not_ using a mock driver.
-    config = zof.Configuration(tls_cert='x')
     app = BasicApp()
-    exit_status = await zof.run_controller(app, config=config)
+    exit_status = await mock_controller(app, mock_driver=False, tls_cert='x')
 
     assert exit_status != 0
     assert caplog.record_tuples == [
@@ -413,9 +413,8 @@ async def test_controller_listen_bad_endpoints(caplog):
     """Test controller listen argument with invalid endpoint."""
 
     # N.B. This is _not_ using a mock driver.
-    config = zof.Configuration(listen_endpoints=['[::1]:FOO'])
     app = BasicApp()
-    exit_status = await zof.run_controller(app, config=config)
+    exit_status = await mock_controller(app, mock_driver=False, listen_endpoints=['[::1]:FOO'])
 
     assert exit_status != 0
     assert len(caplog.record_tuples) == 1
