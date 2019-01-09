@@ -8,11 +8,11 @@ import signal
 from mock_driver import MockDriver
 import zof
 
+
 # pylint: disable=unused-argument,missing-docstring
-
-
 async def mock_controller(app, **kwds):
-    config = zof.Configuration(zof_driver_class=MockDriver, exit_signals=[signal.SIGUSR1], **kwds)
+    config = zof.Configuration(
+        zof_driver_class=MockDriver, exit_signals=[signal.SIGUSR1], **kwds)
     return await zof.run_controller(app, config=config)
 
 
@@ -110,6 +110,7 @@ async def test_async_channel_up_cancel(caplog):
 
             def _other(dp, event):
                 self.log_event(dp, event)
+
             return _other
 
     app = _App()
@@ -117,7 +118,8 @@ async def test_async_channel_up_cancel(caplog):
 
     assert exit_status == 0
     assert app.events == [
-        'START', 'CHANNEL_UP', 'BOGUS_EVENT', 'NEXT0', 'CHANNEL_DOWN', 'CANCEL', 'STOP'
+        'START', 'CHANNEL_UP', 'BOGUS_EVENT', 'NEXT0', 'CHANNEL_DOWN',
+        'CANCEL', 'STOP'
     ]
     assert not caplog.record_tuples
 
@@ -355,10 +357,7 @@ async def test_controller_channel_alert(caplog):
     class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
-            zof.post_event({
-                'conn_id': dp.conn_id,
-                'type': 'CHANNEL_ALERT'
-            })
+            zof.post_event({'conn_id': dp.conn_id, 'type': 'CHANNEL_ALERT'})
 
     app = _App()
     exit_status = await mock_controller(app)
@@ -455,9 +454,7 @@ async def test_controller_custom_event(caplog):
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
-    assert app.events == [
-        'START', 'CHANNEL_UP', 'FOO', 'CHANNEL_DOWN', 'STOP'
-    ]
+    assert app.events == ['START', 'CHANNEL_UP', 'FOO', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples
 
 

@@ -72,20 +72,28 @@ def test_datapath_ports():
         'type': 'CHANNEL_UP',
         'msg': {
             'features': {
-                'ports': [
-                    {'port_no': 1},
-                    {'port_no': 2},
-                    {'port_no': 'LOCAL'}
-                ]
+                'ports': [{
+                    'port_no': 1
+                }, {
+                    'port_no': 2
+                }, {
+                    'port_no': 'LOCAL'
+                }]
             }
         }
     }
     dp.zof_from_channel_up(channel_up)
 
     assert dp.ports == {
-        1: {'port_no': 1},
-        2: {'port_no': 2},
-        'LOCAL': {'port_no': 'LOCAL'}
+        1: {
+            'port_no': 1
+        },
+        2: {
+            'port_no': 2
+        },
+        'LOCAL': {
+            'port_no': 'LOCAL'
+        }
     }
 
     port_status = {
@@ -97,10 +105,7 @@ def test_datapath_ports():
     }
     dp.zof_from_port_status(port_status)
 
-    assert dp.ports == {
-        1: {'port_no': 1},
-        'LOCAL': {'port_no': 'LOCAL'}
-    }
+    assert dp.ports == {1: {'port_no': 1}, 'LOCAL': {'port_no': 'LOCAL'}}
 
     port_status = {
         'type': 'PORT_STATUS',
@@ -112,7 +117,14 @@ def test_datapath_ports():
     dp.zof_from_port_status(port_status)
 
     assert dp.ports == {
-        1: {'port_no': 1},
-        'LOCAL': {'port_no': 'LOCAL'},
-        3: {'port_no': 3, 'reason': 'ADD'}
+        1: {
+            'port_no': 1
+        },
+        'LOCAL': {
+            'port_no': 'LOCAL'
+        },
+        3: {
+            'port_no': 3,
+            'reason': 'ADD'
+        }
     }

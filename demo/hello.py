@@ -3,7 +3,6 @@ import zof
 
 
 class HelloWorld:
-
     def on_channel_up(self, dp, event):
         print(dp, event)
 
