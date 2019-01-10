@@ -13,9 +13,7 @@ def test_zof_load_msg():
 
 def test_zof_dump_msg():
     """Test dump_msg api."""
-    event = {
-        'info': [None, 'abc']
-    }
+    event = {'info': [None, 'abc']}
     expected = b'{"info":[null,"abc"]}\x00'
     assert oftr.zof_dump_msg(event) == expected
 

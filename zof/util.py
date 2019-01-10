@@ -2,7 +2,6 @@
 
 import json
 
-
 _ENCODER = json.JSONEncoder(ensure_ascii=False, separators=(',', ':'))
 
 

@@ -131,9 +131,9 @@ class OftrProtocol(asyncio.Protocol):
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             loop=loop,
-            stdin=None,
-            stdout=None,
-            stderr=None,
+            stdin=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
             start_new_session=True)
         await asyncio.sleep(0.1)
 
