@@ -12,3 +12,5 @@ docs/reference/apidoc/
 build/
 dist/
 zof.egg-info/
+prof/
+
