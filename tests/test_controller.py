@@ -511,3 +511,23 @@ async def test_exception_in_start_stop(caplog):
     assert caplog.record_tuples == [
         ('zof', 50, "Exception in run: RuntimeError('start failed')")
     ]
+
+
+@pytest.mark.asyncio
+async def test_datapath_close(caplog):
+    """Test datapath close() with force argument."""
+
+    class _App(BasicApp):
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            dp.close(force=True)
+            assert dp.closed
+
+    app = _App()
+    exit_status = await mock_controller(app)
+
+    assert exit_status == 0
+    assert app.events == [
+        'START', 'CHANNEL_UP', 'STOP'
+    ]
+    assert not caplog.record_tuples

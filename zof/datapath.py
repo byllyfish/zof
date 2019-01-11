@@ -59,16 +59,22 @@ class Datapath:
         assert not self.closed
         self.zof_tasks.create_task(coro)
 
-    def close(self):
-        """Close the datapath preemptively.
+    def close(self, *, force=False):
+        """Close the datapath's connection.
 
-        The datapath is not closed until the CHANNEL_DOWN
+        The datapath is not fully closed until the CHANNEL_DOWN
         event is received from the connection manager. Your datapath
         will still receive incoming events already in flight.
+
+        Set force to True to close the datapath immediately. You must
+        be careful with force because you will receive no further
+        events, including a CHANNEL_DOWN event.
         """
         if not self.closed:
             logger.debug('Close %r', self)
             self.zof_driver.close_nowait(self.conn_id)
+            if force:
+                self.closed = True
 
     def zof_cancel_tasks(self, parent_scope):
         """Cancel tasks when datapath disconnects."""

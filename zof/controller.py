@@ -170,8 +170,12 @@ class Controller:
                     dp = self.zof_channel_up(event)
                 elif event_type == 'CHANNEL_DOWN':
                     dp = self.zof_channel_down(event)
+                    if dp is None:
+                        continue  # datapath was force-closed
                 else:
                     dp = self.zof_find_dp(event)
+                    if dp is not None and dp.closed:
+                        continue  # datapath was force-closed
                     if event_type == 'PACKET_IN':
                         Packet.zof_from_packet_in(event)
                     elif event_type == 'PORT_STATUS':
@@ -220,12 +224,19 @@ class Controller:
         return dp
 
     def zof_channel_down(self, event):
-        """Remove the zof Datapath object that represents the event source."""
+        """Remove the zof Datapath object that represents the event source.
+
+        If the datapath was already closed (using the force argument),
+        return None.
+        """
         conn_id = event['conn_id']
         dp = self.zof_connections.pop(conn_id)
+        was_closed = dp.closed
         del self.zof_dpids[dp.id]
-        dp.closed = True
         dp.zof_cancel_tasks(self.zof_tasks)
+        if was_closed:
+            return None
+        dp.closed = True
         return dp
 
     def zof_find_dp(self, event):
