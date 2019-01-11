@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from zof.http import HttpServer, HttpClient, ClientResponseError
+from zof.extra.http import HttpServer, HttpClient, ClientResponseError
 
 
 @pytest.mark.asyncio

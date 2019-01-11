@@ -10,7 +10,7 @@ from zof.util import from_json, to_json
 _VAR_REGEX = re.compile(r'^\{(\w+(?:\[\])?)\}$')
 _LOG_FORMAT = '%a "%r" %s %b "%{Referrer}i" "%{User-Agent}i"'
 
-ClientResponseError = aiohttp.ClientResponseError
+ClientResponseError = aiohttp.ClientResponseError  # type: ignore
 
 
 class HttpServer:

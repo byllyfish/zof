@@ -1,5 +1,5 @@
 import unittest
-from zof.ofctl import convert_from_ofctl
+from zof.extra.ofctl import convert_from_ofctl
 
 
 class TestOfctl(unittest.TestCase):
