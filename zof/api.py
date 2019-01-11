@@ -9,10 +9,12 @@ from .configuration import Configuration
 from .datapath import Datapath
 from .driver import Driver
 from .exception import RequestError
+from .match import Match
+from .packet import Packet
 
 __all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath',
            'create_task', 'post_event', 'get_driver', 'Configuration',
-           'Datapath', 'RequestError')
+           'Datapath', 'RequestError', 'Match', 'Packet')
 
 
 async def run_controller(app: object,
