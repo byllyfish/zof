@@ -1,12 +1,12 @@
 """Protocol class for oftr driver."""
 
 import asyncio
+import json
 import shutil
 import shlex
 
 from zof.exception import RequestError
 from zof.log import logger
-from zof.util import from_json, to_json
 
 
 class OftrProtocol(asyncio.Protocol):
@@ -26,8 +26,12 @@ class OftrProtocol(asyncio.Protocol):
         """Send an OpenFlow/RPC message."""
         assert self._write
 
-        data = zof_dump_msg(msg)
-        self._write(data)
+        try:
+            data = zof_dump_msg(msg)
+            self._write(data)
+        except TypeError as ex:
+            logger.exception('Send failed: %r', msg)
+            raise
 
     def request(self, msg):
         """Send an OpenFlow/RPC message and wait for a reply."""
@@ -252,15 +256,18 @@ def _valid_reply(ofp_msg, msg):
     return msg['type'] not in ('PACKET_IN', 'FLOW_REMOVED', 'PORT_STATUS')
 
 
+_ENCODER = json.JSONEncoder(ensure_ascii=False, separators=(',', ':'))
+
+
 def zof_load_msg(data):
     """Read from JSON bytes."""
     try:
-        return from_json(data)
-    except Exception:  # pylint: disable=broad-except
-        logger.exception('zof_load_msg exception: %r', data)
+        return json.loads(data)
+    except json.JSONDecodeError as exc:
+        logger.critical('zof_load_msg exception: %r', data, exc_info=exc)
     return None
 
 
 def zof_dump_msg(msg):
     """Write compact JSON bytes (with delimiter)."""
-    return to_json(msg).encode('utf-8') + b'\0'
+    return _ENCODER.encode(msg).encode('utf-8') + b'\0'

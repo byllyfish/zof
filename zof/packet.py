@@ -90,5 +90,5 @@ class Packet(dict):
         if pkt is not None:
             payload = pkt.pop('payload', None)
             if payload is not None:
-                msg['_pkt_data'] = payload
+                msg['_pkt_data'] = payload.hex()
             msg['_pkt'] = pkt.zof_packet_to_field_list()

@@ -4,7 +4,6 @@ import asyncio
 import re
 import aiohttp
 from aiohttp import web
-from zof.util import from_json, to_json
 
 # Query string variable may end with [].
 _VAR_REGEX = re.compile(r'^\{(\w+(?:\[\])?)\}$')
@@ -149,7 +148,7 @@ def _route_get_text(route_vars, func):
 
 def _route_post_json(route_vars, func):
     async def _post(request):
-        post_data = await request.json(loads=from_json)
+        post_data = await request.json()
         kwds = _build_kwds(request, route_vars, post_data)
         return await _respond_json(func, kwds)
 
@@ -194,7 +193,7 @@ async def _respond_json(func, kwds):
         result = await func(**kwds)
     else:
         result = func(**kwds)
-    return web.json_response(result, dumps=to_json)
+    return web.json_response(result)
 
 
 async def _respond_text(func, kwds):
@@ -235,7 +234,7 @@ class HttpClient:
         """Start async web client."""
         assert self._client is None
         self._client = aiohttp.ClientSession(
-            raise_for_status=True, json_serialize=to_json, conn_timeout=15)
+            raise_for_status=True, conn_timeout=15)
 
     async def stop(self):
         """Stop async web client."""
@@ -256,9 +255,9 @@ class HttpClient:
     async def get_json(self, url):
         """Fetch JSON contents of given url."""
         async with self._client.get(url) as response:
-            return await response.json(loads=from_json)
+            return await response.json()
 
     async def post_json(self, url, *, post_data):
         """Post to url with JSON data."""
         async with self._client.post(url, json=post_data) as response:
-            return await response.json(loads=from_json)
+            return await response.json()
