@@ -138,4 +138,4 @@ def test_to_packet_out():
     }
     Packet.zof_to_packet_out(event)
     assert event['msg']['_pkt'] == [{'field': 'A', 'value': 1}]
-    assert event['msg']['_pkt_data'] == b'\x01\x02'
+    assert event['msg']['_pkt_data'] == '0102'

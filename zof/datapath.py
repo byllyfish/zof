@@ -41,6 +41,7 @@ class Datapath:
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
 
+        assert 'conn_id' not in msg, 'Reused msg dict'
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
         logger.debug('Send %r %s xid=%s', self, msg['type'], msg.get('xid'))
@@ -50,6 +51,7 @@ class Datapath:
         if self.closed:
             raise RequestError.zof_closed()
 
+        assert 'conn_id' not in msg, 'Reused msg dict'
         logger.debug('Send %r %s (request)', self, msg['type'])
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)

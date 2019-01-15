@@ -43,9 +43,20 @@ def test_datapath_send():
                 'field': 'A',
                 'value': 1
             }],
-            '_pkt_data': b'\x01\x02'
+            '_pkt_data': '0102'
         }
     }
+
+
+def test_datapath_send_invalid():
+    event = {
+        'type': 'PACKET_OUT',
+        'msg': {
+            '_pkt_data': b'\x01\x02'  # Not supported
+        }
+    }
+    with pytest.raises(TypeError):
+        _make_dp().send(event)
 
 
 @pytest.mark.asyncio

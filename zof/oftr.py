@@ -26,12 +26,8 @@ class OftrProtocol(asyncio.Protocol):
         """Send an OpenFlow/RPC message."""
         assert self._write
 
-        try:
-            data = zof_dump_msg(msg)
-            self._write(data)
-        except TypeError as ex:
-            logger.exception('Send failed: %r', msg)
-            raise
+        data = zof_dump_msg(msg)
+        self._write(data)
 
     def request(self, msg):
         """Send an OpenFlow/RPC message and wait for a reply."""
@@ -270,4 +266,8 @@ def zof_load_msg(data):
 
 def zof_dump_msg(msg):
     """Write compact JSON bytes (with delimiter)."""
-    return _ENCODER.encode(msg).encode('utf-8') + b'\0'
+    try:
+        return _ENCODER.encode(msg).encode('utf-8') + b'\0'
+    except TypeError:
+        logger.exception('Failed to encode message: %r', msg)
+        raise

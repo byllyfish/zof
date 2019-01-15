@@ -2,6 +2,8 @@
 
 import asyncio
 
+from zof.oftr import zof_dump_msg
+
 # pylint: disable=unused-argument
 
 
@@ -34,10 +36,12 @@ class MockDriver:
     def send(self, msg):
         """Mock send method."""
         assert isinstance(msg, dict)
+        zof_dump_msg(msg)
 
     async def request(self, msg):
         """Mock request method."""
         await asyncio.sleep(0)
+        zof_dump_msg(msg)
         xid = msg.get('id')
         if xid is None:
             xid = msg.get('xid')
