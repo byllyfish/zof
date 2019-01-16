@@ -527,7 +527,5 @@ async def test_datapath_close(caplog):
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
-    assert app.events == [
-        'START', 'CHANNEL_UP', 'STOP'
-    ]
+    assert app.events == ['START', 'CHANNEL_UP', 'STOP']
     assert not caplog.record_tuples
