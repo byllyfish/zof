@@ -64,7 +64,7 @@ class Controller:
 
     """
 
-    def __init__(self, app: object, config: Optional[Configuration] = None):
+    def __init__(self, app: object, config: Optional[Configuration] = None, services: Optional[List[object]] = None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()  # type: Configuration
         self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
@@ -74,6 +74,7 @@ class Controller:
         self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
         self.zof_tasks = None  # type: Optional[TaskList]
         self.app = app
+        self.services = services or []
 
     async def run(self) -> int:
         """Run controller in an event loop."""
@@ -309,14 +310,17 @@ class Controller:
         ZOF_CONTROLLER.reset(ctxt_token)
 
     async def zof_invoke(self, event_type):
-        """Notify app to start/stop."""
+        """Notify services to start/stop."""
         logger.debug('Invoke %r', event_type)
-        handler = self.zof_find_handler(event_type)
-        if handler:
-            if asyncio.iscoroutinefunction(handler):
-                await handler()
-            else:
-                handler()
+        event_type = event_type.lower()
+        services = [self.app] + self.services
+        for service in services:
+            handler = getattr(service, 'on_%s' % event_type, None)
+            if handler:
+                if asyncio.iscoroutinefunction(handler):
+                    await handler()
+                else:
+                    handler()
 
     def zof_find_handler(self, event_type):
         """Return handler function for given event type."""

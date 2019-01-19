@@ -19,9 +19,10 @@ __all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath',
 
 async def run_controller(app: object,
                          *,
-                         config: Optional[Configuration] = None) -> int:
+                         config: Optional[Configuration] = None,
+                         services: Optional[List[object]] = None) -> int:
     """Run controller app using specified configuration."""
-    controller = Controller(app, config)
+    controller = Controller(app, config, services)
     return await controller.run()
 
 
