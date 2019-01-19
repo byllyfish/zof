@@ -64,7 +64,10 @@ class Controller:
 
     """
 
-    def __init__(self, app: object, config: Optional[Configuration] = None, services: Optional[List[object]] = None):
+    def __init__(self,
+                 app: object,
+                 config: Optional[Configuration] = None,
+                 services: Optional[List[object]] = None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()  # type: Configuration
         self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver

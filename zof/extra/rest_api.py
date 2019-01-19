@@ -11,20 +11,18 @@ class RestApi:
         """Initialize RestAPI app."""
         self.web = HttpServer(endpoint)
 
-        get_handlers = [
-            ('/stats/switches', self.get_switches),
-            ('/stats/flow/{dpid}', self.get_flows),
-            ('/stats/groupdesc/{dpid}', self.get_groupdesc),
-            ('/stats/port/{dpid}/{port_no}', self.get_portstats_specific),
-            ('/stats/port/{dpid}', self.get_portstats),
-            ('/stats/portdesc/{dpid}/{port_no}', self.get_portdesc_specific),
-            ('/stats/portdesc/{dpid}', self.get_portdesc)
-        ]
+        get_handlers = [('/stats/switches', self.get_switches),
+                        ('/stats/flow/{dpid}', self.get_flows),
+                        ('/stats/groupdesc/{dpid}', self.get_groupdesc),
+                        ('/stats/port/{dpid}/{port_no}',
+                         self.get_portstats_specific),
+                        ('/stats/port/{dpid}', self.get_portstats),
+                        ('/stats/portdesc/{dpid}/{port_no}',
+                         self.get_portdesc_specific),
+                        ('/stats/portdesc/{dpid}', self.get_portdesc)]
 
-        post_handlers = [
-            ('/stats/flow/{dpid}', self.post_flows),
-            ('/stats/portdesc/modify', self.modify_portdesc)
-        ]
+        post_handlers = [('/stats/flow/{dpid}', self.post_flows),
+                         ('/stats/portdesc/modify', self.modify_portdesc)]
 
         for route, func in get_handlers:
             self.web.get(route, 'json')(func)
@@ -217,7 +215,8 @@ def _translate_action(action):
     return str(action)
 
 
-def _flow_desc_request(*, table_id='ALL',
+def _flow_desc_request(*,
+                       table_id='ALL',
                        out_port='ANY',
                        out_group='ANY',
                        cookie=0,
