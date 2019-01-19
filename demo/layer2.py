@@ -2,14 +2,15 @@
 
 import asyncio
 import logging
+import sys
+
 import zof
 
 
 class Layer2:
     """Demo layer2 OpenFlow app."""
 
-    def __init__(self, config=None):
-        super().__init__(config)
+    def __init__(self):
         self.forwarding_table = {}
         self.logger = logging.getLogger('layer2')
         self.logger.setLevel(logging.INFO)
@@ -21,10 +22,10 @@ class Layer2:
     def on_channel_up(self, dp, event):
         """Handle CHANNEL_UP event."""
         msg = event['msg']
-        self.logger.info('%s Connected from %s (%d ports, version %d)', dp.id,
+        self.logger.info('DPID %#x Connected from %s (%d ports, version %d)', dp.id,
                          msg['endpoint'], len(msg['features']['ports']),
                          event['version'])
-        self.logger.info('%s Remove all flows', dp.id)
+        self.logger.info('DPID %#x Remove all flows', dp.id)
 
         ofmsgs = [_delete_flows(), _barrier(), _table_miss()]
         for ofmsg in ofmsgs:
@@ -32,7 +33,7 @@ class Layer2:
 
     def on_channel_down(self, dp, _event):
         """Handle CHANNEL_DOWN event."""
-        self.logger.info('%s Disconnected', dp.id)
+        self.logger.info('DPID %#x Disconnected', dp.id)
         self.forwarding_table.pop(dp.id, None)
 
     def on_packet_in(self, dp, event):
@@ -59,7 +60,7 @@ class Layer2:
 
         # Update fwd_table based on eth_src and in_port.
         if pkt.eth_src not in fwd_table:
-            self.logger.info('%s Learn %s on port %s', dp.id, pkt.eth_src,
+            self.logger.info('DPID %#x Learn %s on port %s', dp.id, pkt.eth_src,
                              in_port)
             fwd_table[pkt.eth_src] = in_port
 
@@ -68,7 +69,7 @@ class Layer2:
 
         ofmsgs = []
         if out_port != 'ALL':
-            self.logger.info('%s Forward %s to port %s', dp.id, pkt.eth_dst,
+            self.logger.info('DPID %#x Forward %s to port %s', dp.id, pkt.eth_dst,
                              out_port)
             ofmsgs.append(_table_learn(pkt.eth_dst, out_port))
 
@@ -85,7 +86,7 @@ class Layer2:
             for field in msg['match']
         }
         eth_dst = match['eth_dst']
-        self.logger.info('%s Remove %s (%s)', dp.id, eth_dst, msg['reason'])
+        self.logger.info('DPID %#x Remove %s (%s)', dp.id, eth_dst, msg['reason'])
 
 
 def _delete_flows():
@@ -152,6 +153,16 @@ def _match(**kwds):
     } for key, value in kwds.items()]
 
 
-if __name__ == '__main__':
+async def main():
     logging.basicConfig()
-    asyncio.run(zof.run_controller(Layer2()))
+
+    config = zof.Configuration()
+    if len(sys.argv) == 2:
+        config.listen_endpoints = [sys.argv[1]]
+
+    app = Layer2()
+    return await zof.run_controller(app, config=config)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
