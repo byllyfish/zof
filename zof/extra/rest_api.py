@@ -66,8 +66,8 @@ class RestApi:
     async def post_flows(self, dpid, post_data):
         """Web handler for POST `/stats/flow/{dpid}`."""
         dpid = _parse_dpid(dpid)
-        match = zof.Match(post_data.get('match', {})).to_list()
-        ofmsg = _flow_desc_request(match=match, **post_data)
+        post_data['match'] = zof.Match(post_data.get('match', {})).to_list()
+        ofmsg = _flow_desc_request(**post_data)
         result = await self._request(dpid, ofmsg)
         _translate_flows(result['msg'])
         return {dpid: result['msg']}
