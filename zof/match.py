@@ -23,9 +23,16 @@ def _make_field(name, value):
     if isinstance(value, tuple):
         if len(value) != 2:
             raise ValueError('len(tuple) != 2')
-        return dict(field=fname, value=value[0], mask=value[1])
+        return { 'field': fname, 'value': _ip_str(value[0]), 'mask': _ip_str(value[1]) }
 
-    return dict(field=fname, value=value)
+    return { 'field': fname, 'value': _ip_str(value) }
+
+
+def _ip_str(value):
+    """Convert IP address objects to strings."""
+    if isinstance(value, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+        return str(value)
+    return value
 
 
 def _convert_slash_notation(fname, value):
@@ -46,8 +53,7 @@ def _convert_slash_notation(fname, value):
             raise
 
     # Handle generic slash notation for IPv6 addresses.
-    addr = value.split('/', 1)
-    return (ipaddress.IPv6Address(addr[0]), ipaddress.IPv6Address(addr[1]))
+    return tuple(value.split('/', 1))
 
 
 _IP_FIELDS = {'IPV4_SRC', 'IPV4_DST', 'IPV6_SRC', 'IPV6_DST', 'IPV6_ND_TARGET'}
