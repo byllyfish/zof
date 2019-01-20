@@ -23,9 +23,13 @@ def _make_field(name, value):
     if isinstance(value, tuple):
         if len(value) != 2:
             raise ValueError('len(tuple) != 2')
-        return { 'field': fname, 'value': _ip_str(value[0]), 'mask': _ip_str(value[1]) }
+        return {
+            'field': fname,
+            'value': _ip_str(value[0]),
+            'mask': _ip_str(value[1])
+        }
 
-    return { 'field': fname, 'value': _ip_str(value) }
+    return {'field': fname, 'value': _ip_str(value)}
 
 
 def _ip_str(value):
