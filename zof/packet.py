@@ -9,6 +9,7 @@ _key_map = {
     'nxt': 'ip_proto'
 }
 
+
 class Packet(dict):
     """Packet implementation."""
 
@@ -17,35 +18,43 @@ class Packet(dict):
 
     @property
     def ip_ttl(self):
+        """Return `ip_ttl`."""
         return self['nx_ip_ttl']
-    
+
     @property
     def hop_limit(self):
+        """Return `hop_limit`."""
         return self['nx_ip_ttl']
-    
+
     @property
     def ipv6_nd_res(self):
+        """Return `ipv6_nd_res`."""
         return self['x_ipv6_nd_res']
-    
+
     @property
     def nxt(self):
+        """Return `nxt` (ip_proto alias for IPv6)."""
         return self['ip_proto']
 
     @property
     def src(self):
+        """Return layer3 source address."""
         return self.get('ipv4_src') or self.get('ipv6_src')
 
     @property
     def dst(self):
+        """Return layer3 destination address."""
         return self.get('ipv4_dst') or self.get('ipv6_dst')
 
     @property
     def ext_hdrs(self):
+        """Return IPv6 ext_hdrs."""
         return self.get('ipv6_exthdr', 0) != 0
 
     __getattr__ = dict.__getitem__
 
     def __setattr__(self, key, value):
+        """Set field to value."""
         self[_key_map.get(key, key)] = value
 
     _PROTO_FIELD = {
