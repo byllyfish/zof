@@ -25,17 +25,19 @@ def _make_field(name, value):
             raise ValueError('len(tuple) != 2')
         return {
             'field': fname,
-            'value': _ip_str(value[0]),
-            'mask': _ip_str(value[1])
+            'value': to_str(value[0]),
+            'mask': to_str(value[1])
         }
 
-    return {'field': fname, 'value': _ip_str(value)}
+    return {'field': fname, 'value': to_str(value)}
 
 
-def _ip_str(value):
-    """Convert IP address objects to strings."""
+def to_str(value):
+    """Convert IP addresses and bytes to strings."""
     if isinstance(value, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
         return str(value)
+    if isinstance(value, (bytes, bytearray)):
+        return value.hex()
     return value
 
 

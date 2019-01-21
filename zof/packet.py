@@ -1,5 +1,7 @@
 """Implements Packet class."""
 
+from .match import to_str
+
 
 class Packet(dict):
     """Packet implementation."""
@@ -60,10 +62,10 @@ class Packet(dict):
                 for repeated_value in value:
                     result.append({
                         'field': key.upper(),
-                        'value': repeated_value
+                        'value': to_str(repeated_value)
                     })
             else:
-                result.append({'field': key.upper(), 'value': value})
+                result.append({'field': key.upper(), 'value': to_str(value)})
         return result
 
     @classmethod

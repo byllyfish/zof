@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import shutil
 import shlex
 
@@ -143,6 +144,7 @@ class OftrProtocol(asyncio.Protocol):
         _, protocol = await loop.create_unix_connection(
             _proto_factory, socket_path)
         protocol.process = proc
+        os.remove(socket_path)
 
         return protocol
 
@@ -161,7 +163,7 @@ class OftrProtocol(asyncio.Protocol):
     @staticmethod
     def _oftr_cmd(debug):
         """Return oftr command with args."""
-        socket_path = 'oftr.ipc'
+        socket_path = 'oftr-%d.ipc' % os.getpid()
         cmd = '%s jsonrpc'
         if debug:
             cmd += ' --trace=rpc'

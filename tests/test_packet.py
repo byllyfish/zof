@@ -1,6 +1,7 @@
 """Test zof.Packet class."""
 
 import pytest
+from ipaddress import ip_address
 
 from zof.packet import Packet
 
@@ -75,7 +76,20 @@ def test_packet_to_field_list():
         'value': 4
     }, {
         'field': 'PAYLOAD',
-        'value': b'xxx'
+        'value': '787878'
+    }]
+
+
+def test_packet_to_field_list_alternate():
+    """Test to_field_list with alternate types."""
+    pkt = Packet(a=ip_address('127.0.0.1'), b=ip_address('2000::1'))
+    data = pkt.zof_packet_to_field_list()
+    assert data == [{
+        'field': 'A',
+        'value': '127.0.0.1'
+    }, {
+        'field': 'B',
+        'value': '2000::1'
     }]
 
 
