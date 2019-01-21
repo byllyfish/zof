@@ -153,3 +153,23 @@ def test_to_packet_out():
     Packet.zof_to_packet_out(event)
     assert event['msg']['_pkt'] == [{'field': 'A', 'value': 1}]
     assert event['msg']['_pkt_data'] == '0102'
+
+
+def test_packet_properties():
+    """Test _packet_property accessors."""
+    pkt = Packet()
+    pkt.ip_ttl = 64
+    assert pkt.nx_ip_ttl == 64
+    assert pkt.ip_ttl == 64
+    assert pkt.nx_ip_ttl == 64
+    assert pkt.hop_limit == 64
+
+    pkt.hop_limit = 2
+    assert pkt.nx_ip_ttl == 2
+    assert pkt.ip_ttl == 2
+
+    data = pkt.zof_packet_to_field_list()
+    assert data == [{
+        'field': 'NX_IP_TTL',
+        'value': 2
+    }]

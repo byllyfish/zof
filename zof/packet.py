@@ -2,12 +2,51 @@
 
 from .match import to_str
 
+_key_map = {
+    'ip_ttl': 'nx_ip_ttl',
+    'hop_limit': 'nx_ip_ttl',
+    'ipv6_nd_res': 'x_ipv6_nd_res',
+    'nxt': 'ip_proto'
+}
 
 class Packet(dict):
     """Packet implementation."""
 
+    # Support for common field aliases. These aliases only
+    # work when get/set using dot notation.
+
+    @property
+    def ip_ttl(self):
+        return self['nx_ip_ttl']
+    
+    @property
+    def hop_limit(self):
+        return self['nx_ip_ttl']
+    
+    @property
+    def ipv6_nd_res(self):
+        return self['x_ipv6_nd_res']
+    
+    @property
+    def nxt(self):
+        return self['ip_proto']
+
+    @property
+    def src(self):
+        return self.get('ipv4_src') or self.get('ipv6_src')
+
+    @property
+    def dst(self):
+        return self.get('ipv4_dst') or self.get('ipv6_dst')
+
+    @property
+    def ext_hdrs(self):
+        return self.get('ipv6_exthdr', 0) != 0
+
     __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__  # type: ignore
+
+    def __setattr__(self, key, value):
+        self[_key_map.get(key, key)] = value
 
     _PROTO_FIELD = {
         'ETHERNET': 'eth_type',
