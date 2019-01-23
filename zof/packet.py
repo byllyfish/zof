@@ -57,6 +57,10 @@ class Packet(dict):
         """Set field to value."""
         self[_key_map.get(key, key)] = value
 
+    def __contains__(self, key):
+        """Return true if packet contains field."""
+        return super().__contains__(_key_map.get(key, key))
+
     _PROTO_FIELD = {
         'ETHERNET': 'eth_type',
         'ARP': 'arp_op',

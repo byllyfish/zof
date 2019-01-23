@@ -173,3 +173,12 @@ def test_packet_properties():
         'field': 'NX_IP_TTL',
         'value': 2
     }]
+
+
+def test_packet_contains():
+    """Test `key in pkt`."""
+    pkt = Packet()
+    pkt.ip_ttl = 64
+    assert 'nx_ip_ttl' in pkt
+    assert 'hop_limit' in pkt
+    assert 'x' not in pkt
