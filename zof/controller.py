@@ -9,7 +9,7 @@ from contextvars import ContextVar
 from zof.configuration import Configuration
 from zof.datapath import Datapath
 from zof.driver import Driver
-from zof.log import logger
+from zof.log import logger, ZOFDEBUG
 from zof.packet import Packet
 from zof.tasklist import TaskList
 
@@ -202,8 +202,12 @@ class Controller:
         handler = self.zof_find_handler(event_type)
         if handler:
             assert not asyncio.iscoroutinefunction(handler)
-            logger.debug('Receive %r %s xid=%s', dp, event_type,
-                         event.get('xid'))
+            if ZOFDEBUG:
+                logger.debug('Receive %r %s xid=%s', dp, event_type,
+                             event.get('xid'))
+                if ZOFDEBUG >= 2:
+                    logger.debug(event)
+
             try:
                 handler(dp, event)
             except Exception as ex:  # pylint: disable=broad-except
