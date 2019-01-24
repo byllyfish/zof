@@ -1,4 +1,4 @@
-"""Implements a Controller base class."""
+"""Implements an OpenFlow Controller event dispatcher."""
 
 from typing import Any, Dict, List, Optional  # pylint: disable=unused-import
 
@@ -18,51 +18,7 @@ EXIT_STATUS_ERROR = 10
 
 
 class Controller:
-    """Base class for a Controller app.
-
-    To create an app, subclass `Controller`, then call the instance's run()
-    coroutine function in an event loop.
-
-    Example::
-
-        import asyncio
-        import zof
-
-        class HubController(zof.Controller):
-            def on_packet_in(self, dp, event):
-                msg = event['msg']
-                action = {'action': 'OUTPUT', 'port_no': 'ALL'}
-                ofmsg = {
-                    'type': 'PACKET_OUT',
-                    'msg': {
-                        'in_port': msg['in_port'],
-                        'actions': [action],
-                        'data': msg['data']
-                    }
-                }
-                dp.send(ofmsg)
-
-        asyncio.run(HubController().run())
-
-    To handle OpenFlow events, implement methods of the form::
-
-        on_channel_up(dp, event)
-        on_channel_down(dp, event)
-        on_channel_alert(dp, event)
-        on_packet_in(dp, event)
-        on_port_status(dp, event)
-        on_flow_removed(dp, event)
-        on_<MSGTYPE>(dp, event)
-
-    To handle lifecycle events, implement methods of the form::
-
-        on_start()
-        on_stop()
-        on_exception(exc)
-
-    Methods and attributes that begin with `zof_` are reserved.
-
-    """
+    """Main dispatcher for OpenFlow events."""
 
     def __init__(self,
                  app: object,
@@ -335,6 +291,7 @@ class Controller:
 
     def zof_quit(self):
         """Quit controller event loop."""
+        logger.debug('Request to cancel event loop')
         self.zof_run_task.cancel()
 
     def on_exception(self, exc):
