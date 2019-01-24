@@ -15,6 +15,9 @@ install:
 
 script:
     - ./run_tests.sh
+    # Install uvloop and re-run just the unit tests.
+    - pip install uvloop
+    - python -m pytest -s
 
 # pytype requires python 3.6 to be installed also.
 addons:
