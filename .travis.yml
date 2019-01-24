@@ -15,7 +15,8 @@ install:
 
 script:
     - ./run_tests.sh
-    # Install uvloop and re-run just the unit tests.
+    # Re-run unit tests under builtin loop and uvloop.
+    - python -m pytest -s
     - pip install uvloop
     - python -m pytest -s
 
