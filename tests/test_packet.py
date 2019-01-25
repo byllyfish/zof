@@ -169,10 +169,7 @@ def test_packet_properties():
     assert pkt.ip_ttl == 2
 
     data = pkt.zof_packet_to_field_list()
-    assert data == [{
-        'field': 'NX_IP_TTL',
-        'value': 2
-    }]
+    assert data == [{'field': 'NX_IP_TTL', 'value': 2}]
 
 
 def test_packet_contains():

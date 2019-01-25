@@ -47,17 +47,10 @@ def test_match_to_list():
 
     tuple_value = (80, 0xFF)
     match = Match(tcp_dst=tuple_value)
-    assert match.to_list() == [{
-        'field': 'TCP_DST',
-        'value': 80,
-        'mask': 0xFF
-    }]
+    assert match.to_list() == [{'field': 'TCP_DST', 'value': 80, 'mask': 0xFF}]
 
     match = Match(ipv4_dst=IPv4Address('1.2.3.4'))
-    assert match.to_list() == [{
-        'field': 'IPV4_DST',
-        'value': '1.2.3.4'
-    }]
+    assert match.to_list() == [{'field': 'IPV4_DST', 'value': '1.2.3.4'}]
 
     tuple_value = (IPv4Address('1.2.3.4'), IPv4Address('255.255.255.0'))
     match = Match(ipv4_dst=tuple_value)
@@ -68,12 +61,10 @@ def test_match_to_list():
     }]
 
     match = Match(ipv6_dst=IPv6Address('2000::1'))
-    assert match.to_list() == [{
-        'field': 'IPV6_DST',
-        'value': '2000::1'
-    }]
+    assert match.to_list() == [{'field': 'IPV6_DST', 'value': '2000::1'}]
 
-    tuple_value = (IPv6Address('2000::1'), IPv6Address('ffff:ffff:ffff:ffff::'))
+    tuple_value = (IPv6Address('2000::1'),
+                   IPv6Address('ffff:ffff:ffff:ffff::'))
     match = Match(ipv6_dst=tuple_value)
     assert match.to_list() == [{
         'field': 'IPV6_DST',
