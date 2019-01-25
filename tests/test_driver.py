@@ -156,11 +156,11 @@ async def test_driver_openflow():
 
     async with Driver() as controller:
         # Start controller listening on a port.
-        await controller.listen('127.0.0.1:16653')
+        await controller.listen(('127.0.0.1', 16653))
 
         async with Driver() as agent:
             # Agent connects to controller.
-            conn_id = await agent.connect('127.0.0.1:16653')
+            conn_id = await agent.connect(('127.0.0.1', 16653))
             agent.send(dict(type='BARRIER_REPLY', conn_id=conn_id))
 
             # Test controller request (tied to agent reply sent above).

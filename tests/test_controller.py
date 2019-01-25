@@ -415,7 +415,7 @@ async def test_controller_listen_bad_endpoints(caplog):
     # N.B. This is _not_ using a mock driver.
     app = BasicApp()
     exit_status = await mock_controller(
-        app, mock_driver=False, listen_endpoints=['[::1]:FOO'])
+        app, mock_driver=False, listen_endpoints=[('::1', 65540)])
 
     assert exit_status != 0
     assert len(caplog.record_tuples) == 1

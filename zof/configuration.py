@@ -4,7 +4,7 @@ from typing import List, Type  # pylint: disable=unused-import
 
 import signal
 
-from zof.driver import Driver
+from zof.driver import Driver, _Endpoint  # pylint: disable=unused-import
 
 
 class Configuration:
@@ -27,7 +27,7 @@ class Configuration:
     zof_driver_class = Driver  # type: Type[Driver]
     exit_signals = [signal.SIGTERM,
                     signal.SIGINT]  # type: List[signal.Signals]
-    listen_endpoints = ['6653']  # type: List[str]
+    listen_endpoints = [('', 6653)]  # type: List[_Endpoint]
     listen_versions = [1, 4, 5, 6]  # type: List[int]
     tls_cacert = ''  # type: str
     tls_cert = ''  # type: str

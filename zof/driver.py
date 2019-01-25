@@ -1,5 +1,7 @@
 """Implements a Driver class for communicating with `oftr`."""
 
+from typing import Tuple, Optional, Union
+
 import asyncio
 
 from zof.log import logger
@@ -9,6 +11,8 @@ from zof.oftr import OftrProtocol
 # values between 256 and 2**32-255.
 _MAX_RESERVED_XID = 0xff
 _MAX_DYNAMIC_XID = 0xffffff00
+
+_Endpoint = Tuple[Optional[str], Union[str, int]]
 
 
 class Driver:
@@ -74,12 +78,14 @@ class Driver:
 
     async def listen(self, endpoint, options=(), versions=(), tls_id=0):
         """Listen for OpenFlow connections on a given endpoint."""
+        endpoint = self._ofp_endpoint(endpoint)
         request = self._ofp_listen(endpoint, options, versions, tls_id)
         reply = await self.request(request)
         return reply['conn_id']
 
     async def connect(self, endpoint):
         """Make outgoing OpenFlow connection to given endpoint."""
+        endpoint = self._ofp_endpoint(endpoint)
         request = self._ofp_connect(endpoint)
         reply = await self.request(request)
         return reply['conn_id']
@@ -166,3 +172,13 @@ class Driver:
                 'privkey': privkey
             }
         }
+
+    @staticmethod
+    def _ofp_endpoint(endpoint: _Endpoint):
+        """Convert tuple endpoint (host, port) to string format."""
+        if not isinstance(endpoint, tuple):
+            raise ValueError('Invalid endpoint: %r' % endpoint)
+        host, port = endpoint
+        if host:
+            return '[%s]:%d' % (host, int(port))
+        return str(int(port))
