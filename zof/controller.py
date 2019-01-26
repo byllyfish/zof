@@ -1,6 +1,6 @@
 """Implements an OpenFlow Controller event dispatcher."""
 
-from typing import Any, Dict, List, Optional  # pylint: disable=unused-import
+from typing import Any, Dict, List, Optional, Callable  # pylint: disable=unused-import
 
 import asyncio
 import contextlib
@@ -34,6 +34,7 @@ class Controller:
         self.zof_tasks = None  # type: Optional[TaskList]
         self.app = app
         self.services = services or []
+        self._handler_cache = {}  # type: Dict[str, Callable]
 
     async def run(self) -> int:
         """Run controller in an event loop."""
@@ -155,24 +156,22 @@ class Controller:
 
     def zof_dispatch_event(self, event_type, dp, event):
         """Dispatch event to a handler function."""
-        handler = self.zof_find_handler(event_type)
-        if handler:
-            assert not asyncio.iscoroutinefunction(handler)
+        handlers = self.zof_find_handlers(event_type)
+        if handlers:
             if ZOFDEBUG:
                 logger.debug('Receive %r %s xid=%s', dp, event_type,
                              event.get('xid'))
                 if ZOFDEBUG >= 2:
                     logger.debug(event)
 
-            try:
-                handler(dp, event)
-            except Exception as ex:  # pylint: disable=broad-except
-                self.on_exception(ex)
+            for handler in handlers:
+                try:
+                    handler(dp, event)
+                except Exception as ex:  # pylint: disable=broad-except
+                    self.on_exception(ex)
         else:
             logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type,
                          event.get('xid'))
-            if event_type == 'CHANNEL_ALERT':
-                self.on_channel_alert(dp, event)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -275,19 +274,42 @@ class Controller:
     async def zof_invoke(self, event_type):
         """Notify services to start/stop."""
         logger.debug('Invoke %r', event_type)
-        event_type = event_type.lower()
+        handler_name = 'on_%s' % event_type.lower()
         services = [self.app] + self.services
         for service in services:
-            handler = getattr(service, 'on_%s' % event_type, None)
+            handler = getattr(service, handler_name, None)
             if handler:
                 if asyncio.iscoroutinefunction(handler):
                     await handler()
                 else:
                     handler()
 
-    def zof_find_handler(self, event_type):
-        """Return handler function for given event type."""
-        return getattr(self.app, 'on_%s' % event_type.lower(), None)
+    def zof_find_handlers(self, event_type):
+        """Find list of handlers for given event type.
+
+        Returns:
+            List of handler functions.
+
+        """
+        handler_name = 'on_%s' % event_type.lower()
+        handlers = self._handler_cache.get(handler_name)
+        if handlers is not None:
+            # Return cached handler list.
+            return handlers
+        services = [self.app] + self.services
+        handlers = []
+        for service in services:
+            handler = getattr(service, handler_name, None)
+            if handler is not None:
+                assert callable(handler)
+                assert not asyncio.iscoroutinefunction(handler)
+                handlers.append(handler)
+        # Add default handler for channel_alert.
+        if handler_name == 'on_channel_alert' and not handlers:
+            handlers.append(self.on_channel_alert)
+        # Save handler list in cache.
+        self._handler_cache[handler_name] = handlers
+        return handlers
 
     def zof_quit(self):
         """Quit controller event loop."""
@@ -296,9 +318,10 @@ class Controller:
 
     def on_exception(self, exc):
         """Report exception from a zof handler function."""
-        exc_handler = getattr(self.app, 'on_exception', None)
-        if exc_handler:
-            exc_handler(exc)
+        exc_handlers = self.zof_find_handlers('exception')
+        if exc_handlers:
+            # We only call the first exception handler found.
+            exc_handlers[0](exc)
         else:
             logger.critical('Exception in zof handler: %r', exc, exc_info=exc)
 
