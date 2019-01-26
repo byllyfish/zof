@@ -319,11 +319,19 @@ class Controller:
         self.zof_run_task.cancel()
 
     def on_exception(self, exc):
-        """Report exception from a zof handler function."""
-        exc_handlers = self.zof_find_handlers('exception')
-        if exc_handlers:
-            # We only call the first exception handler found.
-            exc_handlers[0](exc)
+        """Report exception from a zof handler function.
+
+        Only the first `on_exception` handler is called. If
+        there are no on_exception handlers, the default is to
+        log the exception.
+        """
+        services = [self.app] + self.services
+        for service in services:
+            exc_handler = getattr(service, 'on_exception', None)
+            if exc_handler:
+                assert not asyncio.iscoroutinefunction(exc_handler)
+                exc_handler(exc)
+                break
         else:
             logger.critical('Exception in zof handler: %r', exc, exc_info=exc)
 
