@@ -1,6 +1,6 @@
 """Implements an OpenFlow Controller event dispatcher."""
 
-from typing import Any, Dict, List, Optional, Callable  # pylint: disable=unused-import
+from typing import Any, Dict, List, Tuple, Optional, Callable  # pylint: disable=unused-import
 
 import asyncio
 import contextlib
@@ -16,14 +16,16 @@ from zof.tasklist import TaskList
 EXIT_STATUS_OKAY = 0
 EXIT_STATUS_ERROR = 10
 
+_Event = Dict[str, Any]
+_Handler = Callable[[Datapath, _Event], None]
+
 
 class Controller:
     """Main dispatcher for OpenFlow events."""
 
     def __init__(self,
-                 app: object,
-                 config: Optional[Configuration] = None,
-                 services: Optional[List[object]] = None):
+                 apps: Tuple[object, ...],
+                 config: Optional[Configuration] = None):
         """Initialize controller with configuration object."""
         self.zof_config = config or Configuration()  # type: Configuration
         self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
@@ -32,9 +34,8 @@ class Controller:
         self.zof_loop = None  # type: Optional[asyncio.AbstractEventLoop]
         self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
         self.zof_tasks = None  # type: Optional[TaskList]
-        self.app = app
-        self.services = services or []
-        self._handler_cache = {}  # type: Dict[str, Callable]
+        self.apps = apps  # type: Tuple[object, ...]
+        self._handler_cache = {}  # type: Dict[str, _Handler]
 
     async def run(self) -> int:
         """Run controller in an event loop."""
@@ -43,14 +44,14 @@ class Controller:
             async with self.zof_driver:
                 try:
                     # Start app and OpenFlow listener.
-                    await self.zof_invoke('START')
+                    await self.zof_invoke_lifecycle('START')
                     await self.zof_listen()
 
                     # Run until cancelled.
                     await self.zof_event_loop()
 
                     await self.zof_cleanup()
-                    await self.zof_invoke('STOP')
+                    await self.zof_invoke_lifecycle('STOP')
 
                 except Exception as ex:  # pylint: disable=broad-except
                     logger.critical('Exception in run: %r', ex, exc_info=True)
@@ -271,13 +272,12 @@ class Controller:
         self.zof_tasks = None
         ZOF_CONTROLLER.reset(ctxt_token)
 
-    async def zof_invoke(self, event_type):
-        """Notify services to start/stop."""
+    async def zof_invoke_lifecycle(self, event_type):
+        """Notify apps to start/stop."""
         logger.debug('Invoke %r', event_type)
         handler_name = 'on_%s' % event_type.lower()
-        services = [self.app] + self.services
-        for service in services:
-            handler = getattr(service, handler_name, None)
+        for app in self.apps:
+            handler = getattr(app, handler_name, None)
             if handler:
                 if asyncio.iscoroutinefunction(handler):
                     await handler()
@@ -296,18 +296,20 @@ class Controller:
         if handlers is not None:
             # Return cached handler list.
             return handlers
-        services = [self.app] + self.services
+
         handlers = []
-        for service in services:
-            handler = getattr(service, handler_name, None)
+        for app in self.apps:
+            handler = getattr(app, handler_name, None)
             if handler is not None:
                 assert callable(handler)
                 # Consider async handler support in the future.
                 assert not asyncio.iscoroutinefunction(handler)
                 handlers.append(handler)
+
         # Add default handler for channel_alert.
         if handler_name == 'on_channel_alert' and not handlers:
             handlers.append(self.on_channel_alert)
+
         # Save handler list in cache.
         handlers = tuple(handlers)
         self._handler_cache[handler_name] = handlers
@@ -325,9 +327,8 @@ class Controller:
         there are no on_exception handlers, the default is to
         log the exception.
         """
-        services = [self.app] + self.services
-        for service in services:
-            exc_handler = getattr(service, 'on_exception', None)
+        for app in self.apps:
+            exc_handler = getattr(app, 'on_exception', None)
             if exc_handler:
                 assert not asyncio.iscoroutinefunction(exc_handler)
                 exc_handler(exc)
