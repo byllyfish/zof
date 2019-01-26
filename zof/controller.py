@@ -157,21 +157,21 @@ class Controller:
     def zof_dispatch_event(self, event_type, dp, event):
         """Dispatch event to a handler function."""
         handlers = self.zof_find_handlers(event_type)
-        if handlers:
-            if ZOFDEBUG:
-                logger.debug('Receive %r %s xid=%s', dp, event_type,
-                             event.get('xid'))
-                if ZOFDEBUG >= 2:
-                    logger.debug(event)
+        if ZOFDEBUG:
+            self._debug_receive(event_type, dp, event, handlers)
 
-            for handler in handlers:
-                try:
-                    handler(dp, event)
-                except Exception as ex:  # pylint: disable=broad-except
-                    self.on_exception(ex)
-        else:
-            logger.debug('Receive %r %r xid=%s (no handler)', dp, event_type,
-                         event.get('xid'))
+        for handler in handlers:
+            try:
+                handler(dp, event)
+            except Exception as ex:  # pylint: disable=broad-except
+                self.on_exception(ex)
+
+    def _debug_receive(self, event_type, dp, event, handlers):
+        """Log received event and associated handlers."""
+        logger.debug('Receive %r %s xid=%s %r', dp, event_type,
+                     event.get('xid'), handlers)
+        if ZOFDEBUG >= 2:
+            logger.debug(event)
 
     def zof_channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
@@ -288,7 +288,7 @@ class Controller:
         """Find list of handlers for given event type.
 
         Returns:
-            List of handler functions.
+            Tuple of handler functions.
 
         """
         handler_name = 'on_%s' % event_type.lower()
@@ -302,12 +302,14 @@ class Controller:
             handler = getattr(service, handler_name, None)
             if handler is not None:
                 assert callable(handler)
+                # Consider async handler support in the future.
                 assert not asyncio.iscoroutinefunction(handler)
                 handlers.append(handler)
         # Add default handler for channel_alert.
         if handler_name == 'on_channel_alert' and not handlers:
             handlers.append(self.on_channel_alert)
         # Save handler list in cache.
+        handlers = tuple(handlers)
         self._handler_cache[handler_name] = handlers
         return handlers
 

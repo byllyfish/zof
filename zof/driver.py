@@ -181,4 +181,4 @@ class Driver:
         host, port = endpoint
         if host:
             return '[%s]:%d' % (host, int(port))
-        return str(int(port))
+        return ':%d' % int(port)

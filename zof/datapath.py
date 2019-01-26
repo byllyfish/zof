@@ -41,7 +41,9 @@ class Datapath:
         if msg['type'] == 'PACKET_OUT':
             Packet.zof_to_packet_out(msg)
 
-        assert 'conn_id' not in msg, 'Reused msg dict'
+        if 'conn_id' in msg:
+            raise ValueError('Message already sent')
+
         msg['conn_id'] = self.conn_id
         self.zof_driver.send(msg)
         logger.debug('Send %r %s xid=%s', self, msg['type'], msg.get('xid'))
@@ -51,7 +53,9 @@ class Datapath:
         if self.closed:
             raise RequestError.zof_closed()
 
-        assert 'conn_id' not in msg, 'Reused msg dict'
+        if 'conn_id' in msg:
+            raise ValueError('Message already sent')
+
         logger.debug('Send %r %s (request)', self, msg['type'])
         msg['conn_id'] = self.conn_id
         return await self.zof_driver.request(msg)
@@ -105,4 +109,4 @@ class Datapath:
     def __repr__(self):
         """Return string representation of datapath."""
         closed_str = ' CLOSED' if self.closed else ''
-        return '<Datapath 0x%x%s>' % (self.id, closed_str)
+        return '<Datapath %#x%s>' % (self.id, closed_str)
