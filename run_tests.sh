@@ -17,7 +17,8 @@ COVERAGE_ARGS="--cov-report=term-missing --cov-fail-under=90"
 python -m pytest -s -vv --timeout=30 \
                  --pylint $PYLINT_ARGS \
                  --mypy \
-                 --cov=zof $COVERAGE_ARGS
+                 --cov=zof $COVERAGE_ARGS \
+                 zof tests demo
 
 echo "===== pytype ====="
 pytype zof || true
