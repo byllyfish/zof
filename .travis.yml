@@ -11,6 +11,7 @@ before_install:
   - oftr version
 
 install:
+    - pip install -U setuptools pip
     - pip install -U -r requirements.txt -r test-requirements.txt
 
 script:
