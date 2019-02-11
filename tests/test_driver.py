@@ -102,17 +102,24 @@ async def test_large_rpc_too_big():
 async def test_large_rpc():
     """Large RPC payload (big, but not too big)."""
 
+    from timeit import default_timer as _timer
+
     async with Driver() as driver:
         request = {
             'id': 1,
             'method': 'FOO',
             'params': 'x' * (_MSG_LIMIT - 100)
         }
+        start_time = _timer()
         with pytest.raises(RequestError) as excinfo:
             await driver.request(request)
+        elapsed_time = _timer() - start_time
 
         assert 'unknown method' in str(excinfo.value)
         assert driver.event_queue.empty()
+
+    bench = {'benchmark': 'large_rpc', 'loops': 1, 'times': [elapsed_time]}
+    print(bench)
 
 
 async def _driver_request_benchmark(name, loops):
