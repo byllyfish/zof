@@ -125,10 +125,16 @@ def test_oftr_protocol_data_received():
     protocol.msg_received.assert_has_calls([call(5), call(6)])
     protocol.msg_received.reset_mock()
 
-    # No failures.
+    # No failures so far.
     protocol.msg_failure.assert_not_called()
 
-    # Force a failure.
+    # Force a failure (invalid message header).
     protocol.data_received(b'\x00\x00\x01\xF47')
     protocol.msg_received.assert_not_called()
     protocol.msg_failure.assert_called_once_with(b'\x00\x00\x01\xF47')
+    protocol.msg_failure.reset_mock()
+
+    # Force a failure (malformed JSON).
+    protocol.data_received(b'\x00\x00\x01\xF5{')
+    protocol.msg_received.assert_not_called()
+    protocol.msg_failure.assert_called_once_with(b'\x00\x00\x01\xF5{')

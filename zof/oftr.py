@@ -81,7 +81,7 @@ class OftrProtocol(asyncio.Protocol):
             if msg:
                 self.msg_received(msg)
             else:
-                self.msg_failure(buf[begin:offset])
+                self.msg_failure(buf[begin-4:offset])
 
             begin = offset
 
