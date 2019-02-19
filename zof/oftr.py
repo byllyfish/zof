@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import shlex
+import struct
 
 from zof.exception import RequestError
 from zof.log import logger
@@ -28,7 +29,8 @@ class OftrProtocol(asyncio.Protocol):
         assert self._write
 
         data = zof_dump_msg(msg)
-        self._write(data)
+        hdr = struct.pack('>I', ((len(data) << 8) | 0xF5))
+        self._write(hdr + data)
 
     def request(self, msg):
         """Send an OpenFlow/RPC message and wait for a reply."""
@@ -39,41 +41,53 @@ class OftrProtocol(asyncio.Protocol):
             xid = msg['params']['xid']
 
         data = zof_dump_msg(msg)
-        self._write(data)
+        hdr = struct.pack('>I', ((len(data) << 8) | 0xF5))
+        self._write(hdr + data)
 
         req_info = _RequestInfo(self._loop, 3.0)
         self._request_futures[xid] = req_info
         return req_info.future
 
     def data_received(self, data):
-        """Read data from pipe into buffer and dispatch incoming messages."""
+        """Read data into buffer and dispatch incoming messages."""
         buf = self._recv_buf
-        offset = len(buf)
         buf += data
+
+        buflen = len(buf)
         begin = 0
 
-        while True:
-            # Search for end-of-message byte.
-            offset = buf.find(b'\x00', offset)
-
-            # If not found, reset buffer and return.
-            if offset < 0:
-                if begin > 0:
-                    del buf[0:begin]
+        while begin < buflen:
+            # Check for too short buffer.
+            if buflen - begin < 4:
+                del buf[0:begin]
                 return
 
-            # If message is non-empty, parse it and dispatch it.
-            assert buf[offset] == 0
-            if begin != offset:
-                msg = zof_load_msg(buf[begin:offset])
-                if msg:
-                    self.handle_msg(msg)
+            header = struct.unpack_from('>I', buf, begin)[0]
+            if (header & 0xFF) != 0xF5:
+                self.msg_failure(buf[begin:])
+                buf.clear()
+                return
 
-            # Move on to next message in buffer (if present).
-            offset += 1
+            size = header >> 8
+            begin += 4
+            offset = begin + size
+
+            # If complete message not available, reset buffer and return.
+            if offset > buflen:
+                del buf[0:begin-4]
+                return
+
+            msg = zof_load_msg(buf[begin:offset])
+            if msg:
+                self.msg_received(msg)
+            else:
+                self.msg_failure(buf[begin:offset])
+
             begin = offset
 
-    def handle_msg(self, msg):
+        buf.clear()
+
+    def msg_received(self, msg):
         """Handle incoming message."""
         if msg.get('method') == 'OFP.MESSAGE':
             msg = msg['params']
@@ -90,7 +104,11 @@ class OftrProtocol(asyncio.Protocol):
         elif ofp_msg:
             self.dispatch(msg)
         else:
-            logger.error('Driver.handle_msg: Ignored msg: %r', msg)
+            logger.error('Driver.msg_received: Ignored msg: %r', msg)
+
+    def msg_failure(self, data):
+        """Handle case where there's an invalid incoming message."""
+        raise RuntimeError('Invalid OFTR message: %r' % data)
 
     def connection_made(self, transport):
         """Handle new incoming connection."""
@@ -164,7 +182,7 @@ class OftrProtocol(asyncio.Protocol):
     def _oftr_cmd(debug):
         """Return oftr command with args."""
         socket_path = 'oftr-%d.ipc' % os.getpid()
-        cmd = '%s jsonrpc'
+        cmd = '%s jsonrpc --binary-protocol'
         if debug:
             cmd += ' --trace=rpc'
         if socket_path:
@@ -269,7 +287,7 @@ def zof_load_msg(data):
 def zof_dump_msg(msg):
     """Write compact JSON bytes (with delimiter)."""
     try:
-        return _ENCODER.encode(msg).encode('utf-8') + b'\0'
+        return _ENCODER.encode(msg).encode('utf-8')
     except TypeError:
         logger.exception('Failed to encode message: %r', msg)
         raise
