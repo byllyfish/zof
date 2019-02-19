@@ -22,9 +22,9 @@ script:
     - python -m pytest -s
 
 # pytype requires python 3.6 to be installed also.
-addons:
-  apt:
-    sources:
-      - sourceline: 'ppa:deadsnakes/ppa'
-    packages:
-      - python3.6
+# addons:
+#   apt:
+#     sources:
+#       - sourceline: 'ppa:deadsnakes/ppa'
+#     packages:
+#       - python3.6
