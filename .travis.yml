@@ -1,7 +1,9 @@
 language: python
 dist: xenial
 sudo: true
-python: 3.7
+python:
+  - "3.7"
+  - "3.8-dev"
 
 before_install:
   # Install oftr from launchpad.
@@ -20,11 +22,3 @@ script:
     - python -m pytest -s
     - pip install uvloop
     - python -m pytest -s
-
-# pytype requires python 3.6 to be installed also.
-# addons:
-#   apt:
-#     sources:
-#       - sourceline: 'ppa:deadsnakes/ppa'
-#     packages:
-#       - python3.6
