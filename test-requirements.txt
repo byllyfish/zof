@@ -7,4 +7,4 @@ pytest-pylint
 pytest-timeout
 pycodestyle
 pydocstyle
-pytype
+pytype ; python_version < 3.8
