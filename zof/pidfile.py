@@ -4,9 +4,10 @@ import os
 class PidFile:
     """Concrete class that represents a PID file."""
 
-    def __init__(self, pid_path):
+    def __init__(self, pid_path, *, remove_on_exit=True):
         self.pid_path = pid_path
         self.exists = False
+        self.remove_on_exit = remove_on_exit
 
     def read(self):
         """Read PID file."""
@@ -34,4 +35,5 @@ class PidFile:
         self.write()
 
     def __exit__(self, *args):
-        self.remove()
+        if self.remove_on_exit:
+            self.remove()
