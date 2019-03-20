@@ -9,7 +9,7 @@ version:         0x04
 msg:             
   buffer_id:       0x00000101
   in_port:         CONTROLLER
-  actions:         
+  actions:         []
   data:            ''
 ---
 # # Send packet data out port 1.
@@ -69,5 +69,5 @@ version:         0x04
 msg:             
   buffer_id:       NO_BUFFER
   in_port:         CONTROLLER
-  actions:         
+  actions:         []
   data:            ''

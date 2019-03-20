@@ -15,7 +15,7 @@ msg:
   config:          [ PORT_DOWN ]
   mask:            [ PORT_DOWN ]
   advertise:       [  ]
-  properties:      
+  properties:      []
 ---
 # type: PORT_MOD
 # msg:
@@ -33,7 +33,7 @@ msg:
   config:          [  ]
   mask:            [ PORT_DOWN ]
   advertise:       [  ]
-  properties:      
+  properties:      []
 ---
 # version: 5
 # type: PORT_MOD

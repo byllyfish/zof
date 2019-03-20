@@ -5,4 +5,4 @@ type:            PORT_DESC_REQUEST
 flags:           [  ]
 xid:             0x00000000
 version:         0x04
-msg:             
+msg:             {}

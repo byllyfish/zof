@@ -19,8 +19,8 @@ msg:
   out_port:        ANY
   out_group:       ANY
   flags:           [  ]
-  match:           
-  instructions:    
+  match:           []
+  instructions:    []
 ---
 # # Delete flows in table 1.
 # type: FLOW_MOD
@@ -42,8 +42,8 @@ msg:
   out_port:        ANY
   out_group:       ANY
   flags:           [  ]
-  match:           
-  instructions:    
+  match:           []
+  instructions:    []
 ---
 # # Add table miss flow entry to send packets to controller.
 # type: FLOW_MOD
@@ -70,7 +70,7 @@ msg:
   out_port:        ANY
   out_group:       ANY
   flags:           [  ]
-  match:           
+  match:           []
   instructions:    
     - instruction:     APPLY_ACTIONS
       actions:         
@@ -98,5 +98,5 @@ msg:
   out_port:        ANY
   out_group:       ANY
   flags:           [  ]
-  match:           
-  instructions:    
+  match:           []
+  instructions:    []

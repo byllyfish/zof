@@ -18,4 +18,4 @@ msg:
   out_group:       ANY
   cookie:          0x0000000000000000
   cookie_mask:     0x0000000000000000
-  match:           
+  match:           []

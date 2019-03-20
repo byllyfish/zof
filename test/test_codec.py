@@ -60,7 +60,7 @@ class CodecTestCase(unittest.TestCase):
 type:            HELLO
 xid:             0x00000000
 version:         0x01
-msg:             
+msg:             {}
 ...
 """)
 
@@ -96,7 +96,7 @@ msg:
 type:            HELLO
 xid:             0x00000000
 version:         0x01
-msg:             
+msg:             {}
 ...
 """)
 
