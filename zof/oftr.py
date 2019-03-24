@@ -2,9 +2,9 @@
 
 import asyncio
 import json
-import os
 import shutil
 import shlex
+import socket
 import struct
 
 from zof.exception import RequestError
@@ -140,7 +140,8 @@ class OftrProtocol(asyncio.Protocol):
     @classmethod
     async def start(cls, post_event, debug):
         """Connect to the the OpenFlow driver process."""
-        cmd, socket_path = OftrProtocol._oftr_cmd(debug)
+        parent_sock, child_sock = socket.socketpair()
+        cmd = OftrProtocol._oftr_cmd(child_sock, debug)
         loop = asyncio.get_running_loop()
 
         # When we create the subprocess, make it a session leader.
@@ -153,17 +154,15 @@ class OftrProtocol(asyncio.Protocol):
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
+            pass_fds=(child_sock.fileno(),),
             start_new_session=True)
-        await asyncio.sleep(0.1)
 
         def _proto_factory():
             return cls(post_event, loop)
 
         _, protocol = await loop.create_unix_connection(
-            _proto_factory, socket_path)
+            _proto_factory, path=None, sock=parent_sock)
         protocol.process = proc
-        os.remove(socket_path)
-
         return protocol
 
     async def stop(self):
@@ -179,16 +178,14 @@ class OftrProtocol(asyncio.Protocol):
             self.process = None
 
     @staticmethod
-    def _oftr_cmd(debug):
+    def _oftr_cmd(sock, debug):
         """Return oftr command with args."""
-        socket_path = 'oftr-%d.ipc' % os.getpid()
         cmd = '%s jsonrpc --binary-protocol'
+        cmd += ' --rpc-socket=%d' % sock.fileno()
         if debug:
             cmd += ' --trace=rpc'
-        if socket_path:
-            cmd += ' --rpc-socket=%s' % socket_path
         result = shlex.split(cmd % shutil.which('oftr'))
-        return result, socket_path
+        return result
 
 
 class _RequestInfo:

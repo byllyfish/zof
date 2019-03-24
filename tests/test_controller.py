@@ -24,11 +24,12 @@ def _call_later(timeout, func):
 class BasicApp:
     """Implements a test controller that uses a mock driver."""
 
-    def __init__(self):
+    def __init__(self, quit_delay=0.02):
+        self.quit_delay = quit_delay
         self.events = []
 
     def on_start(self):
-        _call_later(0.02, self.quit)
+        _call_later(self.quit_delay, self.quit)
         self.events.append('START')
 
     def on_stop(self):
@@ -399,7 +400,7 @@ async def test_controller_listen_bad_tls_args(caplog):
     """Test controller listen argument with bad TLS args."""
 
     # N.B. This is _not_ using a mock driver.
-    app = BasicApp()
+    app = BasicApp(quit_delay=1.0)
     exit_status = await mock_controller(app, mock_driver=False, tls_cert='x')
 
     assert exit_status != 0
@@ -413,7 +414,7 @@ async def test_controller_listen_bad_endpoints(caplog):
     """Test controller listen argument with invalid endpoint."""
 
     # N.B. This is _not_ using a mock driver.
-    app = BasicApp()
+    app = BasicApp(quit_delay=1.0)
     exit_status = await mock_controller(
         app, mock_driver=False, listen_endpoints=[('::1', 65540)])
 
