@@ -11,6 +11,8 @@ _LOG_FORMAT = '%a "%r" %s %b "%{Referrer}i" "%{User-Agent}i"'
 
 ClientResponseError = aiohttp.ClientResponseError  # type: ignore
 
+_get_running_loop = getattr(asyncio, 'get_running_loop', asyncio.get_event_loop)
+
 
 class HttpServer:
     """Simple async web server.
@@ -80,7 +82,7 @@ class HttpServer:
     async def serve_forever(self):
         """Start the web server and run until task is cancelled."""
         try:
-            serve_future = asyncio.get_running_loop().create_future()
+            serve_future = _get_running_loop().create_future()
             await self.start()
             await serve_future
         except asyncio.CancelledError:

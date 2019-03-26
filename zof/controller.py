@@ -19,6 +19,9 @@ EXIT_STATUS_ERROR = 10
 _Event = Dict[str, Any]
 _Handler = Callable[[Datapath, _Event], None]
 
+_get_running_loop = getattr(asyncio, 'get_running_loop', asyncio.get_event_loop)
+_current_task = getattr(asyncio, 'current_task', asyncio.Task.current_task)
+
 
 class Controller:
     """Main dispatcher for OpenFlow events."""
@@ -254,8 +257,8 @@ class Controller:
     def zof_run_context(self):
         """Context manager for runtime state and signal handling."""
         ctxt_token = ZOF_CONTROLLER.set(self)
-        self.zof_loop = asyncio.get_running_loop()
-        self.zof_run_task = asyncio.current_task(self.zof_loop)
+        self.zof_loop = _get_running_loop()
+        self.zof_run_task = _current_task(self.zof_loop)
         self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
 
         signals = list(self.zof_config.exit_signals)

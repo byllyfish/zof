@@ -3,6 +3,7 @@
 import asyncio
 import pytest
 import os
+import re
 import signal
 
 from mock_driver import MockDriver
@@ -19,6 +20,10 @@ async def mock_controller(app, mock_driver=True, **kwds):
 
 def _call_later(timeout, func):
     asyncio.get_event_loop().call_later(timeout, func)
+
+
+def _fix_caplog(record_tuples):
+    return [(t[0], t[1], re.sub(r',\)$', ')', t[2])) for t in record_tuples]
 
 
 class BasicApp:
@@ -308,7 +313,7 @@ async def test_controller_invalid_event(caplog):
 
     assert exit_status == 0
     assert app.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
-    assert caplog.record_tuples == [
+    assert _fix_caplog(caplog.record_tuples) == [
         ('zof', 50, "Exception in zof_event_loop: KeyError('type')")
     ]
 
@@ -347,7 +352,7 @@ async def test_controller_exception_in_handler(caplog):
 
     assert exit_status == 0
     assert app.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
-    assert caplog.record_tuples == [
+    assert _fix_caplog(caplog.record_tuples) == [
         ('zof', 50, "Exception in zof handler: RuntimeError('oops')")
     ]
 
@@ -404,7 +409,7 @@ async def test_controller_listen_bad_tls_args(caplog):
     exit_status = await mock_controller(app, mock_driver=False, tls_cert='x')
 
     assert exit_status != 0
-    assert caplog.record_tuples == [
+    assert _fix_caplog(caplog.record_tuples) == [
         ('zof', 50, "Exception in run: RequestError('ERROR: PEM routines')")
     ]
 
@@ -509,7 +514,7 @@ async def test_exception_in_start_stop(caplog):
 
     assert exit_status != 0
     assert app.events == []
-    assert caplog.record_tuples == [
+    assert _fix_caplog(caplog.record_tuples) == [
         ('zof', 50, "Exception in run: RuntimeError('start failed')")
     ]
 
