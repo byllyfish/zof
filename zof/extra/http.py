@@ -215,6 +215,10 @@ async def _respond_text(func, kwds):
     return web.Response(text=result, status=status)
 
 
+# Shorten default client timeout to 1min (15sec connecting).
+_DEFAULT_TIMEOUT = aiohttp.ClientTimeout(total=60, connect=15)
+
+
 class HttpClient:
     """Simple async web client.
 
@@ -236,7 +240,7 @@ class HttpClient:
         """Start async web client."""
         assert self._client is None
         self._client = aiohttp.ClientSession(
-            raise_for_status=True, conn_timeout=15)
+            raise_for_status=True, timeout=_DEFAULT_TIMEOUT)
 
     async def stop(self):
         """Stop async web client."""
