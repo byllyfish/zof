@@ -75,14 +75,14 @@ class OftrProtocol(asyncio.Protocol):
 
             # If complete message not available, reset buffer and return.
             if offset > buflen:
-                del buf[0:begin-4]
+                del buf[0:begin - 4]
                 return
 
             msg = zof_load_msg(buf[begin:offset])
             if msg:
                 self.msg_received(msg)
             else:
-                self.msg_failure(buf[begin-4:offset])
+                self.msg_failure(buf[begin - 4:offset])
 
             begin = offset
 
@@ -155,7 +155,7 @@ class OftrProtocol(asyncio.Protocol):
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
-            pass_fds=(child_sock.fileno(),),
+            pass_fds=(child_sock.fileno(), ),
             start_new_session=True)
 
         def _proto_factory():
