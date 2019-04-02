@@ -1,6 +1,5 @@
 # hub_reactive.py
 
-import asyncio
 import zof
 
 
@@ -43,4 +42,4 @@ class HubReactive:
 
 
 if __name__ == '__main__':
-    asyncio.run(zof.run_controller(HubReactive()))
+    zof.run(HubReactive())

@@ -1,4 +1,3 @@
-import asyncio
 import zof
 
 
@@ -10,4 +9,4 @@ class HelloWorld:
         print(dp, event)
 
 
-asyncio.run(zof.run_controller(HelloWorld()))
+zof.run(HelloWorld())

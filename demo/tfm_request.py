@@ -1,6 +1,5 @@
 # tfm_request.py
 
-import asyncio
 import zof
 
 
@@ -15,4 +14,4 @@ class TfmRequest:
 
 
 if __name__ == '__main__':
-    asyncio.run(zof.run_controller(TfmRequest()))  # type: ignore
+    zof.run(TfmRequest())

@@ -7,10 +7,9 @@ import shlex
 import socket
 import struct
 
+from zof.backport import get_running_loop
 from zof.exception import RequestError
 from zof.log import logger
-
-_get_running_loop = getattr(asyncio, 'get_running_loop', asyncio.get_event_loop)
 
 
 class OftrProtocol(asyncio.Protocol):
@@ -144,7 +143,7 @@ class OftrProtocol(asyncio.Protocol):
         """Connect to the the OpenFlow driver process."""
         parent_sock, child_sock = socket.socketpair()
         cmd = OftrProtocol._oftr_cmd(child_sock, debug)
-        loop = _get_running_loop()
+        loop = get_running_loop()
 
         # When we create the subprocess, make it a session leader.
         # We do not want SIGINT signals sent from the terminal to reach

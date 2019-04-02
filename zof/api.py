@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Coroutine, Any
 
 import asyncio
 
+from .backport import asyncio_run
 from .controller import Controller, ZOF_CONTROLLER
 from .configuration import Configuration
 from .datapath import Datapath
@@ -13,8 +14,19 @@ from .match import Match
 from .packet import Packet
 
 __all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath',
-           'create_task', 'post_event', 'get_driver', 'Configuration',
+           'create_task', 'post_event', 'get_driver', 'run', 'Configuration',
            'Datapath', 'RequestError', 'Match', 'Packet')
+
+
+def run(*apps: object, config: Optional[Configuration] = None) -> int:
+    """Run controller app using specified configuration.
+
+    Args:
+        apps: one or more apps
+        config: configuration object
+
+    """
+    return asyncio_run(run_controller(apps, config))
 
 
 async def run_controller(*apps: object,

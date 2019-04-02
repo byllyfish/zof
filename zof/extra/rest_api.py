@@ -261,6 +261,4 @@ def _port_desc_request():
 
 
 if __name__ == '__main__':
-    import asyncio
-    app = RestApi(('127.0.0.1', 9000))
-    asyncio.run(zof.run_controller(app))
+    zof.run(RestApi(('127.0.0.1', 9000)))

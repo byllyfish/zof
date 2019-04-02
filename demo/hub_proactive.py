@@ -1,6 +1,5 @@
 # hub_proactive.py
 
-import asyncio
 import zof
 
 
@@ -25,4 +24,4 @@ class HubProactive:
 
 
 if __name__ == '__main__':
-    asyncio.run(zof.run_controller(HubProactive()))
+    zof.run(HubProactive())

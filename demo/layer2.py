@@ -1,6 +1,5 @@
 """Layer 2 demo."""
 
-import asyncio
 import logging
 import sys
 
@@ -153,7 +152,7 @@ def _match(**kwds):
     } for key, value in kwds.items()]
 
 
-async def main():
+def main():
     logging.basicConfig()
 
     config = zof.Configuration()
@@ -161,8 +160,8 @@ async def main():
         config.listen_endpoints = [sys.argv[1]]
 
     app = Layer2()
-    return await zof.run_controller(app, config=config)
+    return zof.run(app, config=config)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

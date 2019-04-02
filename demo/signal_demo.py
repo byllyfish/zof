@@ -15,9 +15,5 @@ class HelloSignal:
         print('SIGHUP')
 
 
-async def main():
-    return await zof.run_controller(HelloSignal())
-
-
 if __name__ == '__main__':
-    asyncio.run(main())
+    zof.run(HelloSignal())
