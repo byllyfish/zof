@@ -44,6 +44,11 @@ class Layer2:
         data = msg['data']
         pkt = msg['pkt']
 
+        # Drop short header.
+        if 'eth_type' not in pkt:
+            self.logger.warning('Truncated header: %r', event)
+            return
+
         # Drop LLDP.
         if pkt.eth_type == 0x88cc:
             self.logger.warning('Ignore LLDP')

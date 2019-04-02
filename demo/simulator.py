@@ -1,10 +1,11 @@
 import asyncio
 import zof
+from zof.backport import asyncio_run
 
 
 class MySimulator:
     def __init__(self):
-        self.controller_endpoint = '127.0.0.1:6653'
+        self.controller_endpoint = ('127.0.0.1', 6653)
         self.dp_count = 5
         self.driver = zof.Driver(debug=True)
 
@@ -12,6 +13,7 @@ class MySimulator:
         async with self.driver:
             # Make `dp_count` independent connections to `controller_endpoint`.
             try:
+                task = None
                 coros = [
                     self.driver.connect(self.controller_endpoint)
                     for i in range(self.dp_count)
@@ -22,7 +24,8 @@ class MySimulator:
             except zof.RequestError as exc:
                 print('ERROR: %r' % exc)
             finally:
-                task.cancel()
+                if task:
+                    task.cancel()
 
     async def _dispatch(self):
         while True:
@@ -85,7 +88,6 @@ class MySimulator:
         self.driver.send(reply)
 
     def DESC_REQUEST(self, event):
-        print('DESC_REQUEST')
         conn_id = event['conn_id']
         xid = event['xid']
         reply = {
@@ -111,16 +113,14 @@ class MySimulator:
             'name': 'port %d' % port_no,
             'config': [],
             'state': [],
-            'ethernet': {
-                'curr': [],
-                'advertised': [],
-                'supported': [],
-                'peer': [],
-                'curr_speed': 0,
-                'max_speed': 0
-            }
+            'curr': [],
+            'advertised': [],
+            'supported': [],
+            'peer': [],
+            'curr_speed': 0,
+            'max_speed': 0
         }
 
 
 if __name__ == '__main__':
-    asyncio.run(MySimulator().run())  # type: ignore
+    asyncio_run(MySimulator().run())

@@ -15,7 +15,7 @@ from .packet import Packet
 
 __all__ = ('run_controller', 'get_config', 'get_datapaths', 'find_datapath',
            'create_task', 'post_event', 'get_driver', 'run', 'Configuration',
-           'Datapath', 'RequestError', 'Match', 'Packet')
+           'Datapath', 'Driver', 'RequestError', 'Match', 'Packet')
 
 
 def run(*apps: object, config: Optional[Configuration] = None) -> int:
@@ -26,7 +26,7 @@ def run(*apps: object, config: Optional[Configuration] = None) -> int:
         config: configuration object
 
     """
-    return asyncio_run(run_controller(apps, config))
+    return asyncio_run(run_controller(*apps, config=config))
 
 
 async def run_controller(*apps: object,
