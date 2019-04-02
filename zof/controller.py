@@ -37,6 +37,7 @@ class Controller:
         self.zof_tasks = None  # type: Optional[TaskList]
         self.apps = apps  # type: Tuple[object, ...]
         self._handler_cache = {}  # type: Dict[str, _Handler]
+        self._check_apps()
 
     async def run(self) -> int:
         """Run controller in an event loop."""
@@ -340,6 +341,15 @@ class Controller:
     def on_channel_alert(self, dp, event):  # pylint: disable=no-self-use
         """Handle CHANNEL_ALERT message."""
         logger.warning('CHANNEL_ALERT %r %r', dp, event)
+
+    def _check_apps(self):
+        """Verify that apps have at least one "on" handler."""
+        for app in self.apps:
+            for handler in dir(app):
+                if handler.startswith('on_'):
+                    break
+            else:
+                logger.warning('App does not have any handlers: %r', app)
 
 
 def _channel_down():
