@@ -5,14 +5,13 @@ import re
 import aiohttp
 from aiohttp import web
 
+from zof.backport import get_running_loop
+
 # Query string variable may end with [].
 _VAR_REGEX = re.compile(r'^\{(\w+(?:\[\])?)\}$')
 _LOG_FORMAT = '%a "%r" %s %b "%{Referrer}i" "%{User-Agent}i"'
 
 ClientResponseError = aiohttp.ClientResponseError  # type: ignore
-
-_get_running_loop = getattr(asyncio, 'get_running_loop',
-                            asyncio.get_event_loop)
 
 
 class HttpServer:
@@ -83,7 +82,7 @@ class HttpServer:
     async def serve_forever(self):
         """Start the web server and run until task is cancelled."""
         try:
-            serve_future = _get_running_loop().create_future()
+            serve_future = get_running_loop().create_future()
             await self.start()
             await serve_future
         except asyncio.CancelledError:
