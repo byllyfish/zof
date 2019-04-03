@@ -125,7 +125,7 @@ class Controller:
 
         while True:
             try:
-                event = await event_queue.get()
+                event = await event_queue.get()  # type: ignore
                 assert isinstance(event, dict), repr(event)
                 event_type = event['type']
 
@@ -142,7 +142,7 @@ class Controller:
                         continue  # datapath was force-closed
                     if event_type == 'PACKET_IN':
                         Packet.zof_from_packet_in(event)
-                    elif event_type == 'PORT_STATUS':
+                    elif event_type == 'PORT_STATUS' and dp is not None:
                         dp.zof_from_port_status(event)
 
                 # Dispatch event, then yield time to other tasks.

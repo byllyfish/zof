@@ -156,7 +156,7 @@ class OftrProtocol(asyncio.Protocol):
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
             pass_fds=(child_sock.fileno(), ),
-            start_new_session=True)
+            start_new_session=True)  # type: ignore
 
         def _proto_factory():
             return cls(post_event, loop)

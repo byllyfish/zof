@@ -21,7 +21,7 @@ python -m pytest -s -vv --timeout=30 --durations=5 \
                  zof tests demo
 
 echo "===== pytype ====="
-pytype zof || true
+pytype -k zof || true
 
 echo "===== pycodestyle ====="
 pycodestyle --max-line-length=95 zof tests demo
