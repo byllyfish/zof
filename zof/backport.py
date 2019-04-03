@@ -6,9 +6,9 @@ import sys
 
 def asyncio_run(coro, *, debug=False):
     """Backport of asyncio.run() for Python 3.6 support."""
-    loop = asyncio.get_event_loop()
-
+    loop = asyncio.new_event_loop()
     try:
+        asyncio.set_event_loop(loop)
         loop.set_debug(debug)
         return loop.run_until_complete(coro)
     finally:
@@ -20,6 +20,7 @@ def _shutdown_loop(loop):
         _cancel_all_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
     finally:
+        asyncio.set_event_loop(None)
         loop.close()
 
 
