@@ -30,8 +30,8 @@ class Datapath:
         self.conn_id = conn_id
         self.closed = False
         self.ports = OrderedDict()
-        self.zof_driver = controller.zof_driver
-        self.zof_tasks = TaskList(controller.zof_loop, controller.on_exception)
+        self.zof_driver = controller.get_driver()
+        self.zof_tasks = TaskList(controller.get_loop(), controller.on_exception)
 
     def send(self, msg):
         """Send message to datapath."""

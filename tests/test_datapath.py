@@ -11,8 +11,14 @@ class MockController:
     """Mock controler for testing datapath."""
 
     def __init__(self, loop=None):
-        self.zof_loop = loop
-        self.zof_driver = MockDriver()
+        self._loop = loop
+        self._driver = MockDriver()
+
+    def get_driver(self):
+        return self._driver
+
+    def get_loop(self):
+        return self._loop
 
     def on_exception(self, exc):
         print('exception: %r' % exc)

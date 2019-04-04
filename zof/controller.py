@@ -28,13 +28,13 @@ class Controller:
                  apps: Tuple[object, ...],
                  config: Optional[Configuration] = None):
         """Initialize controller with configuration object."""
-        self.zof_config = config or Configuration()  # type: Configuration
-        self.zof_driver = self.zof_config.zof_driver_class()  # type: Driver
-        self.zof_connections = {}  # type: Dict[int, Datapath]
-        self.zof_dpids = {}  # type: Dict[str, Datapath]
-        self.zof_loop = None  # type: Optional[asyncio.AbstractEventLoop]
-        self.zof_run_task = None  # type: Optional[asyncio.Task[Any]]
-        self.zof_tasks = None  # type: Optional[TaskList]
+        self._config = config or Configuration()  # type: Configuration
+        self._driver = self._config.zof_driver_class()  # type: Driver
+        self._connections = {}  # type: Dict[int, Datapath]
+        self._dpids = {}  # type: Dict[str, Datapath]
+        self._loop = None  # type: Optional[asyncio.AbstractEventLoop]
+        self._run_task = None  # type: Optional[asyncio.Task[Any]]
+        self._tasks = None  # type: Optional[TaskList]
         self.apps = apps  # type: Tuple[object, ...]
         self._handler_cache = {}  # type: Dict[str, _Handler]
         self._check_apps()
@@ -43,7 +43,7 @@ class Controller:
         """Run controller in an event loop."""
         exit_status = EXIT_STATUS_OKAY
         with self.zof_run_context():
-            async with self.zof_driver:
+            async with self._driver:
                 try:
                     # Start app and OpenFlow listener.
                     await self.zof_invoke_lifecycle('START')
@@ -76,9 +76,9 @@ class Controller:
             asyncio.Task
 
         """
-        if self.zof_tasks is None:
+        if self._tasks is None:
             raise RuntimeError('Controller is not running.')
-        return self.zof_tasks.create_task(coro)
+        return self._tasks.create_task(coro)
 
     def get_config(self) -> Configuration:
         """Retrieve the configuration object.
@@ -87,7 +87,7 @@ class Controller:
             zof.Configuration
 
         """
-        return self.zof_config
+        return self._config
 
     def get_driver(self) -> Driver:
         """Retrieve the driver object.
@@ -96,7 +96,16 @@ class Controller:
             zof.Driver
 
         """
-        return self.zof_driver
+        return self._driver
+
+    def get_loop(self) -> Optional[asyncio.AbstractEventLoop]:
+        """Retrieve the event loop.
+
+        Returns:
+            Optional[asyncio.AbstractEventLoop]
+
+        """
+        return self._loop
 
     def find_datapath(self, dp_id) -> Optional[Datapath]:
         """Retrieve the specified datapath, or None if not found.
@@ -105,7 +114,7 @@ class Controller:
             zof.Datapath
 
         """
-        return self.zof_dpids.get(dp_id)
+        return self._dpids.get(dp_id)
 
     def get_datapaths(self) -> List[Datapath]:
         """Retrieve a list of connected datapaths.
@@ -114,14 +123,14 @@ class Controller:
             List[zof.Datapath]
 
         """
-        return list(self.zof_connections.values())
+        return list(self._connections.values())
 
     async def zof_event_loop(self):
         """Dispatch events to handler functions.
 
         To exit the loop, cancel the task.
         """
-        event_queue = self.zof_driver.event_queue
+        event_queue = self._driver.event_queue
 
         while True:
             try:
@@ -180,13 +189,13 @@ class Controller:
         """Add the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
         dp_id = int(event['datapath_id'].replace(':', ''), 16)
-        assert conn_id not in self.zof_connections
-        assert dp_id not in self.zof_dpids
+        assert conn_id not in self._connections
+        assert dp_id not in self._dpids
 
         dp = Datapath(self, conn_id, dp_id)
         dp.zof_from_channel_up(event)
-        self.zof_connections[conn_id] = dp
-        self.zof_dpids[dp_id] = dp
+        self._connections[conn_id] = dp
+        self._dpids[dp_id] = dp
         return dp
 
     def zof_channel_down(self, event):
@@ -196,10 +205,10 @@ class Controller:
         return None.
         """
         conn_id = event['conn_id']
-        dp = self.zof_connections.pop(conn_id)
+        dp = self._connections.pop(conn_id)
         was_closed = dp.closed
-        del self.zof_dpids[dp.id]
-        dp.zof_cancel_tasks(self.zof_tasks)
+        del self._dpids[dp.id]
+        dp.zof_cancel_tasks(self._tasks)
         if was_closed:
             return None
         dp.closed = True
@@ -210,14 +219,14 @@ class Controller:
         dp = None
         conn_id = event.get('conn_id')
         if conn_id is not None:
-            dp = self.zof_connections.get(conn_id)
+            dp = self._connections.get(conn_id)
             if dp is None:
                 logger.warning('Unknown conn_id %r', conn_id)
         return dp
 
     async def zof_listen(self):
         """Tell driver to listen on configured endpoints."""
-        config = self.zof_config
+        config = self._config
         if not config.listen_endpoints:
             return
 
@@ -227,13 +236,13 @@ class Controller:
         tls_id = 0
         if config.tls_cert:
             # Set up TLS.
-            tls_id = await self.zof_driver.add_identity(
+            tls_id = await self._driver.add_identity(
                 cert=config.tls_cert,
                 cacert=config.tls_cacert,
                 privkey=config.tls_privkey)
 
         coros = [
-            self.zof_driver.listen(
+            self._driver.listen(
                 endpoint,
                 options=['FEATURES_REQ'],
                 versions=config.listen_versions,
@@ -243,35 +252,35 @@ class Controller:
 
     async def zof_cleanup(self):
         """Clean up datapath and controller tasks."""
-        for dp in self.zof_connections.values():
+        for dp in self._connections.values():
             if not dp.closed:
                 dp.closed = True
-                dp.zof_cancel_tasks(self.zof_tasks)
+                dp.zof_cancel_tasks(self._tasks)
                 self.zof_dispatch_event('CHANNEL_DOWN', dp, _channel_down())
 
-        self.zof_tasks.cancel()
-        await self.zof_tasks.wait_cancelled(3.0)
+        self._tasks.cancel()
+        await self._tasks.wait_cancelled(3.0)
 
     @contextlib.contextmanager
     def zof_run_context(self):
         """Context manager for runtime state and signal handling."""
         ctxt_token = ZOF_CONTROLLER.set(self)
-        self.zof_loop = get_running_loop()
-        self.zof_run_task = current_task(self.zof_loop)
-        self.zof_tasks = TaskList(self.zof_loop, self.on_exception)
+        self._loop = get_running_loop()
+        self._run_task = current_task(self._loop)
+        self._tasks = TaskList(self._loop, self.on_exception)
 
-        signals = list(self.zof_config.exit_signals)
+        signals = list(self._config.exit_signals)
         for signum in signals:
-            self.zof_loop.add_signal_handler(signum, self.zof_quit)
+            self._loop.add_signal_handler(signum, self.zof_quit)
 
         yield
 
         for signum in signals:
-            self.zof_loop.remove_signal_handler(signum)
+            self._loop.remove_signal_handler(signum)
 
-        self.zof_loop = None
-        self.zof_run_task = None
-        self.zof_tasks = None
+        self._loop = None
+        self._run_task = None
+        self._tasks = None
         ZOF_CONTROLLER.reset(ctxt_token)
 
     async def zof_invoke_lifecycle(self, event_type):
@@ -320,7 +329,7 @@ class Controller:
     def zof_quit(self):
         """Quit controller event loop."""
         logger.debug('Request to cancel event loop')
-        self.zof_run_task.cancel()
+        self._run_task.cancel()
 
     def on_exception(self, exc):
         """Report exception from a zof handler function.
