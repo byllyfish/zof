@@ -30,8 +30,8 @@ class Datapath:
         self.conn_id = conn_id
         self.closed = False
         self.ports = OrderedDict()
-        self.zof_driver = controller.get_driver()
-        self.zof_tasks = TaskList(controller.get_loop(), controller.on_exception)
+        self._driver = controller.get_driver()
+        self._tasks = TaskList(controller.get_loop(), controller.on_exception)
 
     def send(self, msg):
         """Send message to datapath."""
@@ -45,7 +45,7 @@ class Datapath:
             raise ValueError('Message already sent')
 
         msg['conn_id'] = self.conn_id
-        self.zof_driver.send(msg)
+        self._driver.send(msg)
         logger.debug('Send %r %s xid=%s', self, msg['type'], msg.get('xid'))
 
     async def request(self, msg):
@@ -58,12 +58,12 @@ class Datapath:
 
         logger.debug('Send %r %s (request)', self, msg['type'])
         msg['conn_id'] = self.conn_id
-        return await self.zof_driver.request(msg)
+        return await self._driver.request(msg)
 
     def create_task(self, coro):
         """Create managed async task associated with this datapath."""
         assert not self.closed
-        self.zof_tasks.create_task(coro)
+        self._tasks.create_task(coro)
 
     def close(self, *, force=False):
         """Close the datapath's connection.
@@ -78,13 +78,13 @@ class Datapath:
         """
         if not self.closed:
             logger.debug('Close %r', self)
-            self.zof_driver.close_nowait(self.conn_id)
+            self._driver.close_nowait(self.conn_id)
             if force:
                 self.closed = True
 
     def zof_cancel_tasks(self, parent_scope):
         """Cancel tasks when datapath disconnects."""
-        self.zof_tasks.cancel(parent_scope)
+        self._tasks.cancel(parent_scope)
 
     def zof_from_channel_up(self, event):
         """Initialize port information from a CHANNEL_UP event."""

@@ -242,7 +242,7 @@ async def _controller_request_benchmark(name, dp, loops):
     from timeit import default_timer as _timer
 
     async def _test(loops):
-        driver = dp.zof_driver
+        driver = zof.get_driver()
         desc = {'id': 1, 'method': 'OFP.DESCRIPTION'}
         start_time = _timer()
         for _ in range(loops):

@@ -35,7 +35,7 @@ class Controller:
         self._loop = None  # type: Optional[asyncio.AbstractEventLoop]
         self._run_task = None  # type: Optional[asyncio.Task[Any]]
         self._tasks = None  # type: Optional[TaskList]
-        self.apps = apps  # type: Tuple[object, ...]
+        self._apps = apps  # type: Tuple[object, ...]
         self._handler_cache = {}  # type: Dict[str, _Handler]
         self._check_apps()
 
@@ -79,6 +79,15 @@ class Controller:
         if self._tasks is None:
             raise RuntimeError('Controller is not running.')
         return self._tasks.create_task(coro)
+
+    def get_apps(self) -> Tuple[object, ...]:
+        """Retrieve the list of apps.
+
+        Returns:
+            Tuple[object]
+
+        """
+        return self._apps
 
     def get_config(self) -> Configuration:
         """Retrieve the configuration object.
@@ -287,7 +296,7 @@ class Controller:
         """Notify apps to start/stop."""
         logger.debug('Invoke %r', event_type)
         handler_name = 'on_%s' % event_type.lower()
-        for app in self.apps:
+        for app in self._apps:
             handler = getattr(app, handler_name, None)
             if handler:
                 if asyncio.iscoroutinefunction(handler):
@@ -309,7 +318,7 @@ class Controller:
             return handlers
 
         handlers = []
-        for app in self.apps:
+        for app in self._apps:
             handler = getattr(app, handler_name, None)
             if handler is not None:
                 assert callable(handler)
@@ -338,7 +347,7 @@ class Controller:
         there are no on_exception handlers, the default is to
         log the exception.
         """
-        for app in self.apps:
+        for app in self._apps:
             exc_handler = getattr(app, 'on_exception', None)
             if exc_handler:
                 assert not asyncio.iscoroutinefunction(exc_handler)
@@ -353,7 +362,7 @@ class Controller:
 
     def _check_apps(self):
         """Verify that apps have at least one "on" handler."""
-        for app in self.apps:
+        for app in self._apps:
             for handler in dir(app):
                 if handler.startswith('on_'):
                     break
