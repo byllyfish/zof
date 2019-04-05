@@ -42,18 +42,18 @@ class Controller:
     async def run(self) -> int:
         """Run controller in an event loop."""
         exit_status = EXIT_STATUS_OKAY
-        with self.zof_run_context():
+        with self._run_context():
             async with self._driver:
                 try:
                     # Start app and OpenFlow listener.
-                    await self.zof_invoke_lifecycle('START')
-                    await self.zof_listen()
+                    await self._invoke_lifecycle('START')
+                    await self._listen()
 
                     # Run until cancelled.
-                    await self.zof_event_loop()
+                    await self._event_loop()
 
-                    await self.zof_cleanup()
-                    await self.zof_invoke_lifecycle('STOP')
+                    await self._cleanup()
+                    await self._invoke_lifecycle('STOP')
 
                 except Exception as ex:  # pylint: disable=broad-except
                     logger.critical('Exception in run: %r', ex, exc_info=True)
@@ -125,7 +125,7 @@ class Controller:
         """
         return list(self._connections.values())
 
-    async def zof_event_loop(self):
+    async def _event_loop(self):
         """Dispatch events to handler functions.
 
         To exit the loop, cancel the task.
@@ -140,13 +140,13 @@ class Controller:
 
                 # Update bookkeeping for connected datapaths.
                 if event_type == 'CHANNEL_UP':
-                    dp = self.zof_channel_up(event)
+                    dp = self._channel_up(event)
                 elif event_type == 'CHANNEL_DOWN':
-                    dp = self.zof_channel_down(event)
+                    dp = self._channel_down(event)
                     if dp is None:
                         continue  # datapath was force-closed
                 else:
-                    dp = self.zof_find_dp(event)
+                    dp = self._find_dp(event)
                     if dp is not None and dp.closed:
                         continue  # datapath was force-closed
                     if event_type == 'PACKET_IN':
@@ -155,7 +155,7 @@ class Controller:
                         dp.zof_from_port_status(event)
 
                 # Dispatch event, then yield time to other tasks.
-                self.zof_dispatch_event(event_type, dp, event)
+                self._dispatch_event(event_type, dp, event)
                 await asyncio.sleep(0)
 
             except asyncio.CancelledError:
@@ -164,11 +164,11 @@ class Controller:
 
             except Exception as ex:  # pylint: disable=broad-except
                 logger.critical(
-                    'Exception in zof_event_loop: %r', ex, exc_info=True)
+                    'Exception in zof event loop: %r', ex, exc_info=True)
 
-    def zof_dispatch_event(self, event_type, dp, event):
+    def _dispatch_event(self, event_type, dp, event):
         """Dispatch event to a handler function."""
-        handlers = self.zof_find_handlers(event_type)
+        handlers = self._find_handlers(event_type)
         if ZOFDEBUG:
             self._debug_receive(event_type, dp, event, handlers)
 
@@ -185,7 +185,7 @@ class Controller:
         if ZOFDEBUG >= 2:
             logger.debug(event)
 
-    def zof_channel_up(self, event):
+    def _channel_up(self, event):
         """Add the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
         dp_id = int(event['datapath_id'].replace(':', ''), 16)
@@ -198,7 +198,7 @@ class Controller:
         self._dpids[dp_id] = dp
         return dp
 
-    def zof_channel_down(self, event):
+    def _channel_down(self, event):
         """Remove the zof Datapath object that represents the event source.
 
         If the datapath was already closed (using the force argument),
@@ -214,7 +214,7 @@ class Controller:
         dp.closed = True
         return dp
 
-    def zof_find_dp(self, event):
+    def _find_dp(self, event):
         """Find the zof Datapath object for the event source."""
         dp = None
         conn_id = event.get('conn_id')
@@ -224,7 +224,7 @@ class Controller:
                 logger.warning('Unknown conn_id %r', conn_id)
         return dp
 
-    async def zof_listen(self):
+    async def _listen(self):
         """Tell driver to listen on configured endpoints."""
         config = self._config
         if not config.listen_endpoints:
@@ -250,19 +250,19 @@ class Controller:
         ]
         await asyncio.gather(*coros)
 
-    async def zof_cleanup(self):
+    async def _cleanup(self):
         """Clean up datapath and controller tasks."""
         for dp in self._connections.values():
             if not dp.closed:
                 dp.closed = True
                 dp.zof_cancel_tasks(self._tasks)
-                self.zof_dispatch_event('CHANNEL_DOWN', dp, _channel_down())
+                self._dispatch_event('CHANNEL_DOWN', dp, _channel_down())
 
         self._tasks.cancel()
         await self._tasks.wait_cancelled(3.0)
 
     @contextlib.contextmanager
-    def zof_run_context(self):
+    def _run_context(self):
         """Context manager for runtime state and signal handling."""
         ctxt_token = ZOF_CONTROLLER.set(self)
         self._loop = get_running_loop()
@@ -271,7 +271,7 @@ class Controller:
 
         signals = list(self._config.exit_signals)
         for signum in signals:
-            self._loop.add_signal_handler(signum, self.zof_quit)
+            self._loop.add_signal_handler(signum, self.quit)
 
         yield
 
@@ -283,7 +283,7 @@ class Controller:
         self._tasks = None
         ZOF_CONTROLLER.reset(ctxt_token)
 
-    async def zof_invoke_lifecycle(self, event_type):
+    async def _invoke_lifecycle(self, event_type):
         """Notify apps to start/stop."""
         logger.debug('Invoke %r', event_type)
         handler_name = 'on_%s' % event_type.lower()
@@ -295,7 +295,7 @@ class Controller:
                 else:
                     handler()
 
-    def zof_find_handlers(self, event_type):
+    def _find_handlers(self, event_type):
         """Find list of handlers for given event type.
 
         Returns:
@@ -326,7 +326,7 @@ class Controller:
         self._handler_cache[handler_name] = handlers
         return handlers
 
-    def zof_quit(self):
+    def quit(self):
         """Quit controller event loop."""
         logger.debug('Request to cancel event loop')
         self._run_task.cancel()
