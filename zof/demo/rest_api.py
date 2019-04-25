@@ -191,7 +191,7 @@ def _translate_instruction(instr):
     if instr_type == 'APPLY_ACTIONS':
         return _translate_actions(instr['actions'])
     if instr_type == 'GOTO_TABLE':
-        return 'GOTO_TABLE:%d' % instr['table_id']
+        return ['GOTO_TABLE:%d' % instr['table_id']]
     return [str(instr)]
 
 
