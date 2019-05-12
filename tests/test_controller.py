@@ -410,7 +410,7 @@ async def test_controller_listen_bad_tls_args(caplog):
 
     assert exit_status != 0
     assert _fix_caplog(caplog.record_tuples) == [
-        ('zof', 50, "Exception in run: RequestError('ERROR: PEM routines')")
+        ('zof', 50, "Exception in run: RequestError('ERROR: No such file or directory')")
     ]
 
 
