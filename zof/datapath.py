@@ -20,6 +20,7 @@ class Datapath:
         id (int): Datapath ID
         conn_id (int): Connection Identifier
         closed (bool): True if datapath is closed
+        down (bool): True when channel_down event received
         ports (OrderedDict): Dictionary of port_no -> port_info_dict
 
     """
@@ -29,6 +30,7 @@ class Datapath:
         self.id = dp_id
         self.conn_id = conn_id
         self.closed = False
+        self.down = False
         self.ports = OrderedDict()
         self._driver = controller.get_driver()
         self._tasks = TaskList(controller.get_loop(), controller.on_exception)
@@ -65,22 +67,16 @@ class Datapath:
         assert not self.closed
         self._tasks.create_task(coro)
 
-    def close(self, *, force=False):
+    def close(self):
         """Close the datapath's connection.
 
         The datapath is not fully closed until the CHANNEL_DOWN
-        event is received from the connection manager. Your datapath
-        will still receive incoming events already in flight.
-
-        Set force to True to close the datapath immediately. You must
-        be careful with force because you will receive no further
-        events, including a CHANNEL_DOWN event.
+        event is received from the connection manager.
         """
         if not self.closed:
             logger.debug('Close %r', self)
             self._driver.close_nowait(self.conn_id)
-            if force:
-                self.closed = True
+            self.closed = True
 
     def zof_cancel_tasks(self, parent_scope):
         """Cancel tasks when datapath disconnects."""

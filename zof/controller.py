@@ -152,12 +152,10 @@ class Controller:
                     dp = self._channel_up(event)
                 elif event_type == 'CHANNEL_DOWN':
                     dp = self._channel_down(event)
-                    if dp is None:
-                        continue  # datapath was force-closed
                 else:
                     dp = self._find_dp(event)
                     if dp is not None and dp.closed:
-                        continue  # datapath was force-closed
+                        continue  # datapath was manually closed
                     if event_type == 'PACKET_IN':
                         Packet.zof_from_packet_in(event)
                     elif event_type == 'PORT_STATUS' and dp is not None:
@@ -208,19 +206,13 @@ class Controller:
         return dp
 
     def _channel_down(self, event):
-        """Remove the zof Datapath object that represents the event source.
-
-        If the datapath was already closed (using the force argument),
-        return None.
-        """
+        """Remove the zof Datapath object that represents the event source."""
         conn_id = event['conn_id']
         dp = self._connections.pop(conn_id)
-        was_closed = dp.closed
         del self._dpids[dp.id]
         dp.zof_cancel_tasks(self._tasks)
-        if was_closed:
-            return None
         dp.closed = True
+        dp.down = True
         return dp
 
     def _find_dp(self, event):
@@ -262,11 +254,14 @@ class Controller:
     async def _cleanup(self):
         """Clean up datapath and controller tasks."""
         for dp in self._connections.values():
-            if not dp.closed:
+            if not dp.down:
                 dp.closed = True
+                dp.down = True
                 dp.zof_cancel_tasks(self._tasks)
-                self._dispatch_event('CHANNEL_DOWN', dp, _channel_down())
+                self._dispatch_event('CHANNEL_DOWN', dp, _channel_down_event())
 
+        self._connections.clear()
+        self._dpids.clear()
         self._tasks.cancel()
         await self._tasks.wait_cancelled(3.0)
 
@@ -370,7 +365,7 @@ class Controller:
                 logger.warning('App does not have any handlers: %r', app)
 
 
-def _channel_down():
+def _channel_down_event():
     """Return a synthetic, minimal channel_down event."""
     return {'type': 'CHANNEL_DOWN'}
 

@@ -45,29 +45,29 @@ async def run_controller(*apps: object,
     return await controller.run()
 
 
-def _get_controller() -> Controller:
+def get_controller() -> Controller:
     """Return currently running controller instance."""
     return ZOF_CONTROLLER.get()
 
 
 def get_config() -> Configuration:
     """Return the current configuration object."""
-    return _get_controller().get_config()
+    return get_controller().get_config()
 
 
 def get_datapaths() -> List[Datapath]:
     """Return list of existing datapaths."""
-    return _get_controller().get_datapaths()
+    return get_controller().get_datapaths()
 
 
 def find_datapath(datapath_id: int) -> Optional[Datapath]:
     """Find datapath by datapath_id."""
-    return _get_controller().find_datapath(datapath_id)
+    return get_controller().find_datapath(datapath_id)
 
 
 def create_task(coro: Coroutine) -> asyncio.Task:
     """Create a task."""
-    return _get_controller().create_task(coro)
+    return get_controller().create_task(coro)
 
 
 def post_event(event: Dict[str, Any]) -> None:
@@ -77,4 +77,4 @@ def post_event(event: Dict[str, Any]) -> None:
 
 def get_driver() -> Driver:
     """Return current driver instance."""
-    return _get_controller().get_driver()
+    return get_controller().get_driver()

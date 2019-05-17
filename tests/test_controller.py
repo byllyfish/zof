@@ -39,6 +39,9 @@ class BasicApp:
 
     def on_stop(self):
         self.events.append('STOP')
+        controller = zof.get_controller()
+        assert not controller._connections  # pylint: disable=protected-access
+        assert not controller._dpids  # pylint: disable=protected-access
 
     def log_event(self, dp, event):
         self.events.append(event.get('type', event))
@@ -521,17 +524,63 @@ async def test_exception_in_start_stop(caplog):
 
 @pytest.mark.asyncio
 async def test_datapath_close(caplog):
-    """Test datapath close() with force argument."""
+    """Test datapath close()."""
 
     class _App(BasicApp):
         def on_channel_up(self, dp, event):
             self.log_event(dp, event)
-            dp.close(force=True)
+            dp.close()
             assert dp.closed
+            assert not dp.down
 
     app = _App()
     exit_status = await mock_controller(app)
 
     assert exit_status == 0
-    assert app.events == ['START', 'CHANNEL_UP', 'STOP']
+    assert app.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_datapath_synthetic_channel_down(caplog):
+    """Test synthetic channel_down event."""
+
+    class _App(BasicApp):
+        def on_start(self):
+            super().on_start()
+            zof.get_driver().no_channel_down = True
+
+    app = _App()
+    exit_status = await mock_controller(app)
+
+    assert exit_status == 0
+    assert app.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
+    assert not caplog.record_tuples
+
+
+@pytest.mark.asyncio
+async def test_datapath_synthetic_channel_down_with_close(caplog):
+    """Test synthetic channel_down event when datapath was manually closed."""
+
+    class _App(BasicApp):
+        def on_start(self):
+            super().on_start()
+            zof.get_driver().no_channel_down = True
+
+        def on_channel_up(self, dp, event):
+            self.log_event(dp, event)
+            dp.close()
+            assert dp.closed
+            assert not dp.down
+
+        def on_channel_down(self, dp, event):
+            super().on_channel_down(dp, event)
+            assert dp.closed
+            assert dp.down
+
+    app = _App()
+    exit_status = await mock_controller(app)
+
+    assert exit_status == 0
+    assert app.events == ['START', 'CHANNEL_UP', 'CHANNEL_DOWN', 'STOP']
     assert not caplog.record_tuples

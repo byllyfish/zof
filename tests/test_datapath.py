@@ -77,8 +77,10 @@ async def test_datapath_close():
     """Closing a datapath manually does not close immediately,"""
     dp = _make_dp()
     assert not dp.closed
+    assert not dp.down
     dp.close()
-    assert not dp.closed
+    assert dp.closed
+    assert not dp.down
 
 
 def test_datapath_ports():

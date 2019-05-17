@@ -13,6 +13,7 @@ class MockDriver:
     channel_wait = 0.001
     packet_count = 0
     sim_task = None
+    no_channel_down = False
 
     def __init__(self):
         """Initialize mock driver."""
@@ -84,4 +85,6 @@ class MockDriver:
             self.post_event(packet_in)
         if self.channel_wait >= 0:
             await asyncio.sleep(self.channel_wait)
-        self.post_event({'type': 'CHANNEL_DOWN', 'conn_id': conn_id})
+
+        if not self.no_channel_down:
+            self.post_event({'type': 'CHANNEL_DOWN', 'conn_id': conn_id})
