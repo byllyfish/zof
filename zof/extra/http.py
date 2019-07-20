@@ -47,6 +47,7 @@ class HttpServer:
         Args:
             endpoint (tuple): host, port pair
             logger (Logger): optional logger
+
         """
         self.endpoint = endpoint
         self.logger = logger

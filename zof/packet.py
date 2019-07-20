@@ -89,6 +89,7 @@ class Packet(dict):
 
         Args:
             fields (List[dict]): Sequence of fields.
+
         """
         assert isinstance(fields, list)
 

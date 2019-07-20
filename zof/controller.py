@@ -143,7 +143,7 @@ class Controller:
 
         while True:
             try:
-                event = await event_queue.get()  # type: ignore
+                event = await event_queue.get()
                 assert isinstance(event, dict), repr(event)
                 event_type = event['type']
 

@@ -162,7 +162,7 @@ class OftrProtocol(asyncio.Protocol):
             return cls(post_event, loop)
 
         _, protocol = await loop.create_unix_connection(
-            _proto_factory, path=None, sock=parent_sock)
+            _proto_factory, path=None, sock=parent_sock)  # type: ignore
         protocol.process = proc
         return protocol
 
@@ -264,6 +264,7 @@ def _valid_reply(ofp_msg, msg):
     Args:
         ofp_msg (bool): True if msg is OpenFlow message (instead of RPC).
         msg (dict): OpenFlow message
+
     """
     if not ofp_msg:
         return True
